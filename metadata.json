@@ -1,0 +1,6 @@
+{
+  "name": "AI PPT Studio",
+  "description": "AI-native Presentation Creation Platform: Content Generation, Slide IR, SVG Rendering, Smart Editing & Multi-Format Export",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

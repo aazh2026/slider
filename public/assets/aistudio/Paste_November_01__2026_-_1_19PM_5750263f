@@ -1,0 +1,1231 @@
+# AI 驱动的在线 PPT 制作平台——产品需求与总体设计方案
+
+我建议不要简单地把这个产品设计成一个「输入文字 → AI 生成 PPT → 下载」的网站。
+
+从产品本质上看，它应该是一个：
+
+以 AI 为内容与设计引擎、以 SVG 为页面渲染载体、以模板为设计约束、以结构化页面模型为编辑和导出基础的在线 PPT 创作平台。
+
+这里有一个非常重要的设计决策：
+
+> 不要让 AI 直接生成最终 PPT 文件，也不要把 SVG 当作唯一的数据存储格式。应该建立一个中间的、结构化的 PPT 页面模型（Slide IR），SVG 负责页面视觉呈现，结构化模型负责编辑、修改、版本管理和多格式导出。
+
+这样才能同时解决三个问题：
+
+1. 生成质量：AI 可以充分发挥创意，但页面必须符合模板、布局、字体、颜色等设计约束。
+2. 编辑能力：用户不能只能让 AI 重画整页，而应该能够选择页面上的某个标题、图形、图表或局部区域进行修改。
+3. 导出质量：最终 PPT 不应该只是把每页 SVG 塞进 PPT，而应尽可能转换成原生可编辑的 PPT 元素。
+
+我把整个产品分为产品设计、核心业务流程、技术架构、关键模块设计、数据模型、AI Agent 设计、质量保障和实施路线八个部分。
+
+# 一、首先明确产品的核心定位
+
+## 1.1 产品定位
+
+# AI PPT Studio
+
+AI-native Presentation Creation Platform
+
+# 让用户从想法直接走向专业演示文稿
+
+内容生成 × 模板驱动 × 矢量设计 × 智能编辑 × 多格式导出
+
+AI 内容引擎
+
+理解需求、生成大纲、组织叙事、编排内容
+
+模板设计引擎
+
+模板解析、风格提取、布局推荐、设计规范
+
+页面生成引擎
+
+结构化页面、SVG 渲染、图表与图形生成
+
+智能编辑引擎
+
+局部修改、整体调整、版本回退、智能重排
+
+## 1.2 产品设计目标
+
+| 目标    | 具体要求                 |
+| ----- | -------------------- |
+| 内容质量  | 逻辑完整、叙事清晰、信息密度合理     |
+| 设计质量  | 专业、美观、统一，遵循模板规范      |
+| 生成效率  | 支持整份生成、逐页生成、局部重生成    |
+| 编辑体验  | 支持 AI 编辑和传统可视化编辑     |
+| 模板能力  | 内置模板、用户上传模板、PPT 模板提取 |
+| 输出质量  | SVG、PNG、JPG、PDF、PPTX |
+| 可持续编辑 | 页面元素独立、结构可理解、修改可追踪   |
+
+## 1.3 最重要的产品设计原则
+
+建议确定以下六条原则：
+
+1. 内容与设计分离：内容逻辑不应该被模板绑定。
+2. 模板与页面分离：同一份内容可以应用不同模板。
+3. 页面与元素分离：每一页由多个可以独立操作的元素构成。
+4. 生成与编辑分离：生成过程和后续编辑是两个独立能力。
+5. 结构与渲染分离：结构化页面模型是事实来源，SVG 是渲染结果。
+6. AI 与确定性工程结合：AI 负责理解、规划和创作，程序负责几何约束、格式转换、校验和导出。
+
+# 二、整体业务流程设计
+
+你提出的六个步骤是正确的主线，但我建议增加三个关键环节：
+
+- 生成之前：增加素材收集和内容资料理解。
+- 生成过程中：增加页面布局规划和设计质量检查。
+- 生成之后：增加整份 PPT 的一致性检查和导出验证。
+
+## 2.1 完整业务流程
+
+## AI PPT 创作全流程
+
+01 需求输入
+
+主题、目标受众、演示目的、页数、风格要求、参考资料
+
+02 内容理解与大纲生成
+
+需求分析、内容提取、章节规划、叙事结构、页面规划
+
+03 模板选择与设计规划
+
+模板检索、模板解析、设计规范、页面布局映射
+
+04 页面结构生成
+
+逐页内容组织、组件选择、布局计算、图表规划
+
+05 SVG 渲染与质量检查
+
+SVG 生成、布局检查、文字检查、视觉评估
+
+06 在线预览与智能编辑
+
+逐页预览、元素选中、局部修改、整页重生成、版本管理
+
+07 整体优化与一致性检查
+
+页面风格统一、章节衔接、排版优化、质量验收
+
+08 多格式导出
+
+PPTX、PDF、SVG、PNG、JPG
+
+## 2.2 产品工作台的信息架构
+
+建议网站采用三个层次：
+
+| 层次        | 核心功能           | 用户操作    |
+| --------- | -------------- | ------- |
+| 创作中心      | 创建项目、上传资料、输入需求 | 创建 PPT  |
+| PPT 编辑工作台 | 大纲、模板、页面、素材、编辑 | 生成和修改   |
+| 资产中心      | 模板库、素材库、历史项目   | 复用模板和素材 |
+
+其中，PPT 编辑工作台是产品的核心，不应该把所有操作都塞进一个聊天窗口。
+
+# 三、核心功能模块设计
+
+## 3.1 模块一：AI 需求输入与内容理解
+
+用户可以通过多种方式创建 PPT：
+
+- 自然语言描述主题。
+- 上传 Word、PDF、PPT、Markdown 等资料。
+- 粘贴已有文档或网页内容。
+- 上传图片、图表、参考设计。
+- 提供已有 PPT，要求参考其内容或风格。
+
+### 需求输入示例
+
+用户输入：
+
+「帮我制作一份企业 AI Agent 技术架构规划汇报，面向公司技术管理层，约 20 页，重点介绍 Agent 技术发展趋势、企业架构、工程体系、实施路线和组织能力建设。整体风格专业、简洁、科技感。」
+
+AI 需要提取结构化需求：
+
+| 字段     | 示例                 |
+| ------ | ------------------ |
+| PPT 主题 | 企业 AI Agent 技术架构规划 |
+| 演示目的   | 技术规划汇报             |
+| 目标受众   | 技术管理层              |
+| 预期页数   | 20                 |
+| 内容深度   | 技术战略与架构设计          |
+| 设计风格   | 专业、简洁、科技感          |
+| 输出比例   | 16:9               |
+| 参考资料   | 用户上传的文档            |
+
+这里有一个重要设计：
+
+需求理解结果应该允许用户修改，而不是直接进入生成。
+
+### 需求输入界面
+
+[Best AI Presentation Makers for Startups and Entrepreneurs | by Mehul Gupta | Data Science in Your Pocket | Mar, 2026 | Medium](https://images.openai.com/static-rsc-4/AME_T_QuJbZQ2woagWB-8aGlSlpJP7mt2STrycHKMC3W_zkRcy8wbM67JDvsntFQa-gtMGEyWnbDGVpFVTkVlxKypB2mm63WAfPpklxJiglKRO_KvcRrBiYcmIq5AAvfXp9BPgkjiu3C0IyzXtbru7KFPenbI-p3QFgl2nG7ErA?purpose=inline)
+
+[medium.com](https://medium.com/data-science-in-your-pocket/best-ai-presentation-makers-for-startups-and-entrepreneurs-2bec4fd0c325?utm_source=chatgpt.com)
+
+界面分为：
+
+- 左侧：主题和需求输入。
+- 中间：文件上传、参考资料。
+- 右侧：AI 提取的需求参数。
+- 底部：生成大纲。
+
+## 3.2 模块二：AI PPT 大纲生成
+
+大纲不是简单的标题列表，而是后续页面生成的内容规划基础。
+
+每一页都应该有明确的内容定义。
+
+### 页面大纲的数据结构
+
+例如：
+
+| 页码 | 页面标题               | 页面类型 | 核心信息      | 推荐布局 |
+| -- | ------------------ | ---- | --------- | ---- |
+| 1  | 企业 AI Agent 技术架构规划 | 封面   | 项目主题      | 封面型  |
+| 2  | 为什么需要 Agent 架构升级   | 问题分析 | 现有体系的核心瓶颈 | 左文右图 |
+| 3  | 企业 Agent 技术发展趋势    | 趋势分析 | 技术演进方向    | 多卡片  |
+| 4  | 企业 Agent 总体架构      | 架构图  | 技术分层与关系   | 分层架构 |
+| 5  | Agent 工程能力体系       | 体系模型 | 能力框架      | 中心辐射 |
+
+每一页建议包含：
+
+```
+{
+  "slide_id": "slide_004",
+  "title": "企业 Agent 总体架构",
+  "purpose": "说明企业级 Agent 技术架构",
+  "key_message": "企业 Agent 需要统一的运行时与工程治理体系",
+  "content": [
+    {
+      "type": "text",
+      "content": "..."
+    }
+  ],
+  "visual_intent": "layered_architecture",
+  "layout_preference": "architecture_diagram",
+  "required_elements": [
+    "架构分层",
+    "模块关系",
+    "数据流向"
+  ],
+  "source_refs": [],
+  "speaker_notes": ""
+}
+```
+
+这里建议支持三种大纲操作：
+
+1. AI 自动生成大纲。
+2. 用户手动调整大纲。
+3. 用户选中某一章节，让 AI 扩写、压缩或重新组织。
+
+特别注意：大纲生成应该具备内容去重和叙事连续性检查，避免 20 页 PPT 中反复表达同一个观点。
+
+## 3.3 模块三：PPT 模板中心
+
+这是产品最有差异化潜力的模块之一。
+
+我建议将模板中心分为三种来源：
+
+[Vector  business  presentation slides template design  business layout template design](https://images.openai.com/static-rsc-4/R45PB-Y3XIwUo7HLqSf4nRUHPjnz1_WiQjU7wgdW433-pOwI38EFODn3BLZ_95Y2AZmuP3X-VocIVdi6Pd0xZk_aF8qczH1x55Nm03WqoNGBWN5IjUv5TE7wncwUTaZi1kKUXOy3CnM4QI9sb00_hdwQvPy9FDGMbYlgEAL3Y_k?purpose=inline)
+
+A. 平台内置模板
+
+平台提供专业设计师制作的模板，按行业、用途、风格、颜色和页面类型分类。
+
+[Use multiple themes in one presentation | Microsoft Support](https://images.openai.com/static-rsc-4/IXTnifxojaZL2qVw88qzV5sZVupXGfTOblzZ0Bnr9B3ZZZ1QkQqlUnvvidS6kzDl5Q5QTbx-gUu3xZAtH-PZ_4kc3nIhPzQvsrXllv65RACxpZpvvUgzFAT699jC8rF8X8PuEvfsZHcDzMH7X4UySY5wOgT8d48esgQ40fKfU9s?purpose=inline)
+
+B. 用户上传 PPT 提取模板
+
+用户上传已有 PPTX，系统分析其设计规范、母版、版式、字体、颜色、图形和页面结构，生成可复用模板。
+
+[AI Technology PowerPoint Presentation Template, Presentation Templates](https://images.openai.com/static-rsc-4/XVbYiqz0uV4jK7SKpk9Litqg0Cbzkwrj1ISYzEorG6-qvD5P1M53wKJuNBltS2d_wQIjApF6EpAR0SiNxuQI8OLU7TViGxncuUva87rrf124fYcpiEjy7VSvL8NiTSjh7mHQODDQ974p_9jcPE86AtNxVZEAWNYRd28LbO1BN0E?purpose=inline)
+
+C. AI 定制模板
+
+用户输入风格描述或上传参考图片，由 AI 生成一套新的视觉规范和页面布局。
+
+### 3.3.1 模板不是一张背景图片
+
+这是需要重点强调的设计问题。
+
+一个完整的 PPT 模板至少应该包含五个部分：
+
+| 组成         | 具体内容                   |
+| ---------- | ---------------------- |
+| Theme      | 主色、辅助色、字体、字号体系、背景风格    |
+| Master     | 页面母版、页眉页脚、Logo、页码、背景元素 |
+| Layout     | 封面、目录、章节页、正文、图表、架构图等   |
+| Component  | 标题框、文本框、图形、卡片、流程组件     |
+| Constraint | 安全边距、元素间距、对齐规则、最大内容密度  |
+
+例如，一个模板应该能够表达：
+
+- 一级标题：32px，字体为指定中文字体。
+- 二级标题：24px。
+- 正文：16px。
+- 主色：深蓝。
+- 强调色：橙色。
+- 内容区域：距离左右边缘 80px。
+- 图表颜色：遵循统一色板。
+- 页码：右下角固定位置。
+
+这些设计规范必须结构化保存，不能只依赖 AI 看图理解。
+
+### 3.3.2 从现有 PPT 中提取模板
+
+建议将其设计成独立的模板解析引擎。
+
+处理流程：
+
+上传 PPTX 文件
+
+PPTX / OOXML 解析
+
+Slide、Layout、Master、Theme、Shape、Image、Font
+
+视觉分析
+
+配色、间距、字体、布局、风格
+
+结构分析
+
+元素类型、位置、层级、母版关系
+
+模板抽象与归纳
+
+设计 Token、页面布局、组件库、约束规则
+
+生成标准化模板资产
+
+可检索、可预览、可复用、可修改
+
+建议特别处理以下问题：
+
+- 同一份 PPT 可能有多个母版。
+- 同一种页面布局可能存在多个变体。
+- 有些页面使用了大量手工绘制元素，并不遵循母版。
+- 图片中的文字和图形不一定能够提取为独立元素。
+- 字体可能缺失，或者存在授权限制。
+
+因此，模板提取应该支持两种模式：
+
+模式一：结构化提取。 尽可能保留原生 PPT 的元素、版式、组件和规则。
+
+模式二：视觉风格提取。 对无法结构化提取的复杂页面，通过截图和视觉分析提取风格、布局特征，生成近似的可复用设计规范。
+
+不能把两者混为一谈。视觉相似不代表元素可以编辑。
+
+### 3.3.3 模板资产的数据结构
+
+```
+{
+  "template_id": "tpl_001",
+  "name": "科技蓝商务模板",
+  "version": "1.0",
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "theme": {
+    "primary_color": "#123B68",
+    "secondary_color": "#2878B8",
+    "accent_color": "#F39C45",
+    "background_color": "#FFFFFF",
+    "font_family": "Noto Sans CJK SC"
+  },
+  "layouts": [
+    {
+      "layout_id": "architecture",
+      "type": "architecture_diagram",
+      "regions": [],
+      "constraints": []
+    }
+  ],
+  "components": [],
+  "assets": []
+}
+```
+
+模板必须具备版本管理能力。已经应用到项目中的模板，不应该因为模板库后续修改而自动改变。
+
+## 3.4 模块四：AI 页面生成引擎
+
+这是整个产品最核心、技术难度最高的模块。
+
+建议不要采用「每一页让大模型自由生成一段 SVG 代码」的方案。
+
+这种方案短期容易做出效果，但长期会出现：
+
+- SVG 代码结构混乱。
+- 元素无法独立编辑。
+- 同类页面风格不一致。
+- 修改一个元素导致整页布局变化。
+- 文字溢出、图形重叠。
+- PPTX 导出困难。
+- 生成结果不可稳定复现。
+
+### 3.4.1 推荐的生成架构
+
+建立三级转换机制：
+
+第一层：Slide Content Model
+
+页面表达什么？
+
+标题、正文、图表数据、架构关系、关键结论、注释。
+
+第二层：Slide Design Model / Slide IR
+
+页面如何组织？
+
+元素类型、布局、位置、尺寸、样式、层级、组件引用、约束关系。
+
+第三层：Rendering Engine
+
+页面如何呈现？
+
+SVG Renderer、PNG Renderer、PDF Renderer、PPTX Renderer。
+
+这三个层次的职责非常明确：
+
+| 层次            | AI 是否参与  | 核心职责       |
+| ------------- | -------- | ---------- |
+| Content Model | 是        | 内容理解和组织    |
+| Design Model  | 是，结合规则引擎 | 页面设计、布局规划  |
+| Renderer      | 原则上否     | 确定性渲染与格式转换 |
+
+### 3.4.2 页面元素类型
+
+建议建立标准化的页面元素体系。
+
+| 分类   | 元素类型                       | 说明       |
+| ---- | -------------------------- | -------- |
+| 文本   | Title、Subtitle、Text、Label  | 标题、正文、标签 |
+| 基础图形 | Rect、Circle、Line、Polygon   | 基础几何元素   |
+| 业务图形 | Card、Badge、Arrow、Icon      | 业务表达组件   |
+| 图表   | Bar、Line、Pie、Radar         | 数据可视化    |
+| 关系图  | Flow、Tree、Network          | 流程与关系    |
+| 架构图  | Layer、Module、Connector     | 系统架构     |
+| 媒体   | Image、SVG、Illustration     | 图片和矢量图   |
+| 装饰   | Background、Pattern、Divider | 页面装饰     |
+
+其中架构图、流程图、关系图建议作为独立的语义组件，而不是让 AI 用大量基础矩形和线条拼接。
+
+### 3.4.3 Slide IR 结构设计
+
+例如一张架构图页面：
+
+```
+{
+  "slide_id": "slide_004",
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "layout": {
+    "type": "architecture",
+    "template_layout": "tpl_arch_01"
+  },
+  "elements": [
+    {
+      "id": "title_001",
+      "type": "text",
+      "role": "title",
+      "content": "企业 Agent 总体架构",
+      "geometry": {
+        "x": 100,
+        "y": 70,
+        "width": 1600,
+        "height": 80
+      },
+      "style": {
+        "font_size": 48,
+        "font_weight": 700
+      },
+      "editable": true
+    },
+    {
+      "id": "layer_001",
+      "type": "architecture_layer",
+      "content": "Agent Runtime",
+      "geometry": {
+        "x": 150,
+        "y": 300,
+        "width": 1600,
+        "height": 150
+      },
+      "editable": true
+    }
+  ]
+}
+```
+
+实际设计中还需要增加：
+
+- `parent_id`：元素之间的父子关系。
+- `z_index`：元素绘制顺序。
+- `group_id`：元素分组。
+- `constraints`：对齐、间距、锚点等约束。
+- `source_ref`：元素对应的原始内容。
+- `template_ref`：元素对应的模板组件。
+- `generation_meta`：模型、提示词版本和生成记录。
+
+这样每个 SVG 元素都可以映射回对应的业务对象。
+
+### 3.4.4 SVG 生成策略
+
+建议采用：
+
+Slide IR → SVG DOM → SVG 文件
+
+而不是 AI 直接输出任意 SVG 字符串。
+
+SVG 内部应当具有清晰的分层结构：
+
+```
+<svg viewBox="0 0 1920 1080">
+  <g id="background-layer">
+  </g>
+
+  <g id="template-layer">
+  </g>
+
+  <g id="content-layer">
+    <g id="title-group">
+    </g>
+
+    <g id="architecture-group">
+    </g>
+
+    <g id="annotation-group">
+    </g>
+  </g>
+
+  <g id="decoration-layer">
+  </g>
+</svg>
+```
+
+每个元素保留稳定 ID、语义类型、编辑属性。
+
+这不仅是渲染问题，也是后续编辑能力的基础。SVG 的实际分层和元素结构应该能够与 Slide IR 双向映射。
+
+### 3.4.5 页面布局引擎
+
+建议不要完全依赖大模型计算每个元素的 x、y 坐标。
+
+采用 AI + Layout Engine 的方式：
+
+- AI 决定页面类型。
+- AI 决定内容组织方式。
+- AI 推荐布局方案。
+- 布局引擎计算元素位置。
+- 约束引擎检查布局合法性。
+- 渲染引擎生成 SVG。
+
+布局引擎需要支持：
+
+| 能力    | 具体要求         |
+| ----- | ------------ |
+| 网格布局  | 2 栏、3 栏、4 栏  |
+| 自动对齐  | 左对齐、居中、右对齐   |
+| 自动间距  | 元素间距、段落间距    |
+| 自适应文本 | 换行、缩放、溢出检测   |
+| 组件布局  | 卡片、图表、架构图    |
+| 约束布局  | 固定边距、宽高比例、锚点 |
+| 空间优化  | 避免重叠、留白合理    |
+
+特别需要强调：文字不能通过无限缩小字号来解决溢出。
+
+应该优先尝试调整文本框、换行、布局、内容长度；必要时才缩小字号，仍无法容纳时应提示用户或触发重新规划。
+
+## 3.5 模块五：在线 PPT 编辑工作台
+
+这是用户使用频率最高的模块，建议投入较多精力设计交互体验。
+
+### 3.5.1 工作台布局
+
+推荐采用专业 PPT 软件类似的三栏结构。
+
+[Presentaciones de empresa con IA | Flato](https://images.openai.com/static-rsc-4/WT9gAmpvHc_rgm83rcR16TfA7s5E6KnROZGvFIAkKRBkUuDw47SHIm3f03mtDvHtYsQvJpfKCMut94kg6S4T26ctuRduUtOlHGh1hG7GWAjX_K7Yi-7fmcceHnU7gXWaCYdr3GNaxZfwyMmY_Fa48E9DQ6K7teM-HVXnHq8XxPM?purpose=inline)
+
+[flato.ai](https://www.flato.ai/es/ai-presentation/company-profile?utm_source=chatgpt.com)
+
+| 区域    | 功能                 |
+| ----- | ------------------ |
+| 左侧页面栏 | 页面缩略图、页面排序、增删页面    |
+| 中间画布  | 当前页面 SVG 预览和交互编辑   |
+| 右侧属性栏 | 元素属性、样式、AI 编辑、布局设置 |
+| 顶部工具栏 | 撤销、重做、保存、模板、预览、导出  |
+| 底部状态栏 | 页面比例、缩放比例、生成状态     |
+
+### 3.5.2 编辑模式
+
+建议提供四种模式。
+
+模式 A：整页 AI 修改
+
+用户输入：
+
+- 这一页改成深色科技风。
+- 内容太多了，精简 30%。
+- 将这一页改成左右对比结构。
+- 把这页调整成更适合管理层汇报的表达。
+
+模式 B：选中元素修改
+
+用户点击某个标题、图形或文本框，提出修改要求：
+
+- 标题字体改大。
+- 将这个模块改为橙色。
+- 将文字改成三条简短要点。
+- 将这个矩形改成圆角卡片。
+
+模式 C：局部区域修改
+
+用户框选某个区域：
+
+- 重新绘制这个架构图。
+- 将这三个模块重新组织。
+- 右侧增加一个数据分析图表。
+- 将当前区域改成流程图。
+
+模式 D：传统可视化编辑
+
+提供类似 PPT 的基本编辑能力：
+
+- 拖动。
+- 缩放。
+- 对齐。
+- 组合和取消组合。
+- 复制和删除。
+- 字体和颜色调整。
+- 图层顺序调整。
+
+这四种模式不能混为一谈。AI 修改负责智能创作，传统编辑负责精确控制。
+
+### 3.5.3 AI 修改的关键机制
+
+这里建议采用「修改指令 → 变更计划 → IR Patch → 重新渲染」机制。
+
+例如用户要求：
+
+「把右侧的架构图简化一下，保留三个核心层次。」
+
+系统不应该直接重新生成整个 SVG，而应该：
+
+1. 识别被修改的架构图元素组。
+2. 解析用户修改意图。
+3. 生成变更计划。
+4. 修改对应的 Slide IR 节点。
+5. 检查是否影响其他元素。
+6. 重新渲染页面。
+7. 展示修改前后的差异。
+
+示意：
+
+```
+{
+  "operation": "replace_group",
+  "target_id": "architecture-group",
+  "changes": {
+    "layers": [
+      "业务应用层",
+      "Agent 能力层",
+      "基础设施层"
+    ]
+  },
+  "preserve": [
+    "title_001",
+    "footer_001",
+    "template_style"
+  ]
+}
+```
+
+这是整个编辑体系的重要技术基础。
+
+### 3.5.4 编辑版本管理
+
+必须支持：
+
+- 每次 AI 修改产生一个版本。
+- 用户可以撤销和重做。
+- 支持历史版本预览。
+- 支持页面级版本回退。
+- 支持比较修改前后差异。
+- 支持保存用户认可的版本。
+
+建议采用页面级版本管理，避免整份 PPT 的每一次修改都复制所有页面数据。
+
+## 3.6 模块六：全局一致性优化
+
+这一模块是很多 AI PPT 产品容易忽略的。
+
+逐页生成可能导致每页单独看都不错，但放在一起却存在问题：
+
+- 标题字体和字号不统一。
+- 图表配色不一致。
+- 页面风格跳跃。
+- 信息密度忽高忽低。
+- 章节衔接不自然。
+- 同一术语在不同页面表达不一致。
+
+因此需要单独设计一个全局优化器。
+
+| 检查维度  | 检查内容          |
+| ----- | ------------- |
+| 视觉一致性 | 字体、颜色、背景、标题   |
+| 版式一致性 | 页边距、对齐、间距     |
+| 内容一致性 | 术语、数字、观点      |
+| 叙事一致性 | 页面逻辑、章节关系     |
+| 信息密度  | 每页文字和图形比例     |
+| 视觉节奏  | 封面、目录、章节页、总结页 |
+
+建议支持两种操作：
+
+- 自动检查并给出修改建议。
+- 用户授权后，批量应用修复。
+
+不要让全局优化器未经授权直接重写用户已经确认的页面。
+
+## 3.7 模块七：多格式导出引擎
+
+建议把导出引擎设计为独立模块。
+
+| 输出格式 | 实现方式             | 用户价值   |
+| ---- | ---------------- | ------ |
+| SVG  | 直接输出 SVG         | 高质量矢量图 |
+| PNG  | SVG 光栅化          | 图片分享   |
+| JPG  | SVG 光栅化          | 兼容性    |
+| PDF  | SVG / 矢量内容写入 PDF | 打印和阅读  |
+| PPTX | IR 转换为 PPT 原生元素  | 后续编辑   |
+
+这里有一个非常重要的技术问题：
+
+不能把所有页面都直接作为 SVG 图片嵌入 PPTX，然后声称支持可编辑 PPT。
+
+建议采用三级导出策略：
+
+| 级别   | 处理方式                    | 可编辑性    |
+| ---- | ----------------------- | ------- |
+| 原生对象 | 文本、形状、线条、基础图表转换为 PPT 元素 | 高       |
+| 矢量对象 | 复杂 SVG 转换为 PPT 支持的矢量图形  | 视对象类型而定 |
+| 图片对象 | 无法可靠转换的复杂视觉内容转为图片       | 低       |
+
+用户导出时可以选择：
+
+- 完全可编辑优先。
+- 视觉效果优先。
+- 文件体积优先。
+
+导出前必须进行一次页面检查，防止字体替换、元素错位、图片丢失和页面比例变化。
+
+# 四、AI Agent 与生成任务体系
+
+我建议将 AI 能力设计成一组有明确职责边界的 Agent，而不是一个万能 Agent。
+
+## 4.1 Agent 体系
+
+| Agent             | 核心职责    | 输入       | 输出          |
+| ----------------- | ------- | -------- | ----------- |
+| Requirement Agent | 需求理解    | 用户输入     | 需求模型        |
+| Content Agent     | 内容分析与整理 | 需求、资料    | 内容模型        |
+| Outline Agent     | 大纲规划    | 内容模型     | 页面大纲        |
+| Template Agent    | 模板检索与推荐 | 大纲、设计偏好  | 模板及布局       |
+| Design Agent      | 页面设计规划  | 内容、模板    | Slide IR    |
+| Rendering Engine  | 页面渲染    | Slide IR | SVG         |
+| Review Agent      | 页面质量审查  | SVG、IR   | 问题及修复建议     |
+| Editing Agent     | 页面修改    | 用户指令、IR  | IR Patch    |
+| Export Engine     | 格式转换    | IR、资源    | PPTX/PDF/图片 |
+
+其中 Rendering Engine 和 Export Engine 尽量使用确定性代码实现，而不是交给 Agent 自由发挥。
+
+## 4.2 生成时的多 Agent 协作
+
+建议采用有向任务图，而不是完全自由的 Agent 自主循环。
+
+\#chatgpt-mermaid-\_r_i9\_{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;fill:rgb(13, 13, 13);}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#chatgpt-mermaid-\_r_i9\_ .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_i9\_ .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_i9\_ .error-icon{fill:rgb(243, 243, 243);}#chatgpt-mermaid-\_r_i9\_ .error-text{fill:rgb(13, 13, 13);stroke:rgb(13, 13, 13);}#chatgpt-mermaid-\_r_i9\_ .edge-thickness-normal{stroke-width:1px;}#chatgpt-mermaid-\_r_i9\_ .edge-thickness-thick{stroke-width:3.5px;}#chatgpt-mermaid-\_r_i9\_ .edge-pattern-solid{stroke-dasharray:0;}#chatgpt-mermaid-\_r_i9\_ .edge-thickness-invisible{stroke-width:0;fill:none;}#chatgpt-mermaid-\_r_i9\_ .edge-pattern-dashed{stroke-dasharray:3;}#chatgpt-mermaid-\_r_i9\_ .edge-pattern-dotted{stroke-dasharray:2;}#chatgpt-mermaid-\_r_i9\_ .marker{fill:rgb(143, 143, 143);stroke:rgb(143, 143, 143);}#chatgpt-mermaid-\_r_i9\_ .marker.cross{stroke:rgb(143, 143, 143);}#chatgpt-mermaid-\_r_i9\_ svg{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;}#chatgpt-mermaid-\_r_i9\_ p{margin:0;}#chatgpt-mermaid-\_r_i9\_ .label{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";color:rgb(13, 13, 13);}#chatgpt-mermaid-\_r_i9\_ .cluster-label text{fill:rgb(13, 13, 13);}#chatgpt-mermaid-\_r_i9\_ .cluster-label span{color:rgb(13, 13, 13);}#chatgpt-mermaid-\_r_i9\_ .cluster-label span p{background-color:transparent;}#chatgpt-mermaid-\_r_i9\_ .label text,#chatgpt-mermaid-\_r_i9\_ span{fill:rgb(13, 13, 13);color:rgb(13, 13, 13);}#chatgpt-mermaid-\_r_i9\_ .node rect,#chatgpt-mermaid-\_r_i9\_ .node circle,#chatgpt-mermaid-\_r_i9\_ .node ellipse,#chatgpt-mermaid-\_r_i9\_ .node polygon,#chatgpt-mermaid-\_r_i9\_ .node path{fill:rgb(222, 234, 251);stroke:rgb(83, 154, 248);stroke-width:1px;}#chatgpt-mermaid-\_r_i9\_ .rough-node .label text,#chatgpt-mermaid-\_r_i9\_ .node .label text,#chatgpt-mermaid-\_r_i9\_ .image-shape .label,#chatgpt-mermaid-\_r_i9\_ .icon-shape .label{text-anchor:middle;}#chatgpt-mermaid-\_r_i9\_ .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#chatgpt-mermaid-\_r_i9\_ .rough-node .label,#chatgpt-mermaid-\_r_i9\_ .node .label,#chatgpt-mermaid-\_r_i9\_ .image-shape .label,#chatgpt-mermaid-\_r_i9\_ .icon-shape .label{text-align:center;}#chatgpt-mermaid-\_r_i9\_ .node.clickable{cursor:pointer;}#chatgpt-mermaid-\_r_i9\_ .root .anchor path{fill:rgb(143, 143, 143)!important;stroke-width:0;stroke:rgb(143, 143, 143);}#chatgpt-mermaid-\_r_i9\_ .arrowheadPath{fill:rgb(143, 143, 143);}#chatgpt-mermaid-\_r_i9\_ .edgePath .path{stroke:rgb(143, 143, 143);stroke-width:1px;}#chatgpt-mermaid-\_r_i9\_ .flowchart-link{stroke:rgb(143, 143, 143);fill:none;}#chatgpt-mermaid-\_r_i9\_ .edgeLabel{background-color:rgb(252, 252, 252);text-align:center;}#chatgpt-mermaid-\_r_i9\_ .edgeLabel p{background-color:rgb(252, 252, 252);}#chatgpt-mermaid-\_r_i9\_ .edgeLabel rect{opacity:0.5;background-color:rgb(252, 252, 252);fill:rgb(252, 252, 252);}#chatgpt-mermaid-\_r_i9\_ .labelBkg{background-color:rgba(252, 252, 252, 0.5);}#chatgpt-mermaid-\_r_i9\_ .cluster rect{fill:rgb(243, 243, 243);stroke:rgba(0, 0, 0, 0.1);stroke-width:1px;}#chatgpt-mermaid-\_r_i9\_ .cluster text{fill:rgb(13, 13, 13);}#chatgpt-mermaid-\_r_i9\_ .cluster span{color:rgb(13, 13, 13);}#chatgpt-mermaid-\_r_i9\_ div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:12px;background:rgb(243, 243, 243);border:1px solid rgba(0, 0, 0, 0.1);border-radius:2px;pointer-events:none;z-index:100;}#chatgpt-mermaid-\_r_i9\_ .flowchartTitleText{text-anchor:middle;font-size:18px;fill:rgb(13, 13, 13);}#chatgpt-mermaid-\_r_i9\_ rect.text{fill:none;stroke-width:0;}#chatgpt-mermaid-\_r_i9\_ .icon-shape,#chatgpt-mermaid-\_r_i9\_ .image-shape{background-color:rgb(252, 252, 252);text-align:center;}#chatgpt-mermaid-\_r_i9\_ .icon-shape p,#chatgpt-mermaid-\_r_i9\_ .image-shape p{background-color:rgb(252, 252, 252);padding:2px;}#chatgpt-mermaid-\_r_i9\_ .icon-shape .label rect,#chatgpt-mermaid-\_r_i9\_ .image-shape .label rect{opacity:0.5;background-color:rgb(252, 252, 252);fill:rgb(252, 252, 252);}#chatgpt-mermaid-\_r_i9\_ .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#chatgpt-mermaid-\_r_i9\_ .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#chatgpt-mermaid-\_r_i9\_ .node .neo-node{stroke:rgb(83, 154, 248);}#chatgpt-mermaid-\_r_i9\_ [data-look="neo"].node rect,#chatgpt-mermaid-\_r_i9\_ [data-look="neo"].cluster rect,#chatgpt-mermaid-\_r_i9\_ [data-look="neo"].node polygon{stroke:url(#chatgpt-mermaid-\_r_i9\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_i9\_ [data-look="neo"].swimlane.cluster rect{filter:none;}#chatgpt-mermaid-\_r_i9\_ [data-look="neo"].node path{stroke:url(#chatgpt-mermaid-\_r_i9\_-gradient);stroke-width:1px;}#chatgpt-mermaid-\_r_i9\_ [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_i9\_ [data-look="neo"].node .neo-line path{stroke:rgb(83, 154, 248);filter:none;}#chatgpt-mermaid-\_r_i9\_ [data-look="neo"].node circle{stroke:url(#chatgpt-mermaid-\_r_i9\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_i9\_ [data-look="neo"].node circle .state-start{fill:#000000;}#chatgpt-mermaid-\_r_i9\_ [data-look="neo"].icon-shape .icon{fill:url(#chatgpt-mermaid-\_r_i9\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_i9\_ [data-look="neo"].icon-shape .icon-neo path{stroke:url(#chatgpt-mermaid-\_r_i9\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_i9\_ .node text{font-size:14px;font-weight:600;letter-spacing:normal;fill:rgb(0, 79, 153);}#chatgpt-mermaid-\_r_i9\_ .edgeLabels text{font-size:13px;font-weight:600;letter-spacing:-0.08px;fill:rgb(0, 79, 153);}#chatgpt-mermaid-\_r_i9\_ .node tspan[font-weight="normal"],#chatgpt-mermaid-\_r_i9\_ .edgeLabels tspan[font-weight="normal"]{font-weight:600;}#chatgpt-mermaid-\_r_i9\_ .edgeLabel .label rect{opacity:1;rx:13px;ry:13px;fill:rgb(245, 250, 255);stroke:rgb(206, 219, 229);stroke-width:1px;}#chatgpt-mermaid-\_r_i9\_ .node rect,#chatgpt-mermaid-\_r_i9\_ .node circle,#chatgpt-mermaid-\_r_i9\_ .node ellipse,#chatgpt-mermaid-\_r_i9\_ .node polygon,#chatgpt-mermaid-\_r_i9\_ .node path{fill:rgb(229, 243, 255);stroke:rgba(0, 0, 0, 0.1);stroke-width:1px;}#chatgpt-mermaid-\_r_i9\_ .node rect{rx:16px;ry:16px;}#chatgpt-mermaid-\_r_i9\_ .mermaid-decision .label-container{fill:rgb(245, 250, 255);stroke:rgb(206, 219, 229);stroke-dasharray:2,2;}#chatgpt-mermaid-\_r_i9\_ .edgePaths .flowchart-link{stroke:rgb(143, 143, 143);stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;}#chatgpt-mermaid-\_r_i9\_ .marker{fill:rgb(143, 143, 143);stroke:rgb(143, 143, 143);}#chatgpt-mermaid-\_r_i9\_ :root{--mermaid-font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";}用户需求Requirement AgentContent AgentOutline Agent用户确认大纲Template AgentDesign AgentSlide IRRendering EngineSVGReview Agent质量是否通过用户预览生成修复 PatchEditing AgentExport Engine是否
+
+建议每个 Agent 都有：
+
+- 输入输出 Schema。
+- 执行状态。
+- 任务超时和重试策略。
+- 模型调用记录。
+- Token 消耗统计。
+- 错误处理机制。
+- 可追踪的生成版本。
+
+## 4.3 生成任务应该异步执行
+
+一份 20 页的 PPT 可能需要多次模型调用、图片生成、SVG 渲染和视觉检查。
+
+因此需要建立任务调度机制：
+
+- 创建 PPT 任务。
+- 生成大纲任务。
+- 单页生成任务。
+- 单页修改任务。
+- 模板提取任务。
+- 导出任务。
+
+支持页面级并行生成、失败重试、断点续跑和取消操作。
+
+不应该因为第 18 页生成失败，就导致前面 17 页全部重新生成。
+
+# 五、总体技术架构设计
+
+## 5.1 系统架构
+
+建议采用前后端分离、异步任务处理、AI 能力独立编排的架构。
+
+\#chatgpt-mermaid-\_r_ig\_{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;fill:rgb(13, 13, 13);}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#chatgpt-mermaid-\_r_ig\_ .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_ig\_ .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_ig\_ .error-icon{fill:rgb(243, 243, 243);}#chatgpt-mermaid-\_r_ig\_ .error-text{fill:rgb(13, 13, 13);stroke:rgb(13, 13, 13);}#chatgpt-mermaid-\_r_ig\_ .edge-thickness-normal{stroke-width:1px;}#chatgpt-mermaid-\_r_ig\_ .edge-thickness-thick{stroke-width:3.5px;}#chatgpt-mermaid-\_r_ig\_ .edge-pattern-solid{stroke-dasharray:0;}#chatgpt-mermaid-\_r_ig\_ .edge-thickness-invisible{stroke-width:0;fill:none;}#chatgpt-mermaid-\_r_ig\_ .edge-pattern-dashed{stroke-dasharray:3;}#chatgpt-mermaid-\_r_ig\_ .edge-pattern-dotted{stroke-dasharray:2;}#chatgpt-mermaid-\_r_ig\_ .marker{fill:rgb(143, 143, 143);stroke:rgb(143, 143, 143);}#chatgpt-mermaid-\_r_ig\_ .marker.cross{stroke:rgb(143, 143, 143);}#chatgpt-mermaid-\_r_ig\_ svg{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;}#chatgpt-mermaid-\_r_ig\_ p{margin:0;}#chatgpt-mermaid-\_r_ig\_ .label{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";color:rgb(13, 13, 13);}#chatgpt-mermaid-\_r_ig\_ .cluster-label text{fill:rgb(13, 13, 13);}#chatgpt-mermaid-\_r_ig\_ .cluster-label span{color:rgb(13, 13, 13);}#chatgpt-mermaid-\_r_ig\_ .cluster-label span p{background-color:transparent;}#chatgpt-mermaid-\_r_ig\_ .label text,#chatgpt-mermaid-\_r_ig\_ span{fill:rgb(13, 13, 13);color:rgb(13, 13, 13);}#chatgpt-mermaid-\_r_ig\_ .node rect,#chatgpt-mermaid-\_r_ig\_ .node circle,#chatgpt-mermaid-\_r_ig\_ .node ellipse,#chatgpt-mermaid-\_r_ig\_ .node polygon,#chatgpt-mermaid-\_r_ig\_ .node path{fill:rgb(222, 234, 251);stroke:rgb(83, 154, 248);stroke-width:1px;}#chatgpt-mermaid-\_r_ig\_ .rough-node .label text,#chatgpt-mermaid-\_r_ig\_ .node .label text,#chatgpt-mermaid-\_r_ig\_ .image-shape .label,#chatgpt-mermaid-\_r_ig\_ .icon-shape .label{text-anchor:middle;}#chatgpt-mermaid-\_r_ig\_ .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#chatgpt-mermaid-\_r_ig\_ .rough-node .label,#chatgpt-mermaid-\_r_ig\_ .node .label,#chatgpt-mermaid-\_r_ig\_ .image-shape .label,#chatgpt-mermaid-\_r_ig\_ .icon-shape .label{text-align:center;}#chatgpt-mermaid-\_r_ig\_ .node.clickable{cursor:pointer;}#chatgpt-mermaid-\_r_ig\_ .root .anchor path{fill:rgb(143, 143, 143)!important;stroke-width:0;stroke:rgb(143, 143, 143);}#chatgpt-mermaid-\_r_ig\_ .arrowheadPath{fill:rgb(143, 143, 143);}#chatgpt-mermaid-\_r_ig\_ .edgePath .path{stroke:rgb(143, 143, 143);stroke-width:1px;}#chatgpt-mermaid-\_r_ig\_ .flowchart-link{stroke:rgb(143, 143, 143);fill:none;}#chatgpt-mermaid-\_r_ig\_ .edgeLabel{background-color:rgb(252, 252, 252);text-align:center;}#chatgpt-mermaid-\_r_ig\_ .edgeLabel p{background-color:rgb(252, 252, 252);}#chatgpt-mermaid-\_r_ig\_ .edgeLabel rect{opacity:0.5;background-color:rgb(252, 252, 252);fill:rgb(252, 252, 252);}#chatgpt-mermaid-\_r_ig\_ .labelBkg{background-color:rgba(252, 252, 252, 0.5);}#chatgpt-mermaid-\_r_ig\_ .cluster rect{fill:rgb(243, 243, 243);stroke:rgba(0, 0, 0, 0.1);stroke-width:1px;}#chatgpt-mermaid-\_r_ig\_ .cluster text{fill:rgb(13, 13, 13);}#chatgpt-mermaid-\_r_ig\_ .cluster span{color:rgb(13, 13, 13);}#chatgpt-mermaid-\_r_ig\_ div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:12px;background:rgb(243, 243, 243);border:1px solid rgba(0, 0, 0, 0.1);border-radius:2px;pointer-events:none;z-index:100;}#chatgpt-mermaid-\_r_ig\_ .flowchartTitleText{text-anchor:middle;font-size:18px;fill:rgb(13, 13, 13);}#chatgpt-mermaid-\_r_ig\_ rect.text{fill:none;stroke-width:0;}#chatgpt-mermaid-\_r_ig\_ .icon-shape,#chatgpt-mermaid-\_r_ig\_ .image-shape{background-color:rgb(252, 252, 252);text-align:center;}#chatgpt-mermaid-\_r_ig\_ .icon-shape p,#chatgpt-mermaid-\_r_ig\_ .image-shape p{background-color:rgb(252, 252, 252);padding:2px;}#chatgpt-mermaid-\_r_ig\_ .icon-shape .label rect,#chatgpt-mermaid-\_r_ig\_ .image-shape .label rect{opacity:0.5;background-color:rgb(252, 252, 252);fill:rgb(252, 252, 252);}#chatgpt-mermaid-\_r_ig\_ .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#chatgpt-mermaid-\_r_ig\_ .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#chatgpt-mermaid-\_r_ig\_ .node .neo-node{stroke:rgb(83, 154, 248);}#chatgpt-mermaid-\_r_ig\_ [data-look="neo"].node rect,#chatgpt-mermaid-\_r_ig\_ [data-look="neo"].cluster rect,#chatgpt-mermaid-\_r_ig\_ [data-look="neo"].node polygon{stroke:url(#chatgpt-mermaid-\_r_ig\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_ig\_ [data-look="neo"].swimlane.cluster rect{filter:none;}#chatgpt-mermaid-\_r_ig\_ [data-look="neo"].node path{stroke:url(#chatgpt-mermaid-\_r_ig\_-gradient);stroke-width:1px;}#chatgpt-mermaid-\_r_ig\_ [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_ig\_ [data-look="neo"].node .neo-line path{stroke:rgb(83, 154, 248);filter:none;}#chatgpt-mermaid-\_r_ig\_ [data-look="neo"].node circle{stroke:url(#chatgpt-mermaid-\_r_ig\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_ig\_ [data-look="neo"].node circle .state-start{fill:#000000;}#chatgpt-mermaid-\_r_ig\_ [data-look="neo"].icon-shape .icon{fill:url(#chatgpt-mermaid-\_r_ig\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_ig\_ [data-look="neo"].icon-shape .icon-neo path{stroke:url(#chatgpt-mermaid-\_r_ig\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_ig\_ .node text{font-size:14px;font-weight:600;letter-spacing:normal;fill:rgb(0, 79, 153);}#chatgpt-mermaid-\_r_ig\_ .edgeLabels text{font-size:13px;font-weight:600;letter-spacing:-0.08px;fill:rgb(0, 79, 153);}#chatgpt-mermaid-\_r_ig\_ .node tspan[font-weight="normal"],#chatgpt-mermaid-\_r_ig\_ .edgeLabels tspan[font-weight="normal"]{font-weight:600;}#chatgpt-mermaid-\_r_ig\_ .edgeLabel .label rect{opacity:1;rx:13px;ry:13px;fill:rgb(245, 250, 255);stroke:rgb(206, 219, 229);stroke-width:1px;}#chatgpt-mermaid-\_r_ig\_ .node rect,#chatgpt-mermaid-\_r_ig\_ .node circle,#chatgpt-mermaid-\_r_ig\_ .node ellipse,#chatgpt-mermaid-\_r_ig\_ .node polygon,#chatgpt-mermaid-\_r_ig\_ .node path{fill:rgb(229, 243, 255);stroke:rgba(0, 0, 0, 0.1);stroke-width:1px;}#chatgpt-mermaid-\_r_ig\_ .node rect{rx:16px;ry:16px;}#chatgpt-mermaid-\_r_ig\_ .mermaid-decision .label-container{fill:rgb(245, 250, 255);stroke:rgb(206, 219, 229);stroke-dasharray:2,2;}#chatgpt-mermaid-\_r_ig\_ .edgePaths .flowchart-link{stroke:rgb(143, 143, 143);stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;}#chatgpt-mermaid-\_r_ig\_ .marker{fill:rgb(143, 143, 143);stroke:rgb(143, 143, 143);}#chatgpt-mermaid-\_r_ig\_ :root{--mermaid-font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";}用户Web PPT StudioAPI Gateway / BFF项目与页面管理模板中心在线编辑服务导出服务任务调度中心Agent Orchestrator需求与内容 Agent大纲 Agent页面设计 Agent质量审查 AgentSlide IR Service布局约束引擎SVG RendererPPTX Template Parser模板资产库页面预览格式转换引擎PPTXPDFPNG/JPG关系数据库对象存储
+
+## 5.2 技术选型建议
+
+以下是可供第一版采用的技术组合，不代表必须绑定这些框架。
+
+| 技术层      | 推荐技术                   | 作用              |
+| -------- | ---------------------- | --------------- |
+| Web 前端   | React + TypeScript     | 网站和编辑工作台        |
+| UI       | Tailwind CSS + 组件库     | 界面组件            |
+| SVG 编辑   | SVG.js / 原生 SVG DOM    | 矢量元素操作          |
+| 画布交互     | 自研交互层                  | 选择、拖动、缩放、组合     |
+| 后端       | Python FastAPI         | 业务和 AI 服务       |
+| Agent 编排 | LangGraph              | Agent 工作流       |
+| 数据库      | PostgreSQL             | 项目、页面、模板元数据     |
+| 缓存       | Redis                  | 任务状态和缓存         |
+| 对象存储     | S3 兼容存储                | SVG、PPTX、图片、PDF |
+| PPTX 解析  | python-pptx + OOXML 解析 | PPT 结构提取        |
+| PPTX 导出  | PptxGenJS 或自研转换层       | 原生 PPT 生成       |
+| PDF      | SVG/PDF 矢量转换工具链        | PDF 导出          |
+| 队列       | Celery / Redis 或其他任务队列 | 异步任务            |
+
+### 一个技术选型上的特别提醒
+
+`python-pptx` 可以帮助读取和生成很多常见 PPT 对象，但不能完整覆盖复杂 PowerPoint 文件的所有特性。
+
+特别是复杂 SmartArt、动画、图表、母版继承、特殊字体和第三方扩展，必须设计专门的兼容性处理策略。
+
+不要把 PPTX 解析和导出能力全部寄托在单一 Python 库上。
+
+# 六、核心数据模型设计
+
+建议以 Project 为根对象，下面管理 Outline、Template、Slide、Element、Asset、Version 和 Export。
+
+\#chatgpt-mermaid-\_r_in\_{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;fill:rgb(13, 13, 13);}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#chatgpt-mermaid-\_r_in\_ .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_in\_ .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_in\_ .error-icon{fill:rgb(243, 243, 243);}#chatgpt-mermaid-\_r_in\_ .error-text{fill:rgb(13, 13, 13);stroke:rgb(13, 13, 13);}#chatgpt-mermaid-\_r_in\_ .edge-thickness-normal{stroke-width:1px;}#chatgpt-mermaid-\_r_in\_ .edge-thickness-thick{stroke-width:3.5px;}#chatgpt-mermaid-\_r_in\_ .edge-pattern-solid{stroke-dasharray:0;}#chatgpt-mermaid-\_r_in\_ .edge-thickness-invisible{stroke-width:0;fill:none;}#chatgpt-mermaid-\_r_in\_ .edge-pattern-dashed{stroke-dasharray:3;}#chatgpt-mermaid-\_r_in\_ .edge-pattern-dotted{stroke-dasharray:2;}#chatgpt-mermaid-\_r_in\_ .marker{fill:rgb(143, 143, 143);stroke:rgb(143, 143, 143);}#chatgpt-mermaid-\_r_in\_ .marker.cross{stroke:rgb(143, 143, 143);}#chatgpt-mermaid-\_r_in\_ svg{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;}#chatgpt-mermaid-\_r_in\_ p{margin:0;}#chatgpt-mermaid-\_r_in\_ .entityBox{fill:rgb(222, 234, 251);stroke:rgb(83, 154, 248);}#chatgpt-mermaid-\_r_in\_ .relationshipLabelBox{fill:rgb(243, 243, 243);opacity:0.7;background-color:rgb(243, 243, 243);}#chatgpt-mermaid-\_r_in\_ .relationshipLabelBox rect{opacity:0.5;}#chatgpt-mermaid-\_r_in\_ .labelBkg{background-color:rgba(243, 243, 243, 0.5);}#chatgpt-mermaid-\_r_in\_ .edgeLabel{background-color:rgb(252, 252, 252);}#chatgpt-mermaid-\_r_in\_ .edgeLabel .label rect{fill:rgb(252, 252, 252);}#chatgpt-mermaid-\_r_in\_ .edgeLabel .label text{fill:rgb(13, 13, 13);}#chatgpt-mermaid-\_r_in\_ .edgeLabel .label{fill:rgb(83, 154, 248);font-size:14px;}#chatgpt-mermaid-\_r_in\_ .label{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";color:rgb(13, 13, 13);}#chatgpt-mermaid-\_r_in\_ .edge-pattern-dashed{stroke-dasharray:8,8;}#chatgpt-mermaid-\_r_in\_ .node rect,#chatgpt-mermaid-\_r_in\_ .node circle,#chatgpt-mermaid-\_r_in\_ .node ellipse,#chatgpt-mermaid-\_r_in\_ .node polygon{fill:rgb(222, 234, 251);stroke:rgb(83, 154, 248);stroke-width:1px;}#chatgpt-mermaid-\_r_in\_ .relationshipLine{stroke:rgb(143, 143, 143);stroke-width:1px;fill:none;}#chatgpt-mermaid-\_r_in\_ .marker{fill:none!important;stroke:rgb(143, 143, 143)!important;stroke-width:1;}#chatgpt-mermaid-\_r_in\_ [data-look=neo].labelBkg{background-color:rgba(243, 243, 243, 0.5);}#chatgpt-mermaid-\_r_in\_ .node .neo-node{stroke:rgb(83, 154, 248);}#chatgpt-mermaid-\_r_in\_ [data-look="neo"].node rect,#chatgpt-mermaid-\_r_in\_ [data-look="neo"].cluster rect,#chatgpt-mermaid-\_r_in\_ [data-look="neo"].node polygon{stroke:url(#chatgpt-mermaid-\_r_in\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_in\_ [data-look="neo"].swimlane.cluster rect{filter:none;}#chatgpt-mermaid-\_r_in\_ [data-look="neo"].node path{stroke:url(#chatgpt-mermaid-\_r_in\_-gradient);stroke-width:1px;}#chatgpt-mermaid-\_r_in\_ [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_in\_ [data-look="neo"].node .neo-line path{stroke:rgb(83, 154, 248);filter:none;}#chatgpt-mermaid-\_r_in\_ [data-look="neo"].node circle{stroke:url(#chatgpt-mermaid-\_r_in\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_in\_ [data-look="neo"].node circle .state-start{fill:#000000;}#chatgpt-mermaid-\_r_in\_ [data-look="neo"].icon-shape .icon{fill:url(#chatgpt-mermaid-\_r_in\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_in\_ [data-look="neo"].icon-shape .icon-neo path{stroke:url(#chatgpt-mermaid-\_r_in\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_in\_ :root{--mermaid-font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";}PROJECTOUTLINESLIDETEMPLATEELEMENTSLIDE_VERSIONASSETTEMPLATE_LAYOUTTEMPLATE_COMPONENTEXPORT_TASKGENERATION_TASKcontainscontainsusescontainsversionsreferencescontainscontainsexportsgenerates
+
+核心对象说明：
+
+| 对象                | 主要属性                            | 作用       |
+| ----------------- | ------------------------------- | -------- |
+| Project           | id、name、owner、status            | PPT 项目   |
+| Outline           | id、project_id、content           | PPT 大纲   |
+| Template          | id、name、theme、version           | 模板       |
+| TemplateLayout    | id、template_id、layout_type      | 模板布局     |
+| TemplateComponent | id、template_id、type             | 模板组件     |
+| Slide             | id、project_id、order、ir          | 页面       |
+| Element           | id、slide_id、type、geometry、style | 页面元素     |
+| SlideVersion      | id、slide_id、ir_snapshot         | 页面版本     |
+| Asset             | id、type、uri、metadata            | 图片、图标等资源 |
+| GenerationTask    | id、task_type、status、result      | 生成任务     |
+| ExportTask        | id、format、status、file_uri       | 导出任务     |
+
+建议特别注意：
+
+- Project 和 Template 之间应该保存模板版本快照。
+- Slide 应保存 IR，而不只是 SVG 文件地址。
+- SVG 可以作为缓存文件，修改后重新生成。
+- Element 的 ID 应在局部编辑后尽可能保持稳定。
+- 所有生成操作应该保留来源和版本信息。
+
+# 七、关键质量保障设计
+
+这是整个产品能否真正达到专业 PPT 制作水平的关键。
+
+建议建立四层质量体系。
+
+## 7.1 第一层：结构合法性
+
+自动检查：
+
+- IR Schema 是否正确。
+- SVG 是否能够正常解析。
+- SVG 是否存在非法节点。
+- 元素 ID 是否唯一。
+- 资源引用是否有效。
+- 是否存在越界元素。
+
+## 7.2 第二层：视觉质量
+
+[伝わる資料に生まれ変わる！デザインの4つの基本原則を学ぼう - asoview! Tech Blog](https://images.openai.com/static-rsc-4/6mdQXIUkyA-PQtJ0qMQJn3c6B6FxgWYybA66QQ3GU6GXxxn1QRwcwD5OUmlj3zFSs-XnkiKDgncMWnWT45zcE8vMvJvaxpsr3qvncG_4jaPF1axzl35YNqH10PHDe4-VrHnB2K0pfFYWjXYPVPE79VQwXdK2yrBjRJPmZzuSZzk?purpose=inline)
+
+[tech.asoview.co.jp](https://tech.asoview.co.jp/entry/2025/12/02/100000?utm_source=chatgpt.com)
+
+重点检查：
+
+| 指标    | 检查方法           |
+| ----- | -------------- |
+| 元素重叠  | 几何碰撞检测         |
+| 页面越界  | 边界检测           |
+| 文本溢出  | 字体测量和渲染检测      |
+| 字体一致性 | 样式规范检查         |
+| 颜色一致性 | Theme Token 检查 |
+| 对齐质量  | 几何位置分析         |
+| 留白质量  | 空间分布分析         |
+| 图文比例  | 页面视觉分析         |
+
+## 7.3 第三层：内容质量
+
+- 是否存在重复内容。
+- 是否存在事实错误。
+- 关键结论是否清晰。
+- 图表是否与数据一致。
+- 页面标题是否准确概括内容。
+- 内容是否符合目标受众。
+
+## 7.4 第四层：整份 PPT 质量
+
+- 章节逻辑是否完整。
+- 页面之间是否有叙事连续性。
+- 视觉风格是否统一。
+- 关键结论是否前后一致。
+- 导出文件是否与在线预览一致。
+
+### 7.5 建议建立可计算的质量评分
+
+不要只依赖 LLM 给出一个「整体质量 90 分」。
+
+建议分维度计算：
+
+\\[ Q = w_s Q_s + w_v Q_v + w_c Q_c + w_g Q_g \\]
+
+其中：
+
+- \\(Q_s\\)：结构合法性。
+- \\(Q_v\\)：视觉质量。
+- \\(Q_c\\)：内容质量。
+- \\(Q_g\\)：全局一致性。
+
+结构合法性可以采用硬性门禁，而不是允许通过其他高分抵消。
+
+例如：
+
+| 质量维度 | 核心指标       | 验证方式     |
+| ---- | ---------- | -------- |
+| 结构   | IR/SVG 合法率 | 自动测试     |
+| 布局   | 重叠率、越界率    | 几何算法     |
+| 文字   | 溢出率、可读性    | 渲染检测     |
+| 视觉   | 美观度、风格匹配度  | VLM + 人工 |
+| 内容   | 准确性、完整性    | 规则 + LLM |
+| 导出   | 预览与导出一致性   | 渲染对比     |
+
+这里建议建立一套专门的 PPT 生成评测集，覆盖模板复用、局部编辑、复杂架构图、中文排版、跨页一致性和多格式导出。尤其不能只用截图相似度评估 SVG，还要检查语义结构、独立编辑性和源码合法性。
+
+# 八、非功能性与安全设计
+
+虽然是一个在线创作产品，但仍然需要考虑：
+
+| 维度   | 设计要求                       |
+| ---- | -------------------------- |
+| 性能   | 页面预览优先使用缓存 SVG，避免每次重新生成    |
+| 并发   | 单页生成并行，任务队列限流              |
+| 稳定性  | 任务断点续跑、幂等、失败重试             |
+| 安全   | 上传文件病毒扫描、SVG 内容消毒          |
+| 隔离   | 用户项目、文件、模板权限隔离             |
+| 隐私   | 上传文件访问授权、保留期限、删除机制         |
+| 成本   | 模型调用、图片生成、渲染成本可追踪          |
+| 版权   | 上传模板的使用权声明、素材来源记录          |
+| 可观测性 | Agent 调用、任务耗时、失败率、Token 消耗 |
+
+尤其要注意 SVG 安全问题：
+
+SVG 可能包含脚本、外部资源引用和危险的链接。用户上传的 SVG、从 PPT 提取的 SVG，以及 AI 生成的 SVG 都不能直接作为可信 HTML 插入网页。
+
+需要：
+
+- SVG 白名单解析。
+- 禁止脚本和事件处理器。
+- 限制外部资源引用。
+- 对上传文件进行隔离处理。
+- 在受控环境中进行渲染。
+
+# 九、产品页面与交互设计清单
+
+建议第一版至少有以下页面。
+
+| 页面        | 核心功能            | 优先级 |
+| --------- | --------------- | --- |
+| 首页        | 产品介绍、创建 PPT     | P0  |
+| 创作输入页     | 需求输入、文件上传       | P0  |
+| 大纲编辑页     | 大纲生成、调整、确认      | P0  |
+| 模板中心      | 模板浏览、筛选、预览      | P0  |
+| 模板提取页     | 上传 PPT、解析、提取模板  | P1  |
+| PPT 编辑工作台 | 页面预览、元素编辑、AI 修改 | P0  |
+| 模板管理页     | 模板维护、版本管理       | P1  |
+| 素材管理页     | 图片、图标、图表素材      | P1  |
+| 项目管理页     | 历史项目、复制、删除      | P0  |
+| 导出中心      | 多格式导出、导出记录      | P0  |
+| 质量检查页     | 视觉、内容、结构检查      | P1  |
+
+## 9.1 核心编辑工作台交互原型
+
+建议把以下交互作为第一版的设计基准：
+
+AI PPT Studio
+
+已保存
+
+页面列表
+
+[Cliente no compatible – Canva](https://images.openai.com/static-rsc-4/94ByOny5nlQ4U1OpZcOvD2lGOnHQOkvQbi1W4AN-0wV96b6tTjkkjXgBzoA-WOhu6mtjOcAChhNaJLG83m_rLUxdT_-TjDI-8Om5gSrygDk67o5K4JTdkanh9o_KR0XFl5bEdjjFb1L04WWbEoEjtENkYaefNT82oxZNP7MOyDw?purpose=inline)
+
+01 封面
+
+[IT Architect Powerpoint Infographic Template – Slidewalla](https://images.openai.com/static-rsc-4/gzQ5Mah0IvcmTm_Q1YoN8NXmnHJS-NlQbsMTWUecLZwBC73YMkddTJPn7BbzLCNQ9uyIsXelzRnJUsY6dS2z8ki0nq2n9iTtd7HvplVJbVloTaZSOLPwRxDQd7qiYwfjdtRcZ4bS0GSRxYvL6I_7gkxKAUnvj_KbzoT-YVJkX_c?purpose=inline)
+
+02 总体架构
+
+[Strategy Roadmap Slide Template | PowerPoint and Google Slides](https://images.openai.com/static-rsc-4/o9RSlgcmFTlYEhtEvJx_Yb4TTxtkmEIN5yw_1usk8qyBMhf5XIL47bsRaE-x8PSHFidHJLVgblEDYdBfQ9EiNnJiDPM5QBJBqnxpFkwjkVPumAELkhABGpSzPoVujKf6vYHIEnmCZupbxZDjYPfnnA8nuBaDfDOiO7AOS8kfANo?purpose=inline)
+
+03 实施路线
+
+\+ 新增页面
+
+页面画布 · 16:9
+
+## 企业 Agent 总体架构
+
+业务应用层
+
+业务 Agent
+
+知识 Agent
+
+流程 Agent
+
+Agent 能力层
+
+规划
+
+工具
+
+记忆
+
+基础设施层
+
+模型
+
+数据
+
+运行时
+
+选中元素后可拖动、修改样式或使用 AI 编辑
+
+AI 智能编辑
+
+请描述你想修改的内容……
+
+当前作用范围：选中元素
+
+AI 编辑
+
+SVG · 1920 × 1080
+
+缩放 75%
+
+这是交互概念示意，不是完整的可操作编辑器。真正的编辑器需要基于 SVG 元素选择、拖动、缩放和 IR Patch 实现。
+
+# 十、MVP 实施路线
+
+我的建议是：不要一开始就做一个完整的在线 PowerPoint。
+
+这类产品的技术复杂度主要集中在 SVG 生成、页面编辑、模板抽取和 PPTX 导出。如果一开始全部建设，很容易陷入长期开发。
+
+应该先打通一个真正可用的最小闭环。
+
+## 10.1 分阶段实施
+
+阶段一：AI PPT 生成闭环
+
+P0
+
+目标：完成从输入到导出的基本流程
+
+- 用户需求输入
+- AI 大纲生成与编辑
+- 内置模板选择
+- 结构化页面生成
+- SVG 渲染和预览
+- 整页 AI 修改
+- PNG、PDF、基础 PPTX 导出
+
+阶段二：模板与编辑能力
+
+P1
+
+目标：从 AI 生成工具升级为真正的创作工具
+
+- PPTX 模板上传与解析
+- 模板风格提取
+- 模板布局与组件库
+- 元素级选择和修改
+- 局部 AI 编辑
+- 撤销、重做和版本管理
+- 页面级布局优化
+
+阶段三：专业设计能力
+
+&#x20;P2&#x20;
+
+目标：达到专业 PPT 设计工作流水平
+
+- 高级模板提取与自动归纳
+- AI 定制模板
+- 复杂架构图和数据图表
+- 多页全局一致性优化
+- 原生 PPT 元素转换增强
+- 多人协作和评论
+- 企业模板管理
+
+## 10.2 MVP 的验收标准
+
+我建议第一阶段不要用「生成了多少页」作为主要验收标准，而应该使用完整任务成功率。
+
+| 验收项目   | 建议验收要求               |
+| ------ | -------------------- |
+| 大纲生成   | 能生成结构完整且可编辑的大纲       |
+| 模板应用   | 页面遵循指定主题和布局          |
+| SVG 生成 | 全部页面可以正常渲染           |
+| 中文排版   | 无明显乱码、文字溢出           |
+| 页面修改   | 能够根据指令修改指定页面         |
+| 任务恢复   | 单页失败不影响其他页面          |
+| 导出     | PDF、PNG、PPTX 均能正常打开  |
+| 视觉一致性  | 整份 PPT 遵循统一的设计规范     |
+| 可编辑性   | 基础文本、形状能够在 PPT 中独立编辑 |
+
+具体指标数值需要在第一轮基准测试后确定，不建议现在凭空制定质量百分比。
+
+# 十一、最值得提前解决的五个设计难题
+
+我认为这个项目真正的难点并不是 AI 能否写出 SVG，而是以下五个问题。
+
+| 难题     | 表面问题         | 本质问题                 | 建议方案                     |
+| ------ | ------------ | -------------------- | ------------------------ |
+| 模板提取   | 能否从 PPT 抠出模板 | 如何把视觉设计抽象成可复用规则      | OOXML + 视觉分析 + 模板 IR     |
+| 页面生成   | 能否生成漂亮的 SVG  | 如何实现内容、布局、设计约束的协同    | Slide IR + Layout Engine |
+| 局部修改   | 能否听懂用户修改要求   | 如何精确定位并修改局部对象        | 稳定元素 ID + IR Patch       |
+| PPT 导出 | 能否导出 PPTX    | 如何保留原生编辑能力           | IR 到 PPT 原生元素映射          |
+| 全局质量   | 单页是否漂亮       | 如何保证整份 PPT 的叙事和视觉一致性 | 全局设计规范 + Review Agent    |
+
+这里我特别想强调三个容易被低估的问题。
+
+### 11.1 模板抽取的本质是设计知识抽取
+
+用户上传一份 30 页的 PPT，并不意味着要把 30 张图片当作模板。
+
+真正需要提取的是：
+
+- 这份 PPT 有哪些页面类型？
+- 不同页面类型的布局规律是什么？
+- 哪些元素是母版固定元素？
+- 哪些元素是可以替换的内容占位符？
+- 设计师使用了哪些视觉规范？
+- 哪些组件可以被复用？
+
+最后要形成的是一套可执行的设计系统，而不是一个图片集合。
+
+### 11.2 SVG 不能只是视觉容器
+
+SVG 的价值不应该仅仅是能够放大不失真。
+
+它更大的价值是：
+
+- 元素可定位。
+- 元素可分组。
+- 元素可独立编辑。
+- 元素可以绑定业务语义。
+- 元素可以进行局部替换。
+- 可以作为 PDF 和图片的矢量输出源。
+
+因此，需要始终保持 IR 与 SVG 的映射关系，而不是生成完 SVG 后就丢弃结构信息。
+
+### 11.3 不要低估 PPTX 导出
+
+PPTX 是一个 OOXML 文件体系，不是简单的图片容器。
+
+真正专业的导出能力，需要处理：
+
+- 文本框和字体。
+- 基础图形和自由曲线。
+- 图表和表格。
+- 图片与 SVG。
+- 母版和版式。
+- 元素组合和层级。
+- 特殊字体及替代字体。
+- 页面比例和尺寸。
+
+建议把 PPTX 导出作为独立工程持续建设，而不是项目最后一周才实现。
+
+# 十二、最终建议：确定产品的核心技术路线
+
+如果由我来负责这个产品的技术架构，我会做出以下几个关键决策。
+
+| 关键决策   | 我的建议              | 原因         |
+| ------ | ----------------- | ---------- |
+| 页面事实来源 | Slide IR          | 支持编辑、版本、转换 |
+| 页面渲染   | SVG               | 矢量质量、跨平台预览 |
+| 模板管理   | 结构化 Design System | 支持模板复用     |
+| AI 生成  | 多阶段 Agent 工作流     | 便于控制和验证    |
+| 页面编辑   | IR Patch          | 支持局部精准修改   |
+| 布局计算   | 确定性 Layout Engine | 降低布局随机性    |
+| 质量检查   | 规则引擎 + VLM + LLM  | 同时检查结构和视觉  |
+| PPT 导出 | 原生元素优先            | 保留可编辑能力    |
+| 任务执行   | 异步任务 + 页面级并行      | 提高效率和可靠性   |
+
+## 12.1 最终核心架构图
+
+这张图可以作为后续总体技术设计的基础。
+
+\#chatgpt-mermaid-\_r_iu\_{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;fill:rgb(13, 13, 13);}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#chatgpt-mermaid-\_r_iu\_ .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_iu\_ .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_iu\_ .error-icon{fill:rgb(243, 243, 243);}#chatgpt-mermaid-\_r_iu\_ .error-text{fill:rgb(13, 13, 13);stroke:rgb(13, 13, 13);}#chatgpt-mermaid-\_r_iu\_ .edge-thickness-normal{stroke-width:1px;}#chatgpt-mermaid-\_r_iu\_ .edge-thickness-thick{stroke-width:3.5px;}#chatgpt-mermaid-\_r_iu\_ .edge-pattern-solid{stroke-dasharray:0;}#chatgpt-mermaid-\_r_iu\_ .edge-thickness-invisible{stroke-width:0;fill:none;}#chatgpt-mermaid-\_r_iu\_ .edge-pattern-dashed{stroke-dasharray:3;}#chatgpt-mermaid-\_r_iu\_ .edge-pattern-dotted{stroke-dasharray:2;}#chatgpt-mermaid-\_r_iu\_ .marker{fill:rgb(143, 143, 143);stroke:rgb(143, 143, 143);}#chatgpt-mermaid-\_r_iu\_ .marker.cross{stroke:rgb(143, 143, 143);}#chatgpt-mermaid-\_r_iu\_ svg{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:16px;}#chatgpt-mermaid-\_r_iu\_ p{margin:0;}#chatgpt-mermaid-\_r_iu\_ .label{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";color:rgb(13, 13, 13);}#chatgpt-mermaid-\_r_iu\_ .cluster-label text{fill:rgb(13, 13, 13);}#chatgpt-mermaid-\_r_iu\_ .cluster-label span{color:rgb(13, 13, 13);}#chatgpt-mermaid-\_r_iu\_ .cluster-label span p{background-color:transparent;}#chatgpt-mermaid-\_r_iu\_ .label text,#chatgpt-mermaid-\_r_iu\_ span{fill:rgb(13, 13, 13);color:rgb(13, 13, 13);}#chatgpt-mermaid-\_r_iu\_ .node rect,#chatgpt-mermaid-\_r_iu\_ .node circle,#chatgpt-mermaid-\_r_iu\_ .node ellipse,#chatgpt-mermaid-\_r_iu\_ .node polygon,#chatgpt-mermaid-\_r_iu\_ .node path{fill:rgb(222, 234, 251);stroke:rgb(83, 154, 248);stroke-width:1px;}#chatgpt-mermaid-\_r_iu\_ .rough-node .label text,#chatgpt-mermaid-\_r_iu\_ .node .label text,#chatgpt-mermaid-\_r_iu\_ .image-shape .label,#chatgpt-mermaid-\_r_iu\_ .icon-shape .label{text-anchor:middle;}#chatgpt-mermaid-\_r_iu\_ .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#chatgpt-mermaid-\_r_iu\_ .rough-node .label,#chatgpt-mermaid-\_r_iu\_ .node .label,#chatgpt-mermaid-\_r_iu\_ .image-shape .label,#chatgpt-mermaid-\_r_iu\_ .icon-shape .label{text-align:center;}#chatgpt-mermaid-\_r_iu\_ .node.clickable{cursor:pointer;}#chatgpt-mermaid-\_r_iu\_ .root .anchor path{fill:rgb(143, 143, 143)!important;stroke-width:0;stroke:rgb(143, 143, 143);}#chatgpt-mermaid-\_r_iu\_ .arrowheadPath{fill:rgb(143, 143, 143);}#chatgpt-mermaid-\_r_iu\_ .edgePath .path{stroke:rgb(143, 143, 143);stroke-width:1px;}#chatgpt-mermaid-\_r_iu\_ .flowchart-link{stroke:rgb(143, 143, 143);fill:none;}#chatgpt-mermaid-\_r_iu\_ .edgeLabel{background-color:rgb(252, 252, 252);text-align:center;}#chatgpt-mermaid-\_r_iu\_ .edgeLabel p{background-color:rgb(252, 252, 252);}#chatgpt-mermaid-\_r_iu\_ .edgeLabel rect{opacity:0.5;background-color:rgb(252, 252, 252);fill:rgb(252, 252, 252);}#chatgpt-mermaid-\_r_iu\_ .labelBkg{background-color:rgba(252, 252, 252, 0.5);}#chatgpt-mermaid-\_r_iu\_ .cluster rect{fill:rgb(243, 243, 243);stroke:rgba(0, 0, 0, 0.1);stroke-width:1px;}#chatgpt-mermaid-\_r_iu\_ .cluster text{fill:rgb(13, 13, 13);}#chatgpt-mermaid-\_r_iu\_ .cluster span{color:rgb(13, 13, 13);}#chatgpt-mermaid-\_r_iu\_ div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:12px;background:rgb(243, 243, 243);border:1px solid rgba(0, 0, 0, 0.1);border-radius:2px;pointer-events:none;z-index:100;}#chatgpt-mermaid-\_r_iu\_ .flowchartTitleText{text-anchor:middle;font-size:18px;fill:rgb(13, 13, 13);}#chatgpt-mermaid-\_r_iu\_ rect.text{fill:none;stroke-width:0;}#chatgpt-mermaid-\_r_iu\_ .icon-shape,#chatgpt-mermaid-\_r_iu\_ .image-shape{background-color:rgb(252, 252, 252);text-align:center;}#chatgpt-mermaid-\_r_iu\_ .icon-shape p,#chatgpt-mermaid-\_r_iu\_ .image-shape p{background-color:rgb(252, 252, 252);padding:2px;}#chatgpt-mermaid-\_r_iu\_ .icon-shape .label rect,#chatgpt-mermaid-\_r_iu\_ .image-shape .label rect{opacity:0.5;background-color:rgb(252, 252, 252);fill:rgb(252, 252, 252);}#chatgpt-mermaid-\_r_iu\_ .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#chatgpt-mermaid-\_r_iu\_ .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#chatgpt-mermaid-\_r_iu\_ .node .neo-node{stroke:rgb(83, 154, 248);}#chatgpt-mermaid-\_r_iu\_ [data-look="neo"].node rect,#chatgpt-mermaid-\_r_iu\_ [data-look="neo"].cluster rect,#chatgpt-mermaid-\_r_iu\_ [data-look="neo"].node polygon{stroke:url(#chatgpt-mermaid-\_r_iu\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_iu\_ [data-look="neo"].swimlane.cluster rect{filter:none;}#chatgpt-mermaid-\_r_iu\_ [data-look="neo"].node path{stroke:url(#chatgpt-mermaid-\_r_iu\_-gradient);stroke-width:1px;}#chatgpt-mermaid-\_r_iu\_ [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_iu\_ [data-look="neo"].node .neo-line path{stroke:rgb(83, 154, 248);filter:none;}#chatgpt-mermaid-\_r_iu\_ [data-look="neo"].node circle{stroke:url(#chatgpt-mermaid-\_r_iu\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_iu\_ [data-look="neo"].node circle .state-start{fill:#000000;}#chatgpt-mermaid-\_r_iu\_ [data-look="neo"].icon-shape .icon{fill:url(#chatgpt-mermaid-\_r_iu\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_iu\_ [data-look="neo"].icon-shape .icon-neo path{stroke:url(#chatgpt-mermaid-\_r_iu\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_iu\_ .node text{font-size:14px;font-weight:600;letter-spacing:normal;fill:rgb(0, 79, 153);}#chatgpt-mermaid-\_r_iu\_ .edgeLabels text{font-size:13px;font-weight:600;letter-spacing:-0.08px;fill:rgb(0, 79, 153);}#chatgpt-mermaid-\_r_iu\_ .node tspan[font-weight="normal"],#chatgpt-mermaid-\_r_iu\_ .edgeLabels tspan[font-weight="normal"]{font-weight:600;}#chatgpt-mermaid-\_r_iu\_ .edgeLabel .label rect{opacity:1;rx:13px;ry:13px;fill:rgb(245, 250, 255);stroke:rgb(206, 219, 229);stroke-width:1px;}#chatgpt-mermaid-\_r_iu\_ .node rect,#chatgpt-mermaid-\_r_iu\_ .node circle,#chatgpt-mermaid-\_r_iu\_ .node ellipse,#chatgpt-mermaid-\_r_iu\_ .node polygon,#chatgpt-mermaid-\_r_iu\_ .node path{fill:rgb(229, 243, 255);stroke:rgba(0, 0, 0, 0.1);stroke-width:1px;}#chatgpt-mermaid-\_r_iu\_ .node rect{rx:16px;ry:16px;}#chatgpt-mermaid-\_r_iu\_ .mermaid-decision .label-container{fill:rgb(245, 250, 255);stroke:rgb(206, 219, 229);stroke-dasharray:2,2;}#chatgpt-mermaid-\_r_iu\_ .edgePaths .flowchart-link{stroke:rgb(143, 143, 143);stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;}#chatgpt-mermaid-\_r_iu\_ .marker{fill:rgb(143, 143, 143);stroke:rgb(143, 143, 143);}#chatgpt-mermaid-\_r_iu\_ :root{--mermaid-font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,"Apple Color Emoji",Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";}输出层确定性工程层页面核心模型设计资产层AI 智能创作层用户输入层SVGPNG / JPGPDFEditable PPTXLayout EngineSVG RendererQuality EngineExport EngineSlide Content ModelSlide IRIR PatchVersion ManagerTemplate IRTheme TokensLayout LibraryComponent Library需求理解内容与大纲规划模板推荐页面设计规划局部修改 Agent全局审查 Agent主题与需求文档与素材已有 PPT参考图片
+
+## 12.2 我认为最合理的产品建设顺序
+
+不是先做模板中心，也不是先做一个强大的 SVG 编辑器。
+
+应该按照以下顺序：
+
+1. 先建立 Slide IR。 这是整个产品最重要的基础设施。
+2. 打通大纲 → 模板 → 页面 IR → SVG → 预览。 先让用户真正做出一份 PPT。
+3. 实现页面级 AI 修改。 让用户可以持续改进，而不是只能一次性生成。
+4. 建设模板提取引擎。 把已有 PPT 转化为可复用的设计资产。
+5. 建设专业 PPTX 导出。 让生成结果真正进入用户的日常办公流程。
+6. 逐步完善全局质量优化。 让产品从能生成升级到能生成专业作品。
+
+## 十三、建议进一步明确的三个产品边界
+
+在进入正式开发前，还有三个决策会明显影响系统复杂度：
+
+第一，模板复刻的精度目标。
+
+从现有 PPT 提取模板，是只提取颜色、字体和布局风格，还是要求能够复刻原有页面中的复杂图形和组件？两者的技术成本差异很大。
+
+第二，PPT 编辑能力的目标。
+
+是以 AI 编辑为主，用户通过自然语言修改页面；还是要做到类似 PowerPoint 的完整自由拖拽、组合、对齐、图层和格式编辑？我建议第一版采用 AI 编辑 + 基础可视化编辑。
+
+第三，最终 PPTX 的可编辑性目标。
+
+是允许部分复杂页面以矢量图或图片形式存在，还是要求所有元素都能在 PowerPoint 中独立编辑？我建议采用原生元素优先、复杂图形矢量化的混合方案。
+
+这三个边界会直接决定编辑器、模板解析器和导出引擎的投入。
+
+我的最终判断：这个产品最值得构建的核心竞争力不是单纯的 AI 生成能力，而是「模板设计知识 + 结构化页面模型 + 可控的 SVG 生成与编辑 + 高质量 PPTX 转换」形成的完整技术闭环。 这四项能力一旦形成体系，就不只是一个 AI PPT 生成网站，而是一个真正的 AI 原生演示文稿创作平台。
+
+接下来最值得做的是把这份方案进一步拆解成可交付的产品 PRD 和技术详细设计，尤其把 Slide IR、Template IR、SVG Renderer 和 IR Patch 四个核心模块定义到 Agent 可以直接实现和测试的程度。
