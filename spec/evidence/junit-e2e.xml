@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="bun test" tests="13" assertions="46" failures="0" skipped="0" time="9.068134">
+  <testsuite name="e2e/integration.e2e.ts" file="e2e/integration.e2e.ts" tests="13" assertions="46" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+    <testsuite name="前后端集成（真实浏览器 + 真实服务端）" file="e2e/integration.e2e.ts" line="164" tests="13" assertions="46" failures="0" skipped="0" time="8.426" hostname="AarondeMacBook-Pro.local">
+      <testcase name="1. 注册 → 服务端签发 HttpOnly 会话，前端据此进入工作台" classname="前后端集成（真实浏览器 + 真实服务端）" time="0.632711" file="e2e/integration.e2e.ts" line="165" assertions="6" />
+      <testcase name="2. 新建项目 → 服务端库里真的有这条项目" classname="前后端集成（真实浏览器 + 真实服务端）" time="0.187279" file="e2e/integration.e2e.ts" line="196" assertions="3" />
+      <testcase name="3. 生成大纲 → 服务端按主题动态生成（不是写死的固定文案）" classname="前后端集成（真实浏览器 + 真实服务端）" time="0.113225" file="e2e/integration.e2e.ts" line="222" assertions="3" />
+      <testcase name="3b. 编辑大纲标题 → 服务端存的是前端改的那份" classname="前后端集成（真实浏览器 + 真实服务端）" time="0.093128" file="e2e/integration.e2e.ts" line="251" assertions="1" />
+      <testcase name="4. 编译 → 工作台渲染的是服务端生成的 Slide IR" classname="前后端集成（真实浏览器 + 真实服务端）" time="0.139009" file="e2e/integration.e2e.ts" line="278" assertions="3" />
+      <testcase name="5. 编辑文本 → 防抖同步写回服务端（乐观锁生成新版本）" classname="前后端集成（真实浏览器 + 真实服务端）" time="0.930077" file="e2e/integration.e2e.ts" line="310" assertions="3" />
+      <testcase name="6. 陈旧 baseVersionId → 409 冲突，且不覆盖服务端内容" classname="前后端集成（真实浏览器 + 真实服务端）" time="0.02312" file="e2e/integration.e2e.ts" line="351" assertions="4" />
+      <testcase name="7. AI 编辑 → 服务端施加 IRPatch，前端采纳服务端返回的 IR" classname="前后端集成（真实浏览器 + 真实服务端）" time="0.1354" file="e2e/integration.e2e.ts" line="389" assertions="5" />
+      <testcase name="8. 导出 → 服务端任务产出真实 PPTX 产物" classname="前后端集成（真实浏览器 + 真实服务端）" time="0.416056" file="e2e/integration.e2e.ts" line="453" assertions="4" />
+      <testcase name="9. 跨租户隔离 → 别人的项目拿不到（404 而不是 403）" classname="前后端集成（真实浏览器 + 真实服务端）" time="0.468414" file="e2e/integration.e2e.ts" line="507" assertions="4" />
+      <testcase name="10. 重命名项目 → 服务端存的是新名字" classname="前后端集成（真实浏览器 + 真实服务端）" time="0.066668" file="e2e/integration.e2e.ts" line="560" assertions="1" />
+      <testcase name="11. 导出 PDF → 产物是真正的 PDF（%PDF 魔数）" classname="前后端集成（真实浏览器 + 真实服务端）" time="4.997977" file="e2e/integration.e2e.ts" line="586" assertions="4" />
+      <testcase name="12. 删除项目 → 服务端真的删掉了（且列表里也没有）" classname="前后端集成（真实浏览器 + 真实服务端）" time="0.227106" file="e2e/integration.e2e.ts" line="632" assertions="5" />
+    </testsuite>
+  </testsuite>
+</testsuites>

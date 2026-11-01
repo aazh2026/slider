@@ -1,0 +1,172 @@
+# Spec 文件骨架
+# ---------------------------------------------------------------------------
+# 用法：复制到仓库的 spec/ 目录，按项目实际结构调整字段名。
+#       下面的示例条款用的是合法 ID（SPEC-EXAMPLE-NNN），可直接通过 Schema 校验，
+#       复制后把 EXAMPLE 换成实际领域缩写即可。
+# 校验：spec.schema.json —— 用仓库现有的 schema 校验工具跑
+# ---------------------------------------------------------------------------
+
+meta:
+  spec_version: "1.0"
+  title: "<项目名> · 可执行规格"
+  # 源文档清单 —— 每个被拆解的文档都要列出
+  sources:
+    - doc: docs/<design-doc>.md
+      version: "<日期或提交号>"
+      role: primary          # primary | supplementary | legacy
+  owner: "<负责人>"
+  created_at: "<YYYY-MM-DD>"
+  last_reviewed: "<YYYY-MM-DD>"
+
+# 约定条款的前置说明（避免每条重复）
+conventions:
+  # 全局默认的错误响应约定
+  error_shape:
+    - "所有 4xx/5xx 响应体为 { error: { code, message, details? } }"
+  # 时间与标识约定
+  id_scheme: "<前缀>_<实体>_<序号>"
+  # 数值边界约定（写具体数字，不写"边界情况"）
+  numeric_boundaries:
+    - "画布尺寸固定 1920×1080"
+
+# ---------------------------------------------------------------------------
+# 条款区
+# ---------------------------------------------------------------------------
+clauses:
+
+  # ---- 示例 1：业务契约（有权威 Oracle）----
+  - id: SPEC-EXAMPLE-001
+    title: 密码长度下限
+    type: business
+    risk: high
+    status: active
+    maturity: automated
+    statement: "注册接口在密码长度小于 8 时必须拒绝，并返回 PASSWORD_TOO_WEAK"
+    source:
+      doc: docs/<design-doc>.md
+      section: "§3.2 认证与会话"
+      quote: "<原文摘录>"
+    preconditions:
+      - "请求体已通过基础 JSON 解析"
+    behaviors:
+      - when: "body.password 的长度为 7"
+        then: "返回 HTTP 400，body.error.code = 'PASSWORD_TOO_WEAK'"
+      - when: "body.password 的长度为 8"
+        then: "返回 HTTP 201，创建用户"
+    postconditions:
+      - "失败时不产生任何用户记录"
+    boundaries:
+      - "长度 = 8 通过；长度 = 7 拒绝；长度 = 0 拒绝"
+    failure:
+      - condition: "存储层不可用"
+        observable: "返回 503 + STORAGE_UNAVAILABLE，不返回 500"
+    acceptance:
+      - id: AC-EXAMPLE-001
+        criterion: "POST /api/auth/register，body = { email: 'a@b.com', password: '1234567' } → HTTP 400 且 body.error.code = 'PASSWORD_TOO_WEAK'"
+        oracle:
+          tier: authoritative
+          source: "docs/<design-doc>.md §3.2 原文"
+          confidence: high
+        verification:
+          kind: test
+          target: "apps/api/tests/auth/register.test.ts::password-too-weak"
+          command: "bun test apps/api/tests/auth/register.test.ts"
+          pass_when: "退出码 0 且该用例未被 skip"
+        maturity: automated
+      - id: AC-EXAMPLE-002
+        criterion: "同上但 password 长度为 8 → HTTP 201 且返回体不含明文密码"
+        oracle:
+          tier: authoritative
+          source: "docs/<design-doc>.md §3.2 原文"
+          confidence: high
+        verification:
+          kind: test
+          target: "apps/api/tests/auth/register.test.ts::password-boundary-8"
+          command: "bun test apps/api/tests/auth/register.test.ts"
+          pass_when: "退出码 0 且该用例未被 skip"
+        maturity: automated
+
+  # ---- 示例 2：由推导而来（标注推导来源）----
+  - id: SPEC-EXAMPLE-002
+    title: 元素 ID 全局唯一
+    type: technical
+    risk: high
+    status: active
+    maturity: automated
+    statement: "同一项目内所有页面的所有元素 ID 必须两两不同"
+    source:
+      doc: docs/<design-doc>.md
+      section: "§5.2 版式契约"
+      quote: "<原文摘录>"
+    derived_from: SPEC-EXAMPLE-002
+    inference: "§5.2 要求精准编辑按 elementId 定位；定位唯一的前提是 ID 全局唯一"
+    acceptance:
+      - id: AC-EXAMPLE-003
+        criterion: "构造一个含 6 页、其中 2 页同为 cards_grid 版式的项目，收集全部元素 ID，集合基数等于数组长度"
+        oracle:
+          tier: formal
+          source: "ID 唯一性不变量 —— 定位语义的形式化约束"
+          confidence: high
+        verification:
+          kind: test
+          target: "packages/core/tests/layoutEngine.test.ts::ids-unique-across-slides"
+          command: "bun test packages/core/tests/layoutEngine.test.ts"
+          pass_when: "退出码 0 且该用例未被 skip"
+        maturity: automated
+
+  # ---- 示例 3：存在未决歧义（标记为阻塞）----
+  - id: SPEC-EXAMPLE-003
+    title: PDF 默认输出形态
+    type: business
+    risk: medium
+    status: blocked
+    maturity: none
+    statement: "<待 CONF-001 裁决后填写>"
+    source:
+      doc: docs/<design-doc>.md
+      section: "§7.2 导出格式"
+      quote: "<原文摘录>"
+    conflict: CONF-001
+    acceptance: []          # 冲突未裁决前不写判据 —— 写了就是编造
+
+# ---------------------------------------------------------------------------
+# 歧义与冲突登记
+# ---------------------------------------------------------------------------
+ambiguities:
+  - id: AMB-001
+    topic: "密码是否 trim 两端空白"
+    clause_ref: SPEC-EXAMPLE-001
+    question: "输入 ' abcdefgh ' 时，是按 10 字符拒绝，还是 trim 后按 8 字符通过？"
+    impact: correctness        # correctness | security | usability | none
+    blocks: [SPEC-EXAMPLE-001]
+    proposed_default: "trim 后校验（多数系统惯例）"   # 供确认的建议，不是决定
+    status: OPEN              # OPEN | RESOLVED
+
+conflicts:
+  - id: CONF-001
+    topic: "导出格式的默认行为"
+    clause_a: SPEC-EXAMPLE-003
+    clause_b: SPEC-EXAMPLE-002
+    source:
+      doc: docs/<design-doc>.md
+      section: "§7.2"
+    impact: "决定 PDF 产物的文本可选择性"
+    resolution: BLOCKED       # BLOCKED | RESOLVED
+    note: "两者对同一场景给出互斥默认行为；不自行裁决"
+
+decisions:
+  - id: DEC-001
+    question: AMB-001
+    decision: "<结论>"
+    decided_by: "<谁>"
+    decided_at: "<YYYY-MM-DD>"
+    rationale: "<为什么>"
+    applies_to: [SPEC-EXAMPLE-001]
+
+# ---------------------------------------------------------------------------
+# 未决与已知限制（报告时必须披露）
+# ---------------------------------------------------------------------------
+known_gaps:
+  - clause: SPEC-EXAMPLE-003
+    reason: "CONF-001 未裁决，默认输出形态不可判定"
+    plan: "待 §7.2 决策后补齐验收判据"

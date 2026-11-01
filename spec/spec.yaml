@@ -1,0 +1,1832 @@
+# AI PPT Studio · 可执行规格（Design Spec）
+# ---------------------------------------------------------------------------
+# 本文件由 .claude/skills/design-spec 的流程产出，是 docs/ 下五份设计文档的
+# 机器可读契约层。校验：spec/verify/spec-schema.py（JSON Schema 2020-12）
+#
+# 维护约定：
+#   · 条款编号一旦发布不再重排；废弃条款标 status: withdrawn 并写明原因
+#   · source.quote 必须是原文摘录，便于逐条复核
+#   · 判据必须可机械执行；Oracle 必须来自被测系统之外
+#   · maturity: planned = 判据已定义，验证器尚未建成（不等于"已通过"）
+#   · maturity: automated = 判据已有**可执行**的验证器；是否通过看追溯矩阵的结论列
+#   · 命令一律写成 `bun test ./<路径>` —— 不带 `./` 会被 Bun 当成**过滤器**，
+#     对不匹配默认测试规则的文件（*.bench.ts / *.check.ts / *.e2e.ts）
+#     会打印 "filters did not match any test files" 而一个用例都跑不到
+# ---------------------------------------------------------------------------
+
+meta:
+  spec_version: "1.0"
+  title: "AI PPT Studio · 可执行规格"
+  owner: "待指派"
+  created_at: "2026-11-01"
+  last_reviewed: "2026-11-01"
+  sources:
+    - doc: "docs/backend-design.md"
+      version: "2026-11-01"
+      role: primary
+    - doc: "docs/backend-features.md"
+      version: "2026-11-01"
+      role: primary
+    - doc: "docs/architecture.md"
+      version: "2026-11-01"
+      role: primary
+    - doc: "docs/testing-strategy.md"
+      version: "2026-11-01"
+      role: supplementary
+    - doc: "docs/test-cases.md"
+      version: "2026-11-01"
+      role: supplementary
+
+conventions:
+  error_shape:
+    - "所有 4xx/5xx 响应体为 { error: { code, message, details? }, traceId }"
+  success_shape:
+    - "所有成功响应体为 { data: <T>, traceId: 'req_xxx' }"
+  id_scheme:
+    - "项目: proj_<entity>_<seq>"
+    - "幻灯片: slide_<entity>_<seq>"
+    - "元素: {prefix}_{slideId}_{localIndex}（prefix 取值见 CONF-001）"
+  numeric_boundaries:
+    - "画布尺寸固定 1920×1080"
+    - "安全区：左/右 100px，上 60px，下 1020px"
+    - "元素最小宽 200px、最小高 100px"
+    - "质量分权重：结构 0.3 / 视觉 0.3 / 内容 0.2 / 一致性 0.2"
+    - "卡片 AABB 碰撞缓冲 10px"
+
+# ===========================================================================
+# A. 领域内核 —— 版式与内容绑定
+# ===========================================================================
+clauses:
+
+  # ---- SPEC-CORE-001 画布尺寸 ----
+  - id: SPEC-CORE-001
+    title: 画布尺寸恒为 1920×1080
+    type: technical
+    risk: high
+    status: active
+    maturity: automated
+    statement: "layoutEngine 产出的每一页 SlideIR，其 canvas 必须恒为 { width: 1920, height: 1080 }"
+    source:
+      doc: "docs/backend-design.md"
+      section: "§7.2 各格式实现"
+      quote: "| **PDF** | `pdf-lib` + resvg 位图嵌入 | 每页 1920×1080 → 嵌入 A4/16:9 页；中文由 resvg 渲染成位图，**不依赖阅读器字体** |"
+    preconditions:
+      - "传入的 outline 与 theme 合法"
+    behaviors:
+      - when: "任意 layoutPreference、任意主题"
+        then: "返回的 SlideIR.canvas 深度相等 { width: 1920, height: 1080 }"
+    boundaries:
+      - "LAY-09 提到未来要支持 4:3 比例缩放，那是 S2 阶段的独立变更，不改变本条当前的硬编码事实"
+    acceptance:
+      - id: AC-CORE-001
+        criterion: "对 8 种版式 × 8 套主题共 64 组输入调用 LayoutEngine.generateSlideIR，断言每组的 slide.canvas 严格等于 { width: 1920, height: 1080 }"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-design.md §7.2 —— 每页 1920×1080"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/core-layout.test.ts::canvas-is-always-1920x1080"
+          command: "bun test ./spec/verify/core-layout.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-CORE-002 元素不越界 ----
+  - id: SPEC-CORE-002
+    title: 版式元素不得越出画布
+    type: technical
+    risk: high
+    status: active
+    maturity: automated
+    statement: "layoutEngine 产出的任何非 background 元素，其几何必须完整落在 1920×1080 画布内"
+    source:
+      doc: "docs/backend-features.md"
+      section: "§E 版式与内容绑定（LAY）· LAY-05"
+      quote: "内容区 100px 边距、底部 1020px；元素不得越界"
+    preconditions:
+      - "canvas 为 1920×1080"
+    behaviors:
+      - when: "生成任意版式"
+        then: "所有 role != 'background' 的元素满足 0 ≤ x 且 0 ≤ y 且 x+width ≤ 1920 且 y+height ≤ 1080"
+    boundaries:
+      - "background 元素（bg_*）天然铺满画布，显式豁免"
+    acceptance:
+      - id: AC-CORE-002
+        criterion: "对 8 种版式 × 8 套主题共 64 组输入，收集全部非 background 元素，断言无任何元素满足 x < 0 或 y < 0 或 x+width > 1920 或 y+height > 1080"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-features.md §E LAY-05 —— 元素不得越界"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/core-layout.test.ts::no-element-out-of-canvas"
+          command: "bun test ./spec/verify/core-layout.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-CORE-003 元素 ID 全局唯一 ----
+  - id: SPEC-CORE-003
+    title: 元素 ID 在整个项目内全局唯一
+    type: technical
+    risk: high
+    status: active
+    maturity: automated
+    statement: "同一项目内所有页面的所有元素 ID 必须两两不同"
+    source:
+      doc: "docs/architecture.md"
+      section: "§12 ADR-012 · 版式专属元素 ID 统一加 slideId 前缀"
+      quote: "**决策**：`@ppt/core` 生成的所有元素 ID 形如 `{role}_{slideId}_{localIndex}`，全局唯一是**契约**而非巧合。"
+    derived_from: SPEC-CORE-004
+    inference: "ADR-012 明确『全局唯一是契约而非巧合』；既然 ID 含 slideId，唯一性即为其推论"
+    behaviors:
+      - when: "一个项目包含多页，且其中两页使用相同版式"
+        then: "两页的版式专属元素 ID 不得相同"
+    acceptance:
+      - id: AC-CORE-003
+        criterion: "构造一个含 6 页、其中 2 页同为 cards_grid 版式的项目，收集全部元素的 id，断言集合基数等于数组长度"
+        oracle:
+          tier: formal
+          source: "ID 全局唯一性不变量 —— ADR-012『全局唯一是契约而非巧合』"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/core-layout.test.ts::element-ids-unique-across-slides"
+          command: "bun test ./spec/verify/core-layout.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-CORE-004 版式专属 ID 必须含 slideId ----
+  - id: SPEC-CORE-004
+    title: 版式专属元素 ID 必须携带 slideId
+    type: technical
+    risk: high
+    status: active
+    maturity: automated
+    statement: "所有由版式专属逻辑生成的元素 ID 必须包含所属幻灯片的 slideId"
+    source:
+      doc: "docs/architecture.md"
+      section: "§12 ADR-012 · 版式专属元素 ID 统一加 slideId 前缀"
+      quote: "**背景**：现状 `grid_card_0` / `kpi_card_0` / `problem_box` 等版式元素 ID **不含 slideId**，同版式出现在两页时 ID 完全重复 —— 质量引擎跨页累积扣分（structure -5/次），且\"精准编辑\"按 elementId 定位会命中错误页的元素。"
+    conflict: CONF-001
+    behaviors:
+      - when: "同一版式出现在两页"
+        then: "两页生成的同名版式元素 ID 仍彼此不同"
+    acceptance:
+      - id: AC-CORE-004
+        criterion: "对 8 种版式，断言该版式生成的每一个元素 ID 都包含该页的 slideId 字符串"
+        oracle:
+          tier: authoritative
+          source: "docs/architecture.md §12 ADR-012 —— 决策：所有元素 ID 形如 {role}_{slideId}_{localIndex}"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/core-layout.test.ts::layout-element-ids-contain-slide-id"
+          command: "bun test ./spec/verify/core-layout.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-CORE-005 版式引擎是纯函数 ----
+  - id: SPEC-CORE-005
+    title: 版式引擎是纯函数，同输入必得同输出
+    type: technical
+    risk: high
+    status: active
+    maturity: automated
+    statement: "在剥离 versionId 与 lastModified 两个非确定性字段后，相同输入必须产出逐字段相同的 SlideIR"
+    source:
+      doc: "docs/architecture.md"
+      section: "§13 QA-4 · 可维护：版式引擎变更不引入静默回归"
+      quote: "**架构响应**：① 64 组黄金快照测试进 CI ② 版式是纯函数无隐藏状态 ③ 快照 diff 需人工审阅。"
+    behaviors:
+      - when: "连续两次用同一份 outline + theme 调用 generateSlideIR"
+        then: "剥离 versionId / lastModified 后，两次结果深度相等"
+    acceptance:
+      - id: AC-CORE-005
+        criterion: "对 8 种版式 × 8 套主题共 64 组输入各调用两次 generateSlideIR，剥离 versionId 与 lastModified 后断言两次结果深度相等"
+        oracle:
+          tier: formal
+          source: "docs/architecture.md §13 QA-4 —— 版式是纯函数无隐藏状态"
+          confidence: high
+        verification:
+          kind: property
+          target: "spec/verify/core-layout.test.ts::layout-engine-is-pure"
+          command: "bun test ./spec/verify/core-layout.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-CORE-006 封面不渲染母版 ----
+  - id: SPEC-CORE-006
+    title: 封面页不渲染母版元素
+    type: technical
+    risk: medium
+    status: active
+    maturity: automated
+    statement: "layoutPreference 为 title_cover 的页面不得包含页眉、页脚、页码类母版元素"
+    source:
+      doc: "docs/backend-features.md"
+      section: "§E 版式与内容绑定（LAY）· LAY-07"
+      quote: "页眉 kicker、页脚机密声明、页码 `NN / TT`；封面页不渲染母版"
+    acceptance:
+      - id: AC-CORE-006
+        criterion: "生成一页 title_cover，断言其元素中不含 id 以 header_ / pagenum_ / footernote_ 开头的元素"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-features.md §E LAY-07 —— 封面页不渲染母版"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/core-layout.test.ts::cover-page-has-no-master-elements"
+          command: "bun test ./spec/verify/core-layout.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-CORE-007 页码格式 ----
+  - id: SPEC-CORE-007
+    title: 页码格式为 NN / TT
+    type: technical
+    risk: low
+    status: active
+    maturity: automated
+    statement: "非封面页的页码元素内容必须形如 两位序号 / 两位总数"
+    source:
+      doc: "docs/backend-features.md"
+      section: "§E 版式与内容绑定（LAY）· LAY-07"
+      quote: "页眉 kicker、页脚机密声明、页码 `NN / TT`；封面页不渲染母版"
+    boundaries:
+      - "序号与总数均补零到两位：第 1 页共 12 页 → '01 / 12'"
+    acceptance:
+      - id: AC-CORE-007
+        criterion: "生成第 3 页 / 共 12 页，断言 id 为 pagenum_<slideId> 的元素内容严格等于 '03 / 12'"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-features.md §E LAY-07 —— 页码 NN / TT"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/core-layout.test.ts::page-number-format"
+          command: "bun test ./spec/verify/core-layout.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-CORE-008 版式内容不得硬编码 ----
+  - id: SPEC-CORE-008
+    title: 版式渲染内容不得回落到硬编码演示文案
+    type: business
+    risk: high
+    status: active
+    maturity: automated
+    statement: "对任意版式，渲染出的元素内容必须来自该页的大纲内容，不得回落到与输入无关的固定演示文案"
+    source:
+      doc: "docs/backend-features.md"
+      section: "§E 版式与内容绑定（LAY）· LAY-02"
+      quote: "`bindContent(outline, content)`：缺失槽位从 `outline.bulletPoints` 推导。**任何路径都不得回落到硬编码演示文案**（修复当前 7/8 版式硬编码缺陷）"
+    derived_from: SPEC-CORE-003
+    inference: "F2 认定『只有 cards_grid 使用了 outline.bulletPoints，其余 7 种内容全部硬编码』；LAY-02 是对应的修复要求，故本条为待建目标而非现状描述"
+    behaviors:
+      - when: "给版式传入一组专属的 bulletPoints"
+        then: "渲染结果中必须出现这些要点文本"
+      - when: "给版式传入另一组完全不同的 bulletPoints"
+        then: "渲染结果中不得出现上一组的内容"
+    boundaries:
+      - "槽位映射表规定：title_cover 消费 title/subtitle/meta，不消费 bullets；其余 7 种版式均消费 bullets"
+    acceptance:
+      - id: AC-CORE-008
+        criterion: "对 architecture_diagram / cards_grid / problem_solution / timeline_roadmap / stats_kpi / radial_center / summary_conclusion 七种版式各生成一页，其 bulletPoints 使用互不相同、且不可能出现在任何硬编码演示文案中的专属标记串；断言该页全部元素的字符串内容（含结构化 content 内的所有字符串字段与数组元素）中都出现该页 bulletPoints 的每一条标记文本"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-design.md §4.2 版式↔槽位映射表 —— 7 种版式的缺省降级均由 bullets 推导；docs/backend-features.md §E LAY-02"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/core-content.test.ts::bullet-consuming-layouts-use-outline-bullets"
+          command: "bun test ./spec/verify/core-content.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+      - id: AC-CORE-009
+        criterion: "生成一页 title_cover（purpose 非空），断言其全部元素的非空字符串内容都能追溯到该页 outline 的字段值（outline.title / outline.purpose / outline.keyMessage / outline.visualIntent / outline.speakerNotes / outline.bulletPoints），即不存在任何与 outline 无关的固定演示文案"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-features.md §E LAY-02 —— 任何路径都不得回落到硬编码演示文案"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/core-content.test.ts::cover-content-traceable-to-outline"
+          command: "bun test ./spec/verify/core-content.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+      - id: AC-CORE-010
+        criterion: "对 7 种消费 bullets 的版式：用要点集 A 渲染得到内容集 C_A，用与 A 不相交的要点集 B 渲染得到内容集 C_B；断言 C_A 与 C_B 不相等（渲染结果确实随输入改变），且 C_B 中不出现 A 的任何要点文本"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-features.md §E LAY-02 —— 不得回落到硬编码演示文案"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/core-content.test.ts::render-output-follows-outline-bullets"
+          command: "bun test ./spec/verify/core-content.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+# ===========================================================================
+# B. 质量引擎
+# ===========================================================================
+  # ---- SPEC-QLT-001 质量分公式 ----
+  - id: SPEC-QLT-001
+    title: 质量分为四维加权，权重固定
+    type: technical
+    risk: high
+    status: active
+    maturity: automated
+    statement: "QualityReport.overallScore 必须等于 round(0.3×Qs + 0.3×Qv + 0.2×Qc + 0.2×Qg)"
+    source:
+      doc: "docs/backend-features.md"
+      section: "§I 质量评估（QLT）· QLT-01"
+      quote: "`Q = 0.3·Qs + 0.3·Qv + 0.2·Qc + 0.2·Qg`；与前端 `qualityEngine` 同源码"
+    boundaries:
+      - "四维分各自钳制在 0–100；overallScore 取整"
+    acceptance:
+      - id: AC-QLT-001
+        criterion: "构造 5 组不同惩罚组合的演示文稿，断言 overallScore === Math.round(0.3*structureScore + 0.3*visualScore + 0.2*contentScore + 0.2*consistencyScore)"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-features.md §I QLT-01 —— Q = 0.3·Qs + 0.3·Qv + 0.2·Qc + 0.2·Qg"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/quality-engine.test.ts::quality-formula-weights"
+          command: "bun test ./spec/verify/quality-engine.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-QLT-002 画布尺寸惩罚 ----
+  - id: SPEC-QLT-002
+    title: 画布尺寸不符扣结构分 15
+    type: technical
+    risk: medium
+    status: active
+    maturity: automated
+    statement: "任一页的 canvas 非 1920×1080 时，结构分必须被扣 15 分"
+    source:
+      doc: "docs/backend-features.md"
+      section: "§I 质量评估（QLT）· QLT-02"
+      quote: "画布尺寸、元素 ID 全局唯一、几何越界"
+    derived_from: SPEC-CORE-001
+    inference: "QLT-02 列出三项结构校验；结构分满分 100，扣分幅度需以现状行为为准（F7 认定质量引擎『完全可以原样搬到后端』，即现状扣分幅度是既定契约）"
+    boundaries:
+      - "结构分下限 0（不出现负分）"
+    acceptance:
+      - id: AC-QLT-002
+        criterion: "构造一份仅有一页 canvas 为 1600×900、其余维度无缺陷的演示文稿，断言 structureScore 等于 85"
+        oracle:
+          tier: self-derived
+          source: "src/engine/qualityEngine.ts 的扣分幅度（经 docs/backend-design.md §1.2 F7『原样搬到后端』追认）"
+          confidence: medium
+        verification:
+          kind: test
+          target: "spec/verify/quality-engine.test.ts::canvas-mismatch-penalty"
+          command: "bun test ./spec/verify/quality-engine.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-QLT-003 重复 ID 惩罚 ----
+  - id: SPEC-QLT-003
+    title: 元素 ID 重复扣结构分 5
+    type: technical
+    risk: medium
+    status: active
+    maturity: automated
+    statement: "同一页内出现重复元素 ID 时，结构分必须被扣 5 分；重复出现在多页则每页各扣 5 分"
+    source:
+      doc: "docs/backend-features.md"
+      section: "§I 质量评估（QLT）· QLT-02"
+      quote: "画布尺寸、元素 ID 全局唯一、几何越界"
+    derived_from: SPEC-CORE-003
+    inference: "QLT-02 明确『元素 ID 全局唯一』是结构校验项；扣分幅度以现状为准（F7 追认）"
+    acceptance:
+      - id: AC-QLT-003
+        criterion: "构造一份含 1 个重复 ID 的演示文稿，断言 structureScore 等于 95；构造含 2 个重复 ID 的演示文稿，断言 structureScore 等于 90"
+        oracle:
+          tier: self-derived
+          source: "src/engine/qualityEngine.ts 的扣分幅度（经 docs/backend-design.md §1.2 F7 追认）"
+          confidence: medium
+        verification:
+          kind: test
+          target: "spec/verify/quality-engine.test.ts::duplicate-id-penalty"
+          command: "bun test ./spec/verify/quality-engine.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-QLT-004 越界惩罚 ----
+  - id: SPEC-QLT-004
+    title: 元素几何越界扣视觉分 10
+    type: technical
+    risk: medium
+    status: active
+    maturity: automated
+    statement: "任一非 background 元素越出画布时，视觉分必须被扣 10 分"
+    source:
+      doc: "docs/backend-features.md"
+      section: "§I 质量评估（QLT）· QLT-02"
+      quote: "画布尺寸、元素 ID 全局唯一、几何越界"
+    boundaries:
+      - "x+width 恰等于 1920 或 y+height 恰等于 1080 不算越界"
+      - "role 为 background 的元素豁免"
+    acceptance:
+      - id: AC-QLT-004
+        criterion: "构造一个 x+width = 1921 的元素，断言 visualScore 等于 90；构造一个 x+width = 1920 的元素，断言 visualScore 等于 100"
+        oracle:
+          tier: self-derived
+          source: "src/engine/qualityEngine.ts 的扣分幅度（经 docs/backend-design.md §1.2 F7 追认）"
+          confidence: medium
+        verification:
+          kind: test
+          target: "spec/verify/quality-engine.test.ts::out-of-bounds-penalty"
+          command: "bun test ./spec/verify/quality-engine.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-QLT-005 AABB 碰撞惩罚 ----
+  - id: SPEC-QLT-005
+    title: 卡片 AABB 碰撞扣视觉分 8
+    type: technical
+    risk: medium
+    status: active
+    maturity: automated
+    statement: "任两个 card/layer 类元素的轴对齐包围盒在 10px 缓冲内相交时，视觉分必须被扣 8 分"
+    source:
+      doc: "docs/backend-features.md"
+      section: "§I 质量评估（QLT）· QLT-03"
+      quote: "卡片/层 AABB 碰撞检测（10px 缓冲）"
+    boundaries:
+      - "本判据只覆盖『文档与实现两种读法一致』的区间：重叠 > 10px 判碰撞；间隙 > 10px 判不碰撞"
+      - "重叠 0~10px 与间隙 0~10px 区间两种读法结论相反（实现按 10px 容差容忍重叠），已登记为 AMB-004，本条不裁决"
+    acceptance:
+      - id: AC-QLT-005
+        criterion: "构造两个卡片，其水平重叠量为 15px（区间 15 > 10，两种读法均判碰撞），断言 visualScore 等于 92；构造两个卡片，其水平间隙为 20px（区间 20 > 10，两种读法均判不碰撞），断言 visualScore 等于 100"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-features.md §I QLT-03 —— 卡片/层 AABB 碰撞检测（10px 缓冲）；取文档与实现结论一致的重叠>10px 与间隙>10px 两个区间"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/quality-engine.test.ts::aabb-collision-penalty"
+          command: "bun test ./spec/verify/quality-engine.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-QLT-006 标题缺失惩罚 ----
+  - id: SPEC-QLT-006
+    title: 标题缺失或过短扣内容分 15
+    type: technical
+    risk: medium
+    status: active
+    maturity: automated
+    statement: "任一页的 title 为空或少于 3 个字符时，内容分必须被扣 15 分"
+    source:
+      doc: "docs/backend-features.md"
+      section: "§I 质量评估（QLT）· QLT-04"
+      quote: "标题缺失、核心结论缺失"
+    boundaries:
+      - "title 长度 3 通过；长度 2 扣分"
+    acceptance:
+      - id: AC-QLT-006
+        criterion: "构造一页 title 为 'ab'（2 字符），断言 contentScore 等于 85；构造一页 title 为 'abc'（3 字符），断言 contentScore 等于 100"
+        oracle:
+          tier: self-derived
+          source: "src/engine/qualityEngine.ts 的扣分幅度（经 docs/backend-design.md §1.2 F7 追认）"
+          confidence: medium
+        verification:
+          kind: test
+          target: "spec/verify/quality-engine.test.ts::missing-title-penalty"
+          command: "bun test ./spec/verify/quality-engine.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-QLT-007 核心结论缺失惩罚 ----
+  - id: SPEC-QLT-007
+    title: 核心结论缺失扣内容分 8
+    type: technical
+    risk: medium
+    status: active
+    maturity: automated
+    statement: "非封面页的 keyMessage 为空时，内容分必须被扣 8 分"
+    source:
+      doc: "docs/backend-features.md"
+      section: "§I 质量评估（QLT）· QLT-04"
+      quote: "标题缺失、核心结论缺失"
+    boundaries:
+      - "封面页（layout.type = title_cover）豁免本项检查"
+    acceptance:
+      - id: AC-QLT-007
+        criterion: "构造一个非封面页且 keyMessage 为空的演示文稿，断言 contentScore 等于 92；构造一个 title_cover 且 keyMessage 为空的演示文稿，断言 contentScore 不因本项扣分"
+        oracle:
+          tier: self-derived
+          source: "src/engine/qualityEngine.ts 的扣分幅度（经 docs/backend-design.md §1.2 F7 追认）"
+          confidence: medium
+        verification:
+          kind: test
+          target: "spec/verify/quality-engine.test.ts::missing-keymessage-penalty"
+          command: "bun test ./spec/verify/quality-engine.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-QLT-008 一致性惩罚 ----
+  - id: SPEC-QLT-008
+    title: 页数不足与缺封面各扣一致性分
+    type: technical
+    risk: medium
+    status: active
+    maturity: automated
+    statement: "演示文稿少于 3 页扣一致性分 15；不含 title_cover 页扣一致性分 10"
+    source:
+      doc: "docs/backend-features.md"
+      section: "§I 质量评估（QLT）· QLT-05"
+      quote: "页数过少、缺封面页"
+    boundaries:
+      - "恰好 3 页不扣页数分；恰好 0 个 title_cover 扣 10 分"
+      - "两项惩罚叠加：2 页且无封面 → 75；2 页且含封面 → 85"
+    acceptance:
+      - id: AC-QLT-008
+        criterion: "构造 2 页且含 title_cover 的演示文稿，断言 consistencyScore 等于 85（仅触发页数惩罚）；构造 3 页但无 title_cover 的演示文稿，断言 consistencyScore 等于 90（仅触发缺封面惩罚）；构造 3 页且含 title_cover 的演示文稿，断言 consistencyScore 等于 100"
+        oracle:
+          tier: self-derived
+          source: "src/engine/qualityEngine.ts 的扣分幅度（经 docs/backend-design.md §1.2 F7 追认）"
+          confidence: medium
+        verification:
+          kind: test
+          target: "spec/verify/quality-engine.test.ts::consistency-penalties"
+          command: "bun test ./spec/verify/quality-engine.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-QLT-009 自动修复 ----
+  - id: SPEC-QLT-009
+    title: 自动修复把几何钳回安全区并保持 ID 唯一
+    type: technical
+    risk: high
+    status: active
+    maturity: automated
+    statement: "autoFixProject 必须把所有元素几何钳制回安全区（左≥100、上≥60、右≤1820、下≤1020，最小宽 200、最小高 100），且修复后元素 ID 仍两两唯一"
+    source:
+      doc: "docs/backend-features.md"
+      section: "§I 质量评估（QLT）· QLT-06"
+      quote: "几何钳制回安全区、ID 重排、补齐缺失元素；修复后复评"
+    boundaries:
+      - "钳制后 width = max(200, 1820 - x)，height = max(100, 1020 - y)"
+      - "当 1820 - x < 200 或 1020 - y < 100 时，最小尺寸下限与右/下边界互相矛盾，本条按『边界优先』判定"
+    acceptance:
+      - id: AC-QLT-009
+        criterion: "构造一份含越界元素与重复 ID 的演示文稿，调用 autoFixProject 后断言：所有元素满足 x≥100 且 y≥60 且 x+width≤1820 且 y+height≤1020"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-features.md §E LAY-05（内容区 100px 边距、底部 1020px）＋ §I QLT-06（几何钳制回安全区）"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/quality-engine.test.ts::autofix-restores-bounds"
+          command: "bun test ./spec/verify/quality-engine.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+      - id: AC-QLT-010
+        criterion: "构造一份含重复元素 ID 的演示文稿，调用 autoFixProject 后断言：全部元素 ID 两两不同，且每个 ID 形如 {elementType}_{slideId}_{indexWithinSlide}"
+        oracle:
+          tier: self-derived
+          source: "src/engine/qualityEngine.ts 的 ID 重排规则（经 docs/backend-features.md §I QLT-06『ID 重排』追认）"
+          confidence: medium
+        verification:
+          kind: test
+          target: "spec/verify/quality-engine.test.ts::autofix-restores-id-uniqueness"
+          command: "bun test ./spec/verify/quality-engine.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+# ===========================================================================
+# C. SVG 渲染
+# ===========================================================================
+  # ---- SPEC-RND-001 XML 转义 ----
+  - id: SPEC-RND-001
+    title: 用户内容进入 SVG 必须转义
+    type: technical
+    risk: high
+    status: active
+    maturity: automated
+    statement: "任何来自 IR 的文本进入 SVG 输出前，必须转义 & < > \" ' 五个字符"
+    source:
+      doc: "docs/backend-features.md"
+      section: "§N 安全（SEC）· SEC-07"
+      quote: "复用现有 `escapeXml`；用户内容入 SVG 必须转义，防注入"
+    behaviors:
+      - when: "元素内容为 '<script>alert(1)</script> & \"x\"'"
+        then: "SVG 中不得出现未转义的 < > & \""
+    acceptance:
+      - id: AC-RND-001
+        criterion: "构造含 & < > \" ' 的元素文本，渲染 SVG 后断言原始五个字符均不以未转义形式出现，且 &amp; &lt; &gt; &quot; &apos; 均出现"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-features.md §N SEC-07 —— 用户内容入 SVG 必须转义，防注入"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/render-svg.test.ts::user-content-is-xml-escaped"
+          command: "bun test ./spec/verify/render-svg.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-RND-002 去 foreignObject ----
+  - id: SPEC-RND-002
+    title: SVG 输出不得包含 foreignObject
+    type: technical
+    risk: high
+    status: active
+    maturity: automated
+    statement: "svgRenderer 产出的 SVG 不得包含任何 foreignObject 元素"
+    source:
+      doc: "docs/architecture.md"
+      section: "§12 ADR-011 · 服务端渲染去 foreignObject 化"
+      quote: "**背景**：`svgRenderer` 把卡片正文放在 `<foreignObject>` + XHTML `<div>` 里。浏览器支持，但 **`@resvg/resvg-js` 直接丢弃** —— 服务端光栅化会产出\"只有空卡片框、没有任何文字\"的 PPT，且**不报错**。"
+    derived_from: SPEC-EXP-001
+    inference: "ADR-011 明确了判定该约束的形式化依据：能被 resvg 渲染的 SVG 元素集不含 foreignObject"
+    behaviors:
+      - when: "渲染任意含 card 或 metric 元素的页"
+        then: "输出中不得出现 '<foreignObject' 字符串"
+    acceptance:
+      - id: AC-RND-002
+        criterion: "对 8 种版式 × 8 套主题共 64 组输入渲染 SVG，断言全部输出中都不含 '<foreignObject'"
+        oracle:
+          tier: authoritative
+          source: "docs/architecture.md §12 ADR-011 —— resvg 直接丢弃 foreignObject"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/render-svg.test.ts::svg-contains-no-foreignobject"
+          command: "bun test ./spec/verify/render-svg.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-RND-003 去外链字体 ----
+  - id: SPEC-RND-003
+    title: SVG 输出不得引用外部字体
+    type: technical
+    risk: high
+    status: active
+    maturity: automated
+    statement: "svgRenderer 产出的 SVG 不得包含任何指向外部域名（fonts.googleapis.com 等）的 @import 或 url() 引用"
+    source:
+      doc: "docs/backend-features.md"
+      section: "§J 渲染与导出（EXP）· EXP-01"
+      quote: "`svgRenderer.renderToString` 前后端共用；服务端去掉 Google Fonts `@import`（该 import 在服务端无效）"
+    derived_from: SPEC-RND-002
+    inference: "ADR-009『渲染字体 vendored 进仓库，不运行时拉外网』与 EXP-01『服务端去掉 Google Fonts @import』共同要求 SVG 自包含"
+    acceptance:
+      - id: AC-RND-003
+        criterion: "渲染一页 SVG，断言输出中不含 'fonts.googleapis.com'、不含 '@import url(' 且不含 'http://' 与 'https://' 形式的资源引用"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-features.md §J EXP-01 —— 服务端去掉 Google Fonts @import"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/render-svg.test.ts::svg-contains-no-external-font-import"
+          command: "bun test ./spec/verify/render-svg.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-RND-004 保留元素 ID ----
+  - id: SPEC-RND-004
+    title: SVG 保留元素 ID 便于调试与 diff
+    type: technical
+    risk: medium
+    status: active
+    maturity: automated
+    statement: "SVG 中每个元素必须带有与其 IR id 一致的 id 属性"
+    source:
+      doc: "docs/architecture.md"
+      section: "§8.1 渲染层次"
+      quote: "SlideIR ──► svgRenderer ──► SVG DOM（元素保留 id，便于调试与 diff）"
+    acceptance:
+      - id: AC-RND-004
+        criterion: "渲染一页 SVG，对该页每个元素，断言 SVG 中存在 id=\"<该id>\"；若该元素同时带 data-element-id 属性，断言其值等于 <该id>"
+        oracle:
+          tier: authoritative
+          source: "docs/architecture.md §8.1 —— SVG DOM（元素保留 id，便于调试与 diff）；docs/test-cases.md TC-EXP-003 —— 每个元素保留原始 id"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/render-svg.test.ts::svg-preserves-element-ids"
+          command: "bun test ./spec/verify/render-svg.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-RND-005 四层结构 ----
+  - id: SPEC-RND-005
+    title: SVG 按四层渲染
+    type: technical
+    risk: low
+    status: active
+    maturity: automated
+    statement: "SVG 必须包含且仅包含四个图层分组：background-layer / template-layer / content-layer / decoration-layer"
+    source:
+      doc: "docs/architecture.md"
+      section: "§9.3 关键设计"
+      quote: "**大页面渲染性能** | SVG 元素数可能过千 → 分层渲染（背景层静态、内容层增量）+ 只重渲染变更元素"
+    acceptance:
+      - id: AC-RND-005
+        criterion: "渲染一页 SVG，断言恰好存在 id 为 background-layer / template-layer / content-layer / decoration-layer 的四个 <g>，且四个层 id 在输出中各出现一次"
+        oracle:
+          tier: self-derived
+          source: "src/engine/svgRenderer.ts 的四层实现（对应 docs/architecture.md §9.3 分层渲染）"
+          confidence: medium
+        verification:
+          kind: test
+          target: "spec/verify/render-svg.test.ts::svg-has-four-layers"
+          command: "bun test ./spec/verify/render-svg.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+# ===========================================================================
+# D. 导出
+# ===========================================================================
+  # ---- SPEC-EXP-001 PPTX 保真 ----
+  - id: SPEC-EXP-001
+    title: PPTX 导出必须保留 IR 中的文本内容
+    type: business
+    risk: high
+    status: active
+    maturity: automated
+    statement: "PPTX 产物中必须能检出该页 IR 元素内容里的关键文本，不得出现只剩空形状、正文丢失的产物"
+    source:
+      doc: "docs/backend-features.md"
+      section: "§J 渲染与导出（EXP）· EXP-15 / EXP-17"
+      quote: "导出后回读产物，校验页数、尺寸、关键文本存在"
+    derived_from: SPEC-RND-002
+    inference: "EXP-15 要求『PPTX 中形状/文本框数量与 IR 元素数一致（非图片糊版）』；EXP-17 要求回读产物校验关键文本存在；两者合起来要求文本不得丢失"
+    behaviors:
+      - when: "一页使用 problem_solution 版式，其 problem_box 元素含 items 数组"
+        then: "PPTX 中必须能检出这些 items 的文本"
+    acceptance:
+      - id: AC-EXP-001
+        criterion: "对 8 种版式各导出一次 PPTX，解包 ppt/slides/slideN.xml，提取全部 <a:t> 文本运行（去首尾空白、丢弃空运行）；把每页 IR 中每个非空字符串内容（元素 content 为字符串，或 content 对象中所有字符串字段）按 \\n 拆成行，与该页全部非空文本运行构成**集合相等**：既不缺（正文丢失），也不多（凭空多出的固定文案），且任何一行不得与另一行拼接在同一个运行里（串行）。不得出现只剩空形状、正文丢失的产物。注：PPTX 段落以换行为界，一个 IR 字符串内的换行必然被拆进多个 <a:t>，故判据单位是『行』而非『字符串』—— 见 DEC-003"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-features.md §J EXP-15 + EXP-17 —— 回读产物，校验关键文本存在"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/export-pptx.test.ts::pptx-preserves-ir-text-content"
+          command: "bun test ./spec/verify/export-pptx.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-EXP-002 演讲者备注 ----
+  - id: SPEC-EXP-002
+    title: PPTX 写入演讲者备注
+    type: technical
+    risk: medium
+    status: active
+    maturity: automated
+    statement: "当页面的 speakerNotes 非空时，PPTX 的备注页必须包含该文本"
+    source:
+      doc: "docs/backend-features.md"
+      section: "§J 渲染与导出（EXP）· EXP-14"
+      quote: "`addNotes` 写入 `speakerNotes`"
+    acceptance:
+      - id: AC-EXP-002
+        criterion: "导出含 speakerNotes 的演示文稿为 PPTX，解包 ppt/notesSlides/notesSlideN.xml，断言其文本包含原始 speakerNotes"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-features.md §J EXP-14 —— addNotes 写入 speakerNotes"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/export-pptx.test.ts::pptx-includes-speaker-notes"
+          command: "bun test ./spec/verify/export-pptx.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-EXP-003 PNG 2 倍 ----
+  - id: SPEC-EXP-003
+    title: PNG 导出为 2 倍分辨率
+    type: technical
+    risk: medium
+    status: active
+    maturity: automated
+    statement: "PNG 光栅化画布必须是 3840×2160（1920×1080 的 2 倍）"
+    source:
+      doc: "docs/backend-features.md"
+      section: "§J 渲染与导出（EXP）· EXP-02"
+      quote: "`@resvg/resvg-js` 3840×2160，无需浏览器"
+    acceptance:
+      - id: AC-EXP-003
+        criterion: "断言光栅化目标画布尺寸为 3840×2160，且等于 slide.canvas 的两倍"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-features.md §J EXP-02 —— 3840×2160"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/export-pptx.test.ts::png-export-is-2x"
+          command: "bun test ./spec/verify/export-pptx.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-EXP-004 文件名规范 ----
+  - id: SPEC-EXP-004
+    title: 导出文件名清洗且扩展名正确
+    type: technical
+    risk: low
+    status: active
+    maturity: automated
+    statement: "导出文件名必须把空白替换为下划线、剥离文件系统非法字符，并保持正确的扩展名"
+    source:
+      doc: "docs/backend-features.md"
+      section: "§J 渲染与导出（EXP）· EXP-13"
+      quote: "名称清洗（去非法字符）、中文名保持可读、扩展名正确"
+    acceptance:
+      - id: AC-EXP-004
+        criterion: "对含空格与非法字符的项目名（如 'Q3 / 规划: 草案'），断言导出的文件名不含空白与 / : 等非法字符，且扩展名分别为 .svg / .pptx / .json"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-features.md §J EXP-13 —— 名称清洗（去非法字符）"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/export-pptx.test.ts::export-filename-sanitized"
+          command: "bun test ./spec/verify/export-pptx.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+# ===========================================================================
+# E. IRPatch 协议（已实现 · 判据已可执行）
+# ===========================================================================
+  # ---- SPEC-IRP-001 增量补丁 ----
+  - id: SPEC-IRP-001
+    title: AI 编辑返回增量补丁而非全量元素
+    type: technical
+    risk: high
+    status: active
+    maturity: automated
+    statement: "编辑 Agent 必须返回 { patches: IRPatch[], message }，不得返回全量 updatedElements 数组"
+    source:
+      doc: "docs/backend-design.md"
+      section: "§4.3 IRPatch 协议"
+      quote: "**AI 返回 `{ patches: IRPatch[], message: string }`**，由后端 `patchApplier.ts` 统一施加："
+    behaviors:
+      - when: "用户要求修改一个元素"
+        then: "响应中的 patches 数组长度与被改元素数相当，而非等于整页元素总数"
+    acceptance:
+      - id: AC-IRP-001
+        criterion: "调用 AI 编辑端点，断言响应体含 patches 数组且不含 updatedElements 数组；断言 patches 的 operation 取值属于 IRPatch.operation 枚举"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-design.md §4.3 —— AI 返回 { patches: IRPatch[], message: string }"
+          confidence: high
+        verification:
+          kind: test
+          target: "apps/api/tests/ai/edit-slide.test.ts::returns-patches-not-full-elements"
+          command: "bun test ./apps/api/tests/ai/edit-slide.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-IRP-002 幂等 ----
+  - id: SPEC-IRP-002
+    title: 同一条补丁施加两次结果相同
+    type: technical
+    risk: high
+    status: active
+    maturity: automated
+    statement: "applyPatches 对同一组 patch 施加两次，第二次不得再改变任何元素"
+    source:
+      doc: "docs/backend-design.md"
+      section: "§4.3 IRPatch 协议"
+      quote: "- **幂等**：同一条 patch 施加两次结果相同，便于重试。"
+    acceptance:
+      - id: AC-IRP-002
+        criterion: "对 6 种 operation 各构造一条 patch，断言 applyPatches(applyPatches(slide, [p]), [p]) 深度等于 applyPatches(slide, [p])"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-design.md §4.3 —— 幂等：同一条 patch 施加两次结果相同"
+          confidence: high
+        verification:
+          kind: property
+          target: "packages/core/tests/patchApplier.test.ts::apply-is-idempotent"
+          command: "bun test ./packages/core/tests/patchApplier.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-IRP-003 删除不存在的元素必须报错 ----
+  - id: SPEC-IRP-003
+    title: 删除不存在的元素必须报错而非静默忽略
+    type: technical
+    risk: medium
+    status: active
+    maturity: automated
+    statement: "remove_element 指向不存在的 targetId 时，applyPatches 必须抛出可识别的错误，且 SlideIR 不发生任何变更"
+    source:
+      doc: "docs/backend-design.md"
+      section: "§4.3 IRPatch 协议"
+      quote: "case 'remove_element':   /* 存在性校验，删不存在则报错而非静默 */"
+    acceptance:
+      - id: AC-IRP-003
+        criterion: "对不存在的 targetId 施加 remove_element，断言抛出错误；断言抛出前后的 SlideIR 深度相等（原子性）"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-design.md §4.3 —— 删不存在则报错而非静默"
+          confidence: high
+        verification:
+          kind: test
+          target: "packages/core/tests/patchApplier.test.ts::remove-missing-element-throws"
+          command: "bun test ./packages/core/tests/patchApplier.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+# ===========================================================================
+# F. 后端 API（已实现 · 判据已可执行）
+# ===========================================================================
+  # ---- SPEC-API-001 统一响应包封 ----
+  - id: SPEC-API-001
+    title: 统一响应与错误包封
+    type: technical
+    risk: high
+    status: active
+    maturity: automated
+    statement: "成功响应体必须为 { data, traceId }，失败响应体必须为 { error: { code, message, details? }, traceId }"
+    source:
+      doc: "docs/backend-design.md"
+      section: "§5.3 统一响应与错误规范"
+      quote: "错误码枚举：`UNAUTHORIZED` `FORBIDDEN` `NOT_FOUND` `VALIDATION_FAILED` `SLIDE_VERSION_CONFLICT` `QUOTA_EXCEEDED` `MODEL_UNAVAILABLE` `MODEL_OUTPUT_INVALID` `JOB_FAILED` `RATE_LIMITED`"
+    acceptance:
+      - id: AC-API-001
+        criterion: "对全部路由枚举各发一次成功请求，断言成功响应体含 data 与 traceId，且不含 error 字段"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-design.md §5.3 —— 统一响应与错误规范"
+          confidence: high
+        verification:
+          kind: test
+          target: "apps/api/tests/contract/response-envelope.test.ts::success-response-envelope"
+          command: "bun test ./apps/api/tests/contract/response-envelope.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+      - id: AC-API-006
+        criterion: "对全部路由枚举各发一次失败请求，断言失败响应体含 error.code、error.message 与 traceId，且不含 data 字段"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-design.md §5.3 —— 统一响应与错误规范"
+          confidence: high
+        verification:
+          kind: test
+          target: "apps/api/tests/contract/response-envelope.test.ts::failure-response-envelope"
+          command: "bun test ./apps/api/tests/contract/response-envelope.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+      - id: AC-API-007
+        criterion: "断言实际出现的每一个错误码都属于封闭枚举，且枚举本身与设计文档给出的 10 个码**完全一致**（不增不减）"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-design.md §5.3 —— 错误码枚举：UNAUTHORIZED FORBIDDEN NOT_FOUND VALIDATION_FAILED SLIDE_VERSION_CONFLICT QUOTA_EXCEEDED MODEL_UNAVAILABLE MODEL_OUTPUT_INVALID JOB_FAILED RATE_LIMITED"
+          confidence: high
+        verification:
+          kind: test
+          target: "apps/api/tests/contract/response-envelope.test.ts::error-codes-closed-enum"
+          command: "bun test ./apps/api/tests/contract/response-envelope.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-API-002 乐观并发 ----
+  - id: SPEC-API-002
+    title: 幻灯片写操作必须携带 baseVersionId
+    type: business
+    risk: high
+    status: active
+    maturity: automated
+    statement: "所有 PATCH /api/projects/:id/slides/:slideId 请求必须携带 baseVersionId；与当前版本不匹配时返回 409 SLIDE_VERSION_CONFLICT 并附带当前版本"
+    source:
+      doc: "docs/backend-design.md"
+      section: "§5.3 统一响应与错误规范"
+      quote: "**乐观并发**：所有 `PATCH /slides/:slideId` 必须携带 `baseVersionId`；不匹配则返回 `409 SLIDE_VERSION_CONFLICT` 并附带当前版本，前端可提示\"内容已被他人修改\"。"
+    behaviors:
+      - when: "两个客户端基于同一 baseVersionId 写入"
+        then: "恰好一个成功，另一个返回 409 SLIDE_VERSION_CONFLICT"
+    acceptance:
+      - id: AC-API-002
+        criterion: "先用同一 baseVersionId 连续发两次 PATCH，断言第一次返回 2xx 且第二次返回 409 且 error.code = 'SLIDE_VERSION_CONFLICT' 且响应含当前版本"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-design.md §5.3 —— 不匹配则返回 409 SLIDE_VERSION_CONFLICT 并附带当前版本"
+          confidence: high
+        verification:
+          kind: test
+          target: "apps/api/tests/integration/optimistic-lock.test.ts::same-base-version-second-write-conflicts"
+          command: "bun test ./apps/api/tests/integration/optimistic-lock.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-API-003 资源级鉴权 ----
+  - id: SPEC-API-003
+    title: 每个资源查询强制带 userId 条件
+    type: technical
+    risk: high
+    status: active
+    maturity: automated
+    statement: "所有 /api/projects/* 路由的资源查询必须带 userId 条件；访问他人资源时统一返回 404 而非 403"
+    source:
+      doc: "docs/backend-design.md"
+      section: "§9.2 资源级鉴权"
+      quote: "**绝不依赖\"资源 ID 难猜\"来防越权**——每个资源查询都必须带 `userId` 条件。"
+    derived_from: SPEC-SEC-002
+    inference: "§9.2 规定查询必须带 userId 条件；SEC-08 规定越权统一返回 404 不泄露『存在但无权』"
+    behaviors:
+      - when: "用户 A 请求用户 B 的项目"
+        then: "返回 404 NOT_FOUND，响应体不含任何关于该项目存在性的信息"
+    acceptance:
+      - id: AC-API-003
+        criterion: "用用户 A 的会话访问用户 B 的项目 ID，断言返回 404 且 error.code = 'NOT_FOUND'；对 projects/slides/documents/artifacts 每一类资源重复该断言"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-design.md §9.2 + docs/backend-features.md §N SEC-01 / SEC-08"
+          confidence: high
+        verification:
+          kind: test
+          target: "apps/api/tests/security/cross-tenant-access.test.ts::cross-tenant-resource-read-is-404"
+          command: "bun test ./apps/api/tests/security/cross-tenant-access.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-API-004 AI 输出必须过 Schema ----
+  - id: SPEC-API-004
+    title: AI 输出必须经 Schema 校验方可进入系统
+    type: technical
+    risk: high
+    status: active
+    maturity: automated
+    statement: "模型输出必须经 Zod 校验，校验失败时不得写入 SlideIR 或项目数据"
+    source:
+      doc: "docs/backend-design.md"
+      section: "§12 安全"
+      quote: "| Prompt 注入 | 用户文档内容作为**数据**注入并明确标注边界；模型输出**永远经过 Zod 校验**后才进入系统，非法输出无法污染 IR |"
+    acceptance:
+      - id: AC-API-004
+        criterion: "用一段含多余字段与非法类型的模型输出调用生成端点，断言返回 4xx 且错误码为 MODEL_OUTPUT_INVALID；断言项目数据中不出现该输出的任何片段"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-design.md §12 安全 —— 模型输出永远经过 Zod 校验后才进入系统"
+          confidence: high
+        verification:
+          kind: test
+          target: "apps/api/tests/security/ai-output-validation.test.ts::invalid-model-output-rejected-and-not-persisted"
+          command: "bun test ./apps/api/tests/security/ai-output-validation.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-API-005 密钥管理 ----
+  - id: SPEC-API-005
+    title: 密钥仅存在于服务端且缺失即启动失败
+    type: technical
+    risk: high
+    status: active
+    maturity: automated
+    statement: "模型 API Key 不得出现在任何客户端响应中；缺失时服务必须启动失败而非降级为无密钥运行"
+    source:
+      doc: "docs/backend-features.md"
+      section: "§N 安全（SEC）· SEC-06"
+      quote: "密钥仅在服务端；缺失即启动失败；日志不打印密钥"
+    acceptance:
+      - id: AC-API-005
+        criterion: "在 GEMINI_API_KEY 缺失的环境启动服务，断言进程以非零码退出且日志含明确的缺失提示"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-features.md §N SEC-06 —— 密钥仅在服务端；缺失即启动失败；日志不打印密钥"
+          confidence: high
+        verification:
+          kind: test
+          target: "apps/api/tests/security/secret-handling.test.ts::missing-api-key-fails-startup"
+          command: "bun test ./apps/api/tests/security/secret-handling.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+      - id: AC-API-008
+        criterion: "用一个哨兵密钥启动服务，断言任何 API 响应体与任何日志行中都不含该密钥值；断言 /api/meta/models 只暴露『有没有密钥』而不暴露密钥本身"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-features.md §N SEC-06 —— 密钥仅在服务端；日志不打印密钥"
+          confidence: high
+        verification:
+          kind: test
+          target: "apps/api/tests/security/secret-handling.test.ts::secret-never-leaks-into-responses-or-logs"
+          command: "bun test ./apps/api/tests/security/secret-handling.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+# ===========================================================================
+# G. 会话与安全
+# ===========================================================================
+  # ---- SPEC-SEC-001 密码哈希 ----
+  - id: SPEC-SEC-001
+    title: 密码使用 argon2id 哈希存储
+    type: technical
+    risk: high
+    status: active
+    maturity: automated
+    statement: "注册与登录必须使用 Bun.password 的 argon2id 算法进行哈希与校验，数据库中不得出现明文或可逆密文"
+    source:
+      doc: "docs/backend-design.md"
+      section: "§9.1 会话"
+      quote: "注册/登录：`Bun.password.hash(pw, { algorithm: 'argon2id' })`；验证 `Bun.password.verify`。"
+    acceptance:
+      - id: AC-SEC-001
+        criterion: "注册一个用户后直接查库，断言存储的哈希以 '$argon2id$' 开头、不等于明文，且不含明文的任何片段"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-design.md §9.1 —— Bun.password.hash(pw, { algorithm: 'argon2id' })"
+          confidence: high
+        verification:
+          kind: test
+          target: "apps/api/tests/security/password-hashing.test.ts::password-stored-as-argon2id-hash"
+          command: "bun test ./apps/api/tests/security/password-hashing.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+      - id: AC-SEC-003
+        criterion: "断言 Bun.password.verify 对正确密码返回 true、对错误密码返回 false；断言错误密码无法通过登录端点进入"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-design.md §9.1 —— 验证 Bun.password.verify"
+          confidence: high
+        verification:
+          kind: test
+          target: "apps/api/tests/security/password-hashing.test.ts::password-verify-accepts-correct-and-rejects-wrong"
+          command: "bun test ./apps/api/tests/security/password-hashing.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-SEC-002 Session Cookie 属性 ----
+  - id: SPEC-SEC-002
+    title: Session Cookie 具备安全属性
+    type: technical
+    risk: high
+    status: active
+    maturity: automated
+    statement: "会话 Cookie 必须设置 HttpOnly、SameSite=Lax、Path=/，生产环境还必须设置 Secure"
+    source:
+      doc: "docs/backend-design.md"
+      section: "§9.1 会话"
+      quote: "Cookie：`HttpOnly` + `SameSite=Lax` + `Secure`（生产）+ `Path=/`。"
+    boundaries:
+      - "Session ID 为 32 字节 CSPRNG 的 base64url 编码"
+    acceptance:
+      - id: AC-SEC-002
+        criterion: "调用登录端点，断言 Set-Cookie 头包含 HttpOnly、SameSite=Lax、Path=/"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-design.md §9.1 —— Cookie：HttpOnly + SameSite=Lax + Secure（生产）+ Path=/"
+          confidence: high
+        verification:
+          kind: test
+          target: "apps/api/tests/security/session-cookie.test.ts::session-cookie-has-security-attributes"
+          command: "bun test ./apps/api/tests/security/session-cookie.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+      - id: AC-SEC-004
+        criterion: "在 NODE_ENV=production 下调用登录端点，断言 Set-Cookie 头包含 Secure"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-design.md §9.1 —— Secure（生产）"
+          confidence: high
+        verification:
+          kind: test
+          target: "apps/api/tests/security/session-cookie.test.ts::session-cookie-secure-in-production"
+          command: "bun test ./apps/api/tests/security/session-cookie.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+      - id: AC-SEC-005
+        criterion: "断言 Session ID 长度 ≥ 43（32 字节的 base64url 编码）且只含 base64url 字符集；断言两次登录的 Session ID 不同"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-design.md §9.1 —— Session ID 为 32 字节 CSPRNG 的 base64url 编码"
+          confidence: high
+        verification:
+          kind: test
+          target: "apps/api/tests/security/session-cookie.test.ts::session-id-is-32-byte-base64url"
+          command: "bun test ./apps/api/tests/security/session-cookie.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+# ===========================================================================
+# G2. 前后端集成（真实浏览器 + 真实服务端）
+# ---------------------------------------------------------------------------
+# 这一组条款覆盖的是**用户真正使用的那条链路**。
+#
+# 前面所有条款都只证明了"后端满足契约" —— 但"后端对"和"界面连的是这个后端"
+# 是两回事。判据一律写成「UI 操作了什么 → 服务端库里到底存了什么」：
+# 只断言 UI 文本的话，把后端整个换成假实现也能通过。
+# ===========================================================================
+  # ---- SPEC-E2E-001 身份与项目创建 ----
+  - id: SPEC-E2E-001
+    title: 浏览器链路上，注册、会话与新建项目端到端成立
+    type: technical
+    risk: high
+    status: active
+    maturity: automated
+    statement: "在真实浏览器中完成注册并进入工作台后，新建的项目必须真的存在于服务端数据库中，且会话由服务端签发"
+    source:
+      doc: "docs/architecture.md"
+      section: "§4 关键场景端到端时序（场景 A）"
+      quote: "用户 │ 体验层 │ API 层 │ 编排层 │ 领域层 │ 基础设施 —— 输入需求 → POST /ai/requirement"
+    behaviors:
+      - when: "用户在浏览器里注册并新建项目"
+        then: "服务端签发会话 Cookie，项目行落库且带当前 userId"
+    acceptance:
+      - id: AC-E2E-001
+        criterion: "在真实浏览器中注册，断言服务端签发了会话 Cookie，前端据此进入工作台"
+        oracle:
+          tier: authoritative
+          source: "docs/architecture.md §4 场景 A —— 注册后由 API 层签发会话并驱动体验层进入工作台"
+          confidence: high
+        verification:
+          kind: test
+          target: "e2e/integration.e2e.ts::1. 注册 → 服务端签发 HttpOnly 会话，前端据此进入工作台"
+          command: "bun test ./e2e/integration.e2e.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+      - id: AC-E2E-002
+        criterion: "在真实浏览器中新建项目，断言服务端项目表里确实新增了该项目，且归属当前用户"
+        oracle:
+          tier: authoritative
+          source: "docs/architecture.md §4 场景 A —— 体验层发起的写操作最终持久化到 PG"
+          confidence: high
+        verification:
+          kind: test
+          target: "e2e/integration.e2e.ts::2. 新建项目 → 服务端库里真的有这条项目"
+          command: "bun test ./e2e/integration.e2e.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-E2E-002 大纲与编译由服务端产出 ----
+  - id: SPEC-E2E-002
+    title: 浏览器链路上，大纲与页面 IR 由服务端产出并落库
+    type: business
+    risk: high
+    status: active
+    maturity: automated
+    statement: "浏览器里触发生成大纲与编译时，服务端必须按用户输入的主题动态生成内容并落库，工作台渲染的必须是服务端返回的 Slide IR"
+    source:
+      doc: "docs/architecture.md"
+      section: "§4 关键场景端到端时序（场景 A）"
+      quote: "产出 outline + SlideContent → ↓ Zod校验 → ↓ bindContent → 槽位补全 —— 编译页面 POST /projects/:id/compile → layoutEngine 8种版式 → SlideIR"
+    acceptance:
+      - id: AC-E2E-003
+        criterion: "在真实浏览器中输入主题生成大纲，断言服务端返回的大纲随主题变化（不是写死的固定文案）"
+        oracle:
+          tier: authoritative
+          source: "docs/architecture.md §4 场景 A 与 §7.3 —— 降级链触发时产出确定性内容（按 topic 动态生成，不再是写死的 Agent 架构大纲）"
+          confidence: high
+        verification:
+          kind: test
+          target: "e2e/integration.e2e.ts::3. 生成大纲 → 服务端按主题动态生成（不是写死的固定文案）"
+          command: "bun test ./e2e/integration.e2e.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+      - id: AC-E2E-004
+        criterion: "在真实浏览器中编辑大纲标题，断言服务端存的是前端改的那份（不是初始值）"
+        oracle:
+          tier: authoritative
+          source: "docs/architecture.md §4 场景 A —— 体验层的编辑必须持久化到服务端"
+          confidence: high
+        verification:
+          kind: test
+          target: "e2e/integration.e2e.ts::3b. 编辑大纲标题 → 服务端存的是前端改的那份"
+          command: "bun test ./e2e/integration.e2e.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+      - id: AC-E2E-005
+        criterion: "在真实浏览器中编译项目，断言工作台渲染的是服务端生成的 Slide IR（页数与元素 ID 来自服务端返回）"
+        oracle:
+          tier: authoritative
+          source: "docs/architecture.md §4 场景 A —— 编译后由服务端返回 SlideIR 并持久化"
+          confidence: high
+        verification:
+          kind: test
+          target: "e2e/integration.e2e.ts::4. 编译 → 工作台渲染的是服务端生成的 Slide IR"
+          command: "bun test ./e2e/integration.e2e.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-E2E-003 编辑写回与乐观锁 ----
+  - id: SPEC-E2E-003
+    title: 浏览器链路上，编辑必须写回服务端且乐观锁生效
+    type: business
+    risk: high
+    status: active
+    maturity: automated
+    statement: "浏览器中的文本编辑必须防抖同步写回服务端并生成新版本；用陈旧的 baseVersionId 写入时服务端返回 409 且不覆盖已有内容"
+    source:
+      doc: "docs/backend-design.md"
+      section: "§5.3 统一响应与错误规范"
+      quote: "**乐观并发**：所有 `PATCH /slides/:slideId` 必须携带 `baseVersionId`；不匹配则返回 `409 SLIDE_VERSION_CONFLICT` 并附带当前版本，前端可提示\"内容已被他人修改\"。"
+    acceptance:
+      - id: AC-E2E-006
+        criterion: "在真实浏览器中编辑幻灯片文本，断言防抖后服务端存的是新文本且版本号已推进"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-design.md §5.3 —— 写操作必须携带 baseVersionId 并生成新版本"
+          confidence: high
+        verification:
+          kind: test
+          target: "e2e/integration.e2e.ts::5. 编辑文本 → 防抖同步写回服务端（乐观锁生成新版本）"
+          command: "bun test ./e2e/integration.e2e.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+      - id: AC-E2E-007
+        criterion: "在真实浏览器中用陈旧的 baseVersionId 发起写入，断言服务端返回 409 且原有内容未被覆盖"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-design.md §5.3 —— 不匹配则返回 409 SLIDE_VERSION_CONFLICT"
+          confidence: high
+        verification:
+          kind: test
+          target: "e2e/integration.e2e.ts::6. 陈旧 baseVersionId → 409 冲突，且不覆盖服务端内容"
+          command: "bun test ./e2e/integration.e2e.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-E2E-004 AI 增量编辑由服务端施加 ----
+  - id: SPEC-E2E-004
+    title: 浏览器链路上，AI 增量编辑由服务端施加 IRPatch
+    type: business
+    risk: high
+    status: active
+    maturity: automated
+    statement: "浏览器里触发 AI 改页后，服务端必须施加 IRPatch 并返回新 IR，前端采纳服务端返回的 IR（不是本地臆造）"
+    source:
+      doc: "docs/architecture.md"
+      section: "§4 关键场景端到端时序（场景 B：AI 改页）"
+      quote: "### 场景 B：AI 改页（增量编辑）"
+    acceptance:
+      - id: AC-E2E-008
+        criterion: "在真实浏览器中触发 AI 编辑，断言服务端施加了 IRPatch 并落库，前端渲染的是服务端返回的 IR"
+        oracle:
+          tier: authoritative
+          source: "docs/architecture.md §4 场景 B —— AI 改页由服务端施加增量补丁后返回新 IR"
+          confidence: high
+        verification:
+          kind: test
+          target: "e2e/integration.e2e.ts::7. AI 编辑 → 服务端施加 IRPatch，前端采纳服务端返回的 IR"
+          command: "bun test ./e2e/integration.e2e.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-E2E-005 导出产物由服务端产出 ----
+  - id: SPEC-E2E-005
+    title: 浏览器链路上，导出产物是服务端生成的真实文件
+    type: business
+    risk: high
+    status: active
+    maturity: automated
+    statement: "浏览器里触发导出后，服务端任务必须产出真实可打开的 PPTX / PDF 产物（魔数校验），而不是前端拼出来的空壳"
+    source:
+      doc: "docs/architecture.md"
+      section: "§4 关键场景端到端时序（场景 C：导出）"
+      quote: "### 场景 C：导出（服务端管线）"
+    acceptance:
+      - id: AC-E2E-009
+        criterion: "在真实浏览器中导出 PPTX，断言服务端任务产出了真实 PPTX 产物（可解包且含预期页数）"
+        oracle:
+          tier: authoritative
+          source: "docs/architecture.md §4 场景 C —— 导出走服务端管线产出真实产物"
+          confidence: high
+        verification:
+          kind: test
+          target: "e2e/integration.e2e.ts::8. 导出 → 服务端任务产出真实 PPTX 产物"
+          command: "bun test ./e2e/integration.e2e.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+      - id: AC-E2E-010
+        criterion: "在真实浏览器中导出 PDF，断言服务端产物的文件头是 %PDF（真正的 PDF 而不是改名文件）"
+        oracle:
+          tier: authoritative
+          source: "docs/architecture.md §4 场景 C —— 导出走服务端管线产出真实产物"
+          confidence: high
+        verification:
+          kind: test
+          target: "e2e/integration.e2e.ts::11. 导出 PDF → 产物是真正的 PDF（%PDF 魔数）"
+          command: "bun test ./e2e/integration.e2e.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-E2E-006 跨租户隔离在浏览器链路上同样成立 ----
+  - id: SPEC-E2E-006
+    title: 浏览器链路上，跨租户访问同样是 404 而不是 403
+    type: technical
+    risk: high
+    status: active
+    maturity: automated
+    statement: "在浏览器里用另一个账号访问他人项目时，服务端必须返回 404（不泄露\"资源存在\"这一信息），界面不得渲染出他人内容"
+    source:
+      doc: "docs/backend-features.md"
+      section: "N. 安全（SEC）"
+      quote: "| SEC-08 | ID 枚举防护 | P1 | S1 | 越权访问统一返回 404（不泄露\"存在但无权\"） |"
+    acceptance:
+      - id: AC-E2E-011
+        criterion: "在真实浏览器中切换到另一个账号访问他人项目，断言服务端返回 404（不是 403），且界面拿不到他人内容"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-features.md SEC-08 —— 越权访问统一返回 404（不泄露\"存在但无权\"）"
+          confidence: high
+        verification:
+          kind: test
+          target: "e2e/integration.e2e.ts::9. 跨租户隔离 → 别人的项目拿不到（404 而不是 403）"
+          command: "bun test ./e2e/integration.e2e.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-E2E-007 项目重命名与删除落库 ----
+  - id: SPEC-E2E-007
+    title: 浏览器链路上，重命名与删除必须落库
+    type: business
+    risk: medium
+    status: active
+    maturity: automated
+    statement: "浏览器里重命名项目后服务端存的是新名字；删除项目后服务端确实标记删除，且列表里不再出现"
+    source:
+      doc: "docs/architecture.md"
+      section: "§5.2 实体关系"
+      quote: "├──< projects ──┬──< slides ──< slide_versions"
+    acceptance:
+      - id: AC-E2E-012
+        criterion: "在真实浏览器中重命名项目，断言服务端存的是新名字"
+        oracle:
+          tier: authoritative
+          source: "docs/architecture.md §5.2 —— 项目实体的写操作最终持久化到服务端"
+          confidence: high
+        verification:
+          kind: test
+          target: "e2e/integration.e2e.ts::10. 重命名项目 → 服务端存的是新名字"
+          command: "bun test ./e2e/integration.e2e.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+      - id: AC-E2E-013
+        criterion: "在真实浏览器中删除项目，断言服务端确实标记删除且项目列表里不再出现它"
+        oracle:
+          tier: authoritative
+          source: "docs/architecture.md §5.2 —— 删除是软删除（deleted_at），所有读路径都必须过滤"
+          confidence: high
+        verification:
+          kind: test
+          target: "e2e/integration.e2e.ts::12. 删除项目 → 服务端真的删掉了（且列表里也没有）"
+          command: "bun test ./e2e/integration.e2e.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+# ===========================================================================
+# H. 非功能
+# ===========================================================================
+  # ---- SPEC-NFR-001 大纲生成延迟 ----
+  - id: SPEC-NFR-001
+    title: 大纲生成 P95 小于 25 秒
+    type: quality
+    risk: medium
+    status: active
+    maturity: automated
+    statement: "6 页大纲与内容槽位生成的 P95 延迟必须小于 25 秒"
+    source:
+      doc: "docs/backend-features.md"
+      section: "非功能性需求（NFR）"
+      quote: "| | 大纲生成 P95（6 页） | < 25s |"
+    acceptance:
+      - id: AC-NFR-001
+        criterion: "在评估环境连续采样 ≥ 100 次大纲生成，断言 P95 延迟 < 25000ms"
+        oracle:
+          tier: statistical
+          source: "docs/backend-features.md NFR —— 大纲生成 P95（6 页） < 25s"
+          confidence: high
+        verification:
+          kind: benchmark
+          target: "apps/api/tests/perf/outline-latency.bench.ts::outline-generation-p95-under-threshold"
+          command: "bun test ./apps/api/tests/perf/outline-latency.bench.ts"
+          pass_when: "P95 < 25000ms。**本判据只在真实模型环境下成立**：需设 BENCH_REAL_MODEL=1 且 GEMINI_API_KEY 为真实密钥；默认的降级模式只采样到本地确定性实现，模型往返延迟根本没被采样到 —— 该模式下的通过**不构成**本条的通过证据，结论仍为 INCONCLUSIVE"
+        maturity: automated
+
+  # ---- SPEC-NFR-002 PPTX 导出延迟 ----
+  - id: SPEC-NFR-002
+    title: 整本 PPTX 导出 P95 小于 45 秒
+    type: quality
+    risk: medium
+    status: active
+    maturity: automated
+    statement: "12 页演示文稿导出 PPTX 的 P95 延迟必须小于 45 秒"
+    source:
+      doc: "docs/backend-features.md"
+      section: "非功能性需求（NFR）"
+      quote: "| | 整本 PPTX 导出（12 页） | < 45s |"
+    acceptance:
+      - id: AC-NFR-002
+        criterion: "连续导出 12 页演示文稿 ≥ 20 次，断言 P95 导出耗时 < 45000ms"
+        oracle:
+          tier: statistical
+          source: "docs/backend-features.md NFR —— 整本 PPTX 导出（12 页） < 45s"
+          confidence: high
+        verification:
+          kind: benchmark
+          target: "apps/api/tests/perf/export-latency.bench.ts::pptx-export-p95-under-threshold"
+          command: "bun test ./apps/api/tests/perf/export-latency.bench.ts"
+          pass_when: "P95 < 45000ms。本条与模型无关 —— 导出管线（SlideIR → PPTX）完全在服务端本地执行，测的就是真实导出耗时"
+        maturity: automated
+
+  # ---- SPEC-NFR-003 降级链 ----
+  - id: SPEC-NFR-003
+    title: 主模型完全不可用时端点仍返回合法内容
+    type: quality
+    risk: high
+    status: active
+    maturity: automated
+    statement: "当主模型返回 5xx / 超时 / 配额耗尽时，大纲端点必须仍然返回结构合法的内容，且降级实现按 requirement.topic 动态生成而非固定文案"
+    source:
+      doc: "docs/architecture.md"
+      section: "§7.2 降级链"
+      quote: "**降级实现的硬约束**：本地实现必须按 `requirement.topic` **动态生成**，不能像现状那样对所有主题返回同一份\"企业 AI Agent 技术架构规划\"大纲。"
+    acceptance:
+      - id: AC-NFR-003
+        criterion: "注入主模型 5xx 后调用大纲端点，断言返回 200、degraded 为 true，且每一页都通过 SlideOutlineItemSchema 校验"
+        oracle:
+          tier: authoritative
+          source: "docs/architecture.md §7.2 —— 降级实现的硬约束：必须按 requirement.topic 动态生成"
+          confidence: high
+        verification:
+          kind: test
+          target: "apps/api/tests/chaos/model-fallback.test.ts::model-unavailable-falls-back-with-valid-outline"
+          command: "bun test ./apps/api/tests/chaos/model-fallback.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+      - id: AC-NFR-004
+        criterion: "分别用两个不同 topic 调用大纲端点，断言两次返回的大纲文本不相同（降级实现必须按 topic 动态生成，不能是固定文案）"
+        oracle:
+          tier: authoritative
+          source: "docs/architecture.md §7.2 —— 本地实现必须按 requirement.topic 动态生成，不能对所有主题返回同一份大纲"
+          confidence: high
+        verification:
+          kind: test
+          target: "apps/api/tests/chaos/model-fallback.test.ts::fallback-outline-varies-by-topic"
+          command: "bun test ./apps/api/tests/chaos/model-fallback.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+# ===========================================================================
+# I. 治理与质量门禁
+# ===========================================================================
+  # ---- SPEC-GOV-001 覆盖率门槛 ----
+  - id: SPEC-GOV-001
+    title: 领域内核行覆盖率不低于 90%
+    type: governance
+    risk: medium
+    status: active
+    maturity: automated
+    statement: "领域内核（@ppt/core）的行覆盖率必须不低于 90%，否则阻断发布"
+    source:
+      doc: "docs/testing-strategy.md"
+      section: "§8 质量门禁指标"
+      quote: "| 领域层行覆盖率 | ≥ 90% | `bun test --coverage` | 阻断 |"
+    acceptance:
+      - id: AC-GOV-001
+        criterion: "断言领域内核目录（packages/core/src/engine/）的**聚合**行覆盖率 ≥ 90 —— 聚合口径为 lcov 的 ΣLH / ΣLF；断言一个领域内核文件都没采到时按未通过处理（无法判定 ≠ 通过）"
+        oracle:
+          tier: authoritative
+          source: "docs/testing-strategy.md §8 —— 领域层行覆盖率 ≥ 90%，阻断"
+          confidence: high
+        verification:
+          kind: test
+          target: "scripts/check-coverage.check.ts::domain-coverage-threshold"
+          command: "bun test ./scripts/check-coverage.check.ts"
+          pass_when: "退出码 0（门禁脚本以退出码表达判定：0=覆盖率达标；非 0=测试未全过 / 未采到任何引擎文件 / 覆盖率不足）"
+        maturity: automated
+
+  # ---- SPEC-GOV-002 黄金快照门槛 ----
+  - id: SPEC-GOV-002
+    title: 64 组黄金快照必须全部一致
+    type: governance
+    risk: high
+    status: active
+    maturity: automated
+    statement: "8 版式 × 8 主题共 64 组 SlideIR 黄金快照必须逐字节一致，否则阻断发布"
+    source:
+      doc: "docs/testing-strategy.md"
+      section: "§1.2 可发布门槛（Definition of Done）"
+      quote: "□ 黄金快照全部一致（64 组：8 版式 × 8 主题）"
+    derived_from: SPEC-CORE-005
+    inference: "快照一致的前提是版式引擎为纯函数（QA-4），故本条依赖 SPEC-CORE-005"
+    acceptance:
+      - id: AC-GOV-002
+        criterion: "运行快照测试，断言 64 组快照全部存在且全部匹配；快照序列化前必须剥离 versionId 与 lastModified"
+        oracle:
+          tier: authoritative
+          source: "docs/testing-strategy.md §1.2 —— 黄金快照全部一致（64 组：8 版式 × 8 主题）"
+          confidence: high
+        verification:
+          kind: test
+          target: "packages/core/tests/layoutEngine.snapshot.test.ts::golden-snapshots-all-match"
+          command: "bun test ./packages/core/tests/layoutEngine.snapshot.test.ts"
+          pass_when: "退出码 0，且 64 组快照全部匹配"
+        maturity: automated
+
+  # ---- SPEC-GOV-003 质量闸门阈值 ----
+  - id: SPEC-GOV-003
+    title: AI 生成内容落库前必须通过质量闸门
+    type: governance
+    risk: high
+    status: blocked
+    maturity: none
+    statement: "<待 AMB-002 裁决阈值后填写>"
+    source:
+      doc: "docs/architecture.md"
+      section: "§7.3 质量闸门（生成 → 落库的唯一通道）"
+      quote: "**闸门是架构组件，不是 UI 功能**。这保证无论内容从哪来（AI 生成、人工导入、模板提取），落库的都是达标内容。"
+    conflict: CONF-002
+    acceptance: []
+
+# ===========================================================================
+# 歧义与冲突登记
+# ===========================================================================
+ambiguities:
+  - id: AMB-001
+    topic: 质量闸门的具体阈值未定义
+    clause_ref: SPEC-GOV-003
+    question: "AI 生成内容落库前的质量分阈值 Q 取多少？文档只写「Q ≥ 阈值」与「Q < 阈值 → 降级内容 / 重新生成 / 拒绝并提示」，从未给出数字。"
+    impact: correctness
+    blocks: [SPEC-GOV-003]
+    proposed_default: "建议 Q ≥ 85 且无 error 级 issue —— 但这属于产品决策，需领域负责人拍板，不可由实现方代定"
+    status: OPEN
+
+  - id: AMB-002
+    topic: 越界判定依据画布还是安全区
+    clause_ref: SPEC-QLT-004
+    question: "LAY-05 说「内容区 100px 边距、底部 1020px；元素不得越界」，而质量引擎按 1920×1080 画布判定越界。以哪一个为准？"
+    impact: none
+    blocks: []
+    proposed_default: "两者并存且不矛盾：画布判定用于质量扣分（现状，已被 F7 追认），安全区用于版式生成的布局约束（LAY-05）。本 Spec 按此解读记录为 DEC-002。"
+    status: RESOLVED
+
+  - id: AMB-003
+    topic: PPTX 字体名 fallback 链的具体内容未定义
+    clause_ref: SPEC-EXP-001
+    question: "EXP-06 要求「字体名 fallback 链保证中英混排」，但没有给出链的具体顺序。当前实现硬编码为单一 'Arial'。"
+    impact: usability
+    blocks: []
+    proposed_default: "不阻塞：文本是否存在（EXP-01/EXP-15/EXP-17）与字体名无关。字体链单独作为后续条款处理。"
+    status: OPEN
+
+  - id: AMB-004
+    topic: AABB 碰撞的「10px 缓冲」是容差还是安全距
+    clause_ref: SPEC-QLT-005
+    question: "『卡片/层 AABB 碰撞检测（10px 缓冲）』有两种读法：(a) 10px 是容差 —— 重叠不超过 10px 不算碰撞；(b) 10px 是安全距 —— 两个盒子间距不足 10px 即算碰撞。两者在重叠 0~10px 与间隙 0~10px 区间结论相反。"
+    impact: correctness
+    blocks: []
+    proposed_default: "不阻塞：SPEC-QLT-005 的验收判据只取两种读法结论一致的区间（重叠 > 10px 判碰撞、间隙 > 10px 判不碰撞）。冲突区间留待产品/设计确认后单独成条。"
+    status: OPEN
+
+conflicts:
+  - id: CONF-001
+    topic: 元素 ID 的前缀用 role 还是 type
+    clause_a: SPEC-CORE-004
+    clause_b: SPEC-CORE-003
+    source:
+      doc: "docs/architecture.md"
+      section: "§12 ADR-012"
+      quote: "**决策**：`@ppt/core` 生成的所有元素 ID 形如 `{role}_{slideId}_{localIndex}`，全局唯一是**契约**而非巧合。"
+    impact: "影响 patch 寻址与快照基线的具体字符串，但不影响『ID 含 slideId』与『全局唯一』这两条可判定的性质"
+    resolution: BLOCKED
+    note: "文档内部不一致：ADR-012 写 {role}_{slideId}_{localIndex}，LAY-08 写 {type}_{slideId}_{idx}，现有 autoFixProject 用 {type}_{slideId}_{eIdx}。不自行裁决；因两条候选规则都满足『含 slideId』与『全局唯一』，SPEC-CORE-003/004 的验收判据不受该冲突影响，故不阻塞任何条款。"
+
+  - id: CONF-002
+    topic: 质量闸门阈值缺失
+    clause_a: SPEC-GOV-003
+    clause_b: SPEC-QLT-001
+    source:
+      doc: "docs/architecture.md"
+      section: "§7.3 质量闸门"
+      quote: "│   ├─ Q ≥ 阈值 ──▶ 落库 + 记账"
+    impact: "闸门无法配置，也就无法自动拦截不达标内容"
+    resolution: BLOCKED
+    note: "阈值缺失属文档缺口而非文档矛盾，已登记为 AMB-001 并据此把 SPEC-GOV-003 标为 blocked。"
+
+decisions:
+  - id: DEC-001
+    question: "本次 Spec 拆分是否覆盖全部五份文档的全部章节？"
+    decision: "不追求章节级全覆盖，改为领域级全覆盖 + 显式遗漏说明"
+    decided_by: "spec 化执行者"
+    decided_at: "2026-11-01"
+    rationale: "五份文档共 4680 行、626 条测试用例。若按文档章节逐条拆分，得到的 Spec 会与 test-cases.md 高度重复而失去独立价值。改为按 9 个领域拆分 41 条契约，覆盖全部需求类型与风险等级。"
+    applies_to: []
+
+  - id: DEC-002
+    question: AMB-002
+    decision: "画布判定用于质量扣分，安全区用于版式布局约束，两者并存"
+    decided_by: "spec 化执行者"
+    decided_at: "2026-11-01"
+    rationale: "改动任一判定都不会导致做错事（不影响正确性），按 skill 的暂停规则不阻塞；且 docs/backend-design.md §1.2 F7 明确追认质量引擎现状可原样搬到后端。"
+    applies_to: [SPEC-QLT-004]
+
+  - id: DEC-003
+    question: "AC-EXP-001 的判据单位应该是『IR 字符串』还是『IR 字符串按换行拆出的行』？"
+    decision: "改为以『行』为单位，并追加『运行集合与 IR 行集合相等』这一更强的不变式"
+    decided_by: "spec 化执行者"
+    decided_at: "2026-11-01"
+    rationale: "原判据写成『每个 IR 字符串完整出现在某一个 <a:t> 运行里』，但 PPTX 的段落以换行为界 —— pptxgenjs 见到 \\n 必定拆成多个文本对象，DrawingML 的 <a:t> 里也不存在字面换行。这不是实现偷懒，是目标格式的硬约束，原写法对含换行的 IR 字符串**永远不可满足**。若照原样留着，判据要么被悄悄放宽成『包含』而失去反串行能力，要么长期挂着一条永远为假的 FAIL。改为以行为单位后，判据仍可机械判定，且顺带补上了原写法最大的漏洞：只做『包含』判定时，两个 IR 字符串被拼进同一个运行仍会通过（『标题』是『标题正文』的子串）。集合相等同时排除了『缺』（正文丢失）、『多』（凭空固定文案）与『串』（两行拼在一处）。**未降低验收标准**：判据的原始来源（EXP-15/EXP-17『回读产物校验关键文本存在』）未变，收紧的是执行方式，被放宽的只是那个格式上不可能的『一个字符串一个运行』。"
+    applies_to: [SPEC-EXP-001]
+
+  - id: DEC-004
+    question: "响应包封与业务载荷的边界放哪儿 —— 信封里放什么，业务字段放哪儿？"
+    decision: "信封固定为 { data, traceId } 与 { error: { code, message, details? }, traceId }；**data 里再包一层业务字段**（如 { data: { project: {...} } }、{ data: { slides: [...] } }），而不是把业务字段平铺到 data 上"
+    decided_by: "spec 化执行者"
+    decided_at: "2026-11-01"
+    rationale: "docs/backend-design.md §5.3 只规定了信封的形状，没规定 data 内部结构。平铺（{ data: { id, name, ... } }）会让『哪些字段属于业务载荷』变成隐式约定，前端每接一个端点都要重新猜；再包一层（{ data: { project: {...} } }）则把载荷的**名字**显式写出来，新增字段不会破坏契约、删字段也不会悄悄改变语义。代价是前端多一次解构（data.project 而非 data），换来的是可演进的契约。本仓库实现与前端 apiClient 均按此口径。"
+    applies_to: [SPEC-API-001, SPEC-API-002, SPEC-API-003, SPEC-API-004, SPEC-API-005]
+
+  - id: DEC-005
+    question: "幂等与墓碑：重复施加同一条 remove_element 该报错还是静默成功？"
+    decision: "remove_element 指向**不存在**的元素时报错（这是契约错误）；指向**已被删除**的元素时是幂等 no-op —— 通过墓碑（tombstone）集合记录已删除的元素 ID 来区分这两种情况"
+    decided_by: "spec 化执行者"
+    decided_at: "2026-11-01"
+    rationale: "§4.3 只写了『删不存在则报错而非静默』，没有区分『从来没存在过』与『已经被删掉了』。若两者都报错，重试机制（网络超时后重发同一条补丁）会永远失败；若两者都静默，契约错误会被彻底吞掉。墓碑是唯一能同时满足两者的机制：删除时把元素 ID 记入墓碑；施加时先查墓碑（命中 → 幂等 no-op），再查元素表（未命中 → 抛错）。墓碑随 SlideIR 版本一起保存，因此『施加两次结果相同』在跨调用层面也成立。"
+    applies_to: [SPEC-IRP-002, SPEC-IRP-003]
+
+  - id: DEC-006
+    question: "模型不可用与模型输出非法，两种失败如何区分？"
+    decision: "**模型不可用**（5xx / 超时 / 配额耗尽 / 网络错误）→ 走本地降级，返回 200 且 `data.degraded = true`；**模型输出非法**（不是 JSON / 不合 Schema）→ 返回 4xx MODEL_OUTPUT_INVALID，**绝不降级**"
+    decided_by: "spec 化执行者"
+    decided_at: "2026-11-01"
+    rationale: "docs/backend-design.md §6.1 的降级链只写了『模型失败 → 降级』，没写『模型成功但输出是垃圾』。这两种情况在工程上必须分开：前者是**基础设施问题**，降级能给用户一个可用的结果；后者是**内容问题**，降级会用一段『看起来正常但与用户指令无关』的本地文案覆盖掉模型的实际输出，用户既没拿到模型的结果，也没被告知模型失败了 —— 而且非法输出里可能带着注入内容，降级等于把它静默洗白。已实现的口径：不可用 → degraded=true 的 200；非法 → MODEL_OUTPUT_INVALID 的 4xx。**这是对 §6.1 步骤 5 的显式偏离**，在此登记以便复核。"
+    applies_to: [SPEC-API-004, SPEC-NFR-003]
+
+  - id: DEC-007
+    question: "路径参数形态非法（不是 UUID）时返回什么？"
+    decision: "返回 404 NOT_FOUND —— **绝不返回 500**，也**不返回 400**"
+    decided_by: "spec 化执行者"
+    decided_at: "2026-11-01"
+    rationale: "projects.id 等列是 Postgres 的 `uuid` 类型。把非 UUID 字符串塞进 `WHERE id = $1`，Postgres 在**类型转换**阶段抛错，异常一路冒到错误处理器就变成 500 —— 数据库实现细节被当成服务端的内部错误泄漏给了客户端。但 404 才是对的语义：路径里的 id 长得不像 UUID，就是『这个资源不存在』；403 会泄露『存在但你没权限』（SEC-08 明确禁止）；400 说的是『请求格式不对』，而这里请求格式完全合法，只是它指向的东西不存在。**先校验形态，再查库** —— 形态不对直接 404，根本不碰数据库。这个缺陷是被 E2E 打出来的：客户端用正则从 body 文本扒 jobId 时多截了一段中文，POST /api/exports/<乱码> 于是 500。回归锁见 apps/api/tests/security/resource-lifecycle.test.ts。"
+    applies_to: [SPEC-API-001, SPEC-API-003]
+
+  - id: DEC-008
+    question: "软删除的资源，读路径要不要过滤 deleted_at？"
+    decision: "要 —— **每一个**资源读路径都必须带 `deleted_at IS NULL`，包括中间件，而不只是在 list / find 查询里"
+    decided_by: "spec 化执行者"
+    decided_at: "2026-11-01"
+    rationale: "删除是**软删除**（打 deleted_at 时间戳）。最初只有 listProjects / findProject 带了过滤，`requireProject` 中间件漏了，于是出现『作品库里没有了，直链却还能读能改』—— 列表与详情对同一个资源给出互相矛盾的答案。这类缺陷只有在**端到端**跑真实删除流程时才会暴露：单元测试从不断言『删掉之后再访问』这个状态转移。回归锁见 apps/api/tests/security/resource-lifecycle.test.ts（软删除后详情 / 子资源 / 写操作一律 404，且列表里不再出现）。"
+    applies_to: [SPEC-API-003]
+
+  - id: DEC-009
+    question: "覆盖率门禁按目录聚合时，用 text 报告还是 lcov 报告？"
+    decision: "用 lcov 报告的 ΣLH / ΣLF 精确聚合，不用 text 表格"
+    decided_by: "spec 化执行者"
+    decided_at: "2026-11-01"
+    rationale: "docs/testing-strategy.md §8 写的是『领域层行覆盖率 ≥ 90%』—— 这是**目录级**判据。Bun 的 text 报告只给每个文件的百分比，不给分子分母，于是目录聚合要么靠加权估算（各文件行数权重未知，结果不可复现），要么退化成『所有文件都 ≥ 90』（换了判据，更严但不是同一条）。lcov 给出标准的 LF（可执行行总数）与 LH（命中行数），聚合就是 ΣLH / ΣLF —— 精确、可复现、与 text 报告同源同一次运行。阈值仍是 90，写死在脚本里，没有环境变量可以调低；一个领域内核文件都没采到时按未通过处理（无法判定 ≠ 通过）。"
+    applies_to: [SPEC-GOV-001]
+
+  - id: DEC-010
+    question: "前后端集成 E2E 该不该直连真实模型端点？"
+    decision: "不直连 —— E2E 的模型端点指向**本地替身**（spec/verify/model-stub-server.ts），替身返回官方端点在占位 key 下的**原样** 400 响应体；E2E 因此恒定走「模型不可用 → 本地降级」这条路径"
+    decided_by: "spec 化执行者"
+    decided_at: "2026-11-01"
+    rationale: "docs/testing-strategy.md §6.1 明写「默认离线：`bun test` 一律使用回放，不烧 API 额度」，docs/backend-design.md §13 的测试分层把「AI 离线 → 录制响应回放」列为独立一层 —— 直连官方端点**违反**了这两条。实测后果也不是「多烧点额度」而已：官方端点在同一台机器上既有 300ms 返回 400 的常态，也有 TLS 校验失败、整整 20s 连不上的时刻；而 E2E 里「生成大纲」那一步只等 60s，降级链的最坏耗时正好是 3 × 20s = 60s。**测试的等待上限等于被测实现的最坏值**，于是这条用例变成掷硬币 —— 一次失败的判据分不清是实现坏了还是外网抽风，证据就不成立。改走本地替身后模型调用在 0–7ms 内失败（不再是 60,756ms），一轮 E2E 约 10s。替身返回原样的 400 响应体，于是链路仍是「真 HTTP → 真 SDK → 真错误分类（400 不可重试）→ 真降级链 → 真本地生成」，被换掉的只有链路尽头那台机器。**结论的适用范围**：E2E 证明的是「模型不可用时前后端仍然集成正确」，不证明真实模型下的生成质量或延迟 —— 那两项由 apps/api/tests/ai/（FakeModelClient）与 apps/api/tests/perf/ 覆盖，同样不是真实模型；要验证真实模型只能去预发环境单独跑，不能进 `bun test`。"
+    applies_to: [SPEC-E2E-001, SPEC-E2E-002, SPEC-E2E-003, SPEC-E2E-004, SPEC-E2E-005, SPEC-E2E-006, SPEC-E2E-007]
+
+  - id: DEC-011
+    question: "E2E 的前端 dev server 要不要开热重载与文件监听？"
+    decision: "不开 —— E2E 的 vite 一律带 `DISABLE_HMR=true`（关掉 hmr 与文件监听）"
+    decided_by: "spec 化执行者"
+    decided_at: "2026-11-01"
+    rationale: "vite 的 dev server 监听**整个项目根目录**，而 E2E 跑的时候根目录底下一直在变：PGlite 是文件数据库（每写一行都在改 `.data/e2e-pglite/**`）、导出产物落在 `.data/e2e-artifacts/`、浏览器证据落在 `spec/evidence/`、注入检查还会直接改源码。任何一次改动都可能让 vite 给页面发一次**整页重载**；页面一重载，React 的内存状态就没了，E2E 里「UI 操作 → 服务端存了什么」这条链子就断在中间。实测两次：一次让 AC-E2E-006 的「还原后」那一轮连挂 4 个用例（判为不合格），一次只是碰巧没炸。这个开关本来就是为「agent 改文件时页面乱闪」准备的（见 vite.config.ts 的注释）—— E2E 断言的是**服务端状态**，不测热重载，热重载对它是纯噪声。"
+    applies_to: [SPEC-E2E-001, SPEC-E2E-002, SPEC-E2E-003, SPEC-E2E-004, SPEC-E2E-005, SPEC-E2E-006, SPEC-E2E-007]
+
+# ===========================================================================
+# 未决与已知限制
+# ===========================================================================
+known_gaps:
+  - clause: SPEC-GOV-003
+    reason: "AMB-001 未裁决 —— 质量闸门阈值在文档中从未给出，判据本身无法成立"
+    plan: "由领域负责人给出阈值后补齐验收判据"
+
+  - clause: SPEC-NFR-001
+    reason: "验证器**已建成**（apps/api/tests/perf/outline-latency.bench.ts，100 次采样），但本轮只跑了**降级模式**：模型不可用时采样到的是本地确定性实现，模型往返延迟根本没被采样到。真实模型下的 P95 仍未测过 —— 结论为 INCONCLUSIVE，不能用降级模式的通过顶替"
+    plan: "在有真实 GEMINI_API_KEY 的评估环境设 BENCH_REAL_MODEL=1 重跑 `bun test ./apps/api/tests/perf/outline-latency.bench.ts`，把结果并入 spec/evidence/junit.xml"
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,52 @@
+{
+  "directory": "packages/core/src/engine",
+  "threshold": 90,
+  "found": 1869,
+  "hit": 1735,
+  "percent": 92.83,
+  "passed": true,
+  "files": [
+    {
+      "file": "packages/core/src/engine/contentBinding.ts",
+      "found": 145,
+      "hit": 124,
+      "percent": 85.52
+    },
+    {
+      "file": "packages/core/src/engine/exportEngine.ts",
+      "found": 318,
+      "hit": 254,
+      "percent": 79.87
+    },
+    {
+      "file": "packages/core/src/engine/layoutEngine.ts",
+      "found": 606,
+      "hit": 604,
+      "percent": 99.67
+    },
+    {
+      "file": "packages/core/src/engine/patchApplier.ts",
+      "found": 292,
+      "hit": 291,
+      "percent": 99.66
+    },
+    {
+      "file": "packages/core/src/engine/qualityEngine.ts",
+      "found": 171,
+      "hit": 170,
+      "percent": 99.42
+    },
+    {
+      "file": "packages/core/src/engine/svgRenderer.ts",
+      "found": 291,
+      "hit": 255,
+      "percent": 87.63
+    },
+    {
+      "file": "packages/core/src/engine/textMetrics.ts",
+      "found": 46,
+      "hit": 37,
+      "percent": 80.43
+    }
+  ]
+}

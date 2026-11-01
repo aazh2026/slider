@@ -1,0 +1,261 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.internal/schemas/design-spec.schema.json",
+  "title": "Design Spec",
+  "description": "机器可校验的 Spec 文件结构。字段语义见 references/spec-model.md",
+  "type": "object",
+  "required": ["meta", "clauses"],
+  "additionalProperties": false,
+
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["spec_version", "title", "sources", "created_at"],
+      "additionalProperties": false,
+      "properties": {
+        "spec_version": { "type": "string", "minLength": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "owner": { "type": "string" },
+        "created_at": { "type": "string", "format": "date" },
+        "last_reviewed": { "type": "string", "format": "date" },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["doc", "role"],
+            "additionalProperties": false,
+            "properties": {
+              "doc": { "type": "string", "minLength": 1 },
+              "version": { "type": "string" },
+              "role": { "enum": ["primary", "supplementary", "legacy"] }
+            }
+          }
+        }
+      }
+    },
+
+    "conventions": {
+      "type": "object",
+      "additionalProperties": true
+    },
+
+    "clauses": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/clause" }
+    },
+
+    "ambiguities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "topic", "question", "impact", "status"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "$ref": "#/$defs/ambiguityId" },
+          "topic": { "type": "string", "minLength": 1 },
+          "clause_ref": { "$ref": "#/$defs/clauseId" },
+          "question": { "type": "string", "minLength": 1 },
+          "impact": { "enum": ["correctness", "security", "usability", "none"] },
+          "blocks": { "type": "array", "items": { "$ref": "#/$defs/clauseId" } },
+          "proposed_default": { "type": "string" },
+          "status": { "enum": ["OPEN", "RESOLVED"] }
+        }
+      }
+    },
+
+    "conflicts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "topic", "clause_a", "clause_b", "resolution"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "$ref": "#/$defs/conflictId" },
+          "topic": { "type": "string", "minLength": 1 },
+          "clause_a": { "$ref": "#/$defs/clauseId" },
+          "clause_b": { "$ref": "#/$defs/clauseId" },
+          "source": {
+            "type": "object",
+            "required": ["doc", "section"],
+            "additionalProperties": false,
+            "properties": {
+              "doc": { "type": "string" },
+              "section": { "type": "string" },
+              "quote": { "type": "string" }
+            }
+          },
+          "impact": { "type": "string" },
+          "resolution": { "enum": ["BLOCKED", "RESOLVED"] },
+          "note": { "type": "string" }
+        }
+      }
+    },
+
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "question", "decision", "decided_by"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^DEC-[0-9]{3,}$" },
+          "question": { "type": "string" },
+          "decision": { "type": "string", "minLength": 1 },
+          "decided_by": { "type": "string", "minLength": 1 },
+          "decided_at": { "type": "string", "format": "date" },
+          "rationale": { "type": "string" },
+          "applies_to": { "type": "array", "items": { "$ref": "#/$defs/clauseId" } }
+        }
+      }
+    },
+
+    "known_gaps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["clause", "reason"],
+        "additionalProperties": false,
+        "properties": {
+          "clause": { "$ref": "#/$defs/clauseId" },
+          "reason": { "type": "string", "minLength": 1 },
+          "plan": { "type": "string" }
+        }
+      }
+    }
+  },
+
+  "$defs": {
+    "clauseId": { "type": "string", "pattern": "^SPEC-[A-Z0-9]+-[0-9]{3,}$" },
+    "ambiguityId": { "type": "string", "pattern": "^AMB-[0-9]{3,}$" },
+    "conflictId": { "type": "string", "pattern": "^CONF-[0-9]{3,}$" },
+    "acceptanceId": { "type": "string", "pattern": "^AC-[A-Z0-9]+-[0-9]{3,}$" },
+
+    "clause": {
+      "type": "object",
+      "required": ["id", "title", "type", "risk", "statement", "source", "acceptance", "maturity"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/clauseId" },
+        "title": { "type": "string", "minLength": 1 },
+        "type": { "enum": ["business", "technical", "quality", "governance"] },
+        "risk": { "enum": ["high", "medium", "low"] },
+        "status": { "enum": ["draft", "blocked", "active", "withdrawn"] },
+        "statement": { "type": "string", "minLength": 1 },
+        "source": {
+          "type": "object",
+          "required": ["doc", "section", "quote"],
+          "additionalProperties": false,
+          "properties": {
+            "doc": { "type": "string", "minLength": 1 },
+            "section": { "type": "string", "minLength": 1 },
+            "quote": { "type": "string", "minLength": 1 },
+            "clause_ref": { "type": "string" }
+          }
+        },
+        "derived_from": { "$ref": "#/$defs/clauseId" },
+        "inference": { "type": "string" },
+        "assumption": { "type": "string" },
+        "conflict": { "$ref": "#/$defs/conflictId" },
+        "preconditions": { "type": "array", "items": { "type": "string" } },
+        "behaviors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["when", "then"],
+            "additionalProperties": false,
+            "properties": {
+              "when": { "type": "string", "minLength": 1 },
+              "then": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "postconditions": { "type": "array", "items": { "type": "string" } },
+        "boundaries": { "type": "array", "items": { "type": "string" } },
+        "failure": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["condition", "observable"],
+            "additionalProperties": false,
+            "properties": {
+              "condition": { "type": "string", "minLength": 1 },
+              "observable": { "type": "string", "minLength": 1 },
+              "spec_ref": { "$ref": "#/$defs/clauseId" }
+            }
+          }
+        },
+        "invariants": { "type": "array", "items": { "type": "string" } },
+        "acceptance": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/acceptance" }
+        },
+        "maturity": { "enum": ["automated", "semi", "manual", "none"] }
+      },
+      "allOf": [
+        {
+          "description": "active 条款必须有验收判据；blocked 条款允许为空",
+          "if": {
+            "properties": { "status": { "const": "active" } },
+            "required": ["status"]
+          },
+          "then": {
+            "properties": {
+              "acceptance": { "minItems": 1 }
+            }
+          }
+        },
+        {
+          "description": "maturity = none 的条款不得声明任何验收判据 —— 没有验证方式就不存在判据",
+          "if": {
+            "properties": { "maturity": { "const": "none" } },
+            "required": ["maturity"]
+          },
+          "then": {
+            "properties": {
+              "acceptance": { "maxItems": 0 }
+            }
+          }
+        }
+      ]
+    },
+
+    "acceptance": {
+      "type": "object",
+      "required": ["id", "criterion", "oracle", "verification", "maturity"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/acceptanceId" },
+        "criterion": { "type": "string", "minLength": 1 },
+        "oracle": {
+          "type": "object",
+          "required": ["tier", "source", "confidence"],
+          "additionalProperties": false,
+          "properties": {
+            "tier": {
+              "enum": ["authoritative", "expert", "formal", "statistical", "human", "self-derived"]
+            },
+            "source": { "type": "string", "minLength": 1 },
+            "confidence": { "enum": ["high", "medium", "low"] }
+          }
+        },
+        "verification": {
+          "type": "object",
+          "required": ["kind", "target", "command", "pass_when"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "enum": ["test", "schema", "property", "differential", "metamorphic", "benchmark", "manual"]
+            },
+            "target": { "type": "string", "minLength": 1 },
+            "command": { "type": "string", "minLength": 1 },
+            "pass_when": { "type": "string", "minLength": 1 },
+            "fixtures": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "maturity": { "enum": ["automated", "semi", "manual", "none"] }
+      }
+    }
+  }
+}
