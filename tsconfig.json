@@ -4,7 +4,7 @@
     "experimentalDecorators": true,
     "useDefineForClassFields": false,
     "module": "ESNext",
-    "types": ["vite/client"],
+    "types": ["vite/client", "bun-types"],
     "lib": [
       "ES2022",
       "DOM",
@@ -19,10 +19,26 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@ppt/core": [
+        "./packages/core/src/index.ts"
+      ],
+      "@ppt/core/*": [
+        "./packages/core/src/*"
       ]
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "exclude": ["dist"]
+  "include": [
+    "src",
+    "packages/core/src",
+    "packages/core/tests",
+    "apps/api/src",
+    "apps/api/tests",
+    "spec/verify",
+    "scripts",
+    "e2e"
+  ],
+  "exclude": ["dist", "node_modules"]
 }

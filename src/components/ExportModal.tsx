@@ -1,12 +1,26 @@
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
+ *
+ * 导出中心 —— 走**服务端**导出任务
+ * ---------------------------------------------------------------------------
+ *   POST /api/exports             创建任务（立即返回 jobId）
+ *   GET  /api/exports/:id         轮询任务状态
+ *   GET  /api/exports/:id/download 下载产物
+ *
+ * 旧版在浏览器里用 ExportEngine 直接生成文件。改走服务端的理由：
+ *
+ *   1. **前端预览与导出产物必须是同一份渲染器**。服务端用 `@ppt/core`
+ *      的同一份 SVGRenderer，客户端与服务端不可能出现"预览好看、导出走样"。
+ *   2. PDF 的 CJK 字体问题只有服务端能绕开（resvg 位图化，见 exportService）。
+ *   3. 导出是重活（12 页 PPTX 要上百毫秒），放服务端才不卡主线程。
  */
 
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { X, Download, FileText, Image, FileCode, CheckCircle2, ShieldCheck } from 'lucide-react';
-import { PresentationProject } from '../types/slide';
-import { ExportEngine } from '../engine/exportEngine';
+import { PresentationProject } from '@ppt/core';
+
+import { api, ApiClientError } from '../services/apiClient';
 
 interface ExportModalProps {
   project: PresentationProject;
@@ -15,59 +29,134 @@ interface ExportModalProps {
   onClose: () => void;
 }
 
+type ExportFormat = 'pptx' | 'pdf' | 'png' | 'svg' | 'json';
+
+interface ExportJob {
+  id: string;
+  status: 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled';
+  progress: number;
+  error?: string | null;
+  result?: { artifactId: string | null; filename: string } | null;
+}
+
+const STATUS_TEXT: Record<ExportJob['status'], string> = {
+  queued: '任务排队中',
+  running: '正在生成产物',
+  succeeded: '导出成功',
+  failed: '导出失败',
+  cancelled: '任务已取消',
+};
+
+/** 轮询间隔 */
+const POLL_INTERVAL_MS = 400;
+/** 轮询上限 —— 5 分钟；超过就判失败（不能无限等） */
+const POLL_MAX_ATTEMPTS = 750;
+
 export const ExportModal: React.FC<ExportModalProps> = ({
   project,
   currentSlideIndex,
   isOpen,
   onClose,
 }) => {
-  const [selectedFormat, setSelectedFormat] = useState<'pptx' | 'pdf' | 'png' | 'svg' | 'json'>('pptx');
+  const [selectedFormat, setSelectedFormat] = useState<ExportFormat>('pptx');
   const [isExporting, setIsExporting] = useState(false);
   const [progressText, setProgressText] = useState('');
   const [isDone, setIsDone] = useState(false);
+  const [jobId, setJobId] = useState<string | null>(null);
+  const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancelledRef = useRef(false);
 
-  if (!isOpen) return null;
+  // 关闭弹窗时停掉轮询
+  useEffect(() => {
+    return () => {
+      cancelledRef.current = true;
+      if (pollRef.current) clearTimeout(pollRef.current);
+    };
+  }, []);
 
   const currentSlide = project.slides[currentSlideIndex] || project.slides[0];
 
-  const handleExport = async () => {
-    setIsExporting(true);
-    setIsDone(false);
-    setProgressText('正在初始化导出引擎...');
-
-    try {
-      if (selectedFormat === 'pptx') {
-        setProgressText('正在将 Slide IR 元素映射为原生 PPTX 形状与文本框...');
-        await ExportEngine.exportPresentationAsPptx(project, (cur, total) => {
-          setProgressText(`正在转换第 ${cur} / ${total} 页原生 PPTX 对象...`);
-        });
-      } else if (selectedFormat === 'pdf') {
-        setProgressText('正在光栅化并写入 16:9 矢量 PDF 文档...');
-        await ExportEngine.exportPresentationAsPdf(project, (cur, total) => {
-          setProgressText(`正在渲染第 ${cur} / ${total} 页 PDF 页面...`);
-        });
-      } else if (selectedFormat === 'png') {
-        setProgressText('正在渲染 2x 超清 3840x2160 PNG 图片...');
-        await ExportEngine.exportSlideAsPng(currentSlide, project.template.theme);
-      } else if (selectedFormat === 'svg') {
-        setProgressText('正在打包纯净矢量 SVG 源码...');
-        ExportEngine.exportSlideAsSvg(currentSlide, project.template.theme);
-      } else if (selectedFormat === 'json') {
-        setProgressText('正在导出 Slide IR 结构化数据...');
-        ExportEngine.exportProjectAsJson(project);
+  const pollJob = useCallback(
+    async (id: string, attempt: number): Promise<void> => {
+      if (cancelledRef.current) return;
+      if (attempt > POLL_MAX_ATTEMPTS) {
+        setProgressText('导出超时：任务在预期时间内没有结束');
+        setIsExporting(false);
+        return;
       }
 
-      setIsDone(true);
-      setProgressText('导出成功！已触发浏览器下载。');
-      setTimeout(() => {
+      let job: ExportJob;
+      try {
+        const data = await api.get<{ job: ExportJob }>(`/api/exports/${id}`);
+        job = data.job;
+      } catch (err) {
+        setProgressText(
+          `查询任务状态失败：${err instanceof ApiClientError ? err.message : String(err)}`
+        );
         setIsExporting(false);
-      }, 1500);
-    } catch (err: any) {
-      console.error('Export error:', err);
-      setProgressText(`导出失败: ${err.message || '未知错误'}`);
+        return;
+      }
+
+      setJobId(job.id);
+      setProgressText(`${STATUS_TEXT[job.status]}（${job.progress}%）`);
+
+      if (job.status === 'failed' || job.status === 'cancelled') {
+        setProgressText(`导出失败：${job.error ?? STATUS_TEXT[job.status]}`);
+        setIsExporting(false);
+        return;
+      }
+
+      if (job.status === 'succeeded') {
+        await downloadArtifact(id, job.result?.filename ?? 'presentation');
+        setIsDone(true);
+        setProgressText('导出成功！文件已开始下载。');
+        setIsExporting(false);
+        return;
+      }
+
+      pollRef.current = setTimeout(() => void pollJob(id, attempt + 1), POLL_INTERVAL_MS);
+    },
+    []
+  );
+
+  const handleExport = async () => {
+    if (isExporting) return;
+    if (!currentSlide && (selectedFormat === 'png' || selectedFormat === 'svg')) {
+      setProgressText('没有可导出的幻灯片');
+      return;
+    }
+
+    setIsExporting(true);
+    setIsDone(false);
+    setJobId(null);
+    cancelledRef.current = false;
+    setProgressText('正在提交导出任务…');
+
+    try {
+      // PNG / SVG 只导出当前页（与旧版行为一致）；其余格式导出全部
+      const scope =
+        selectedFormat === 'png' || selectedFormat === 'svg'
+          ? { slideIds: currentSlide ? [currentSlide.slideId] : [] }
+          : undefined;
+
+      const data = await api.post<{ job: ExportJob }>('/api/exports', {
+        projectId: project.id,
+        format: selectedFormat,
+        scope,
+      });
+
+      setJobId(data.job.id);
+      setProgressText(`${STATUS_TEXT[data.job.status]}（${data.job.progress}%）`);
+      await pollJob(data.job.id, 0);
+    } catch (err) {
+      setProgressText(
+        `导出失败：${err instanceof ApiClientError ? err.message : String(err)}`
+      );
       setIsExporting(false);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
@@ -77,7 +166,11 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             <Download className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             <h2 className="text-base font-bold text-slate-900 dark:text-white">多格式导出中心 (Export Engine)</h2>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800">
+          <button
+            onClick={onClose}
+            data-testid="export-close"
+            className="p-1 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -89,6 +182,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           {/* PPTX Option */}
           <div
             onClick={() => setSelectedFormat('pptx')}
+            data-testid="export-format-pptx"
             className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-start gap-3.5 ${
               selectedFormat === 'pptx'
                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 ring-1 ring-blue-500/40'
@@ -114,6 +208,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           {/* PDF Option */}
           <div
             onClick={() => setSelectedFormat('pdf')}
+            data-testid="export-format-pdf"
             className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-start gap-3.5 ${
               selectedFormat === 'pdf'
                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 ring-1 ring-blue-500/40'
@@ -136,6 +231,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           {/* PNG Option */}
           <div
             onClick={() => setSelectedFormat('png')}
+            data-testid="export-format-png"
             className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-start gap-3.5 ${
               selectedFormat === 'png'
                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 ring-1 ring-blue-500/40'
@@ -159,6 +255,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           {/* SVG Option */}
           <div
             onClick={() => setSelectedFormat('svg')}
+            data-testid="export-format-svg"
             className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-start gap-3.5 ${
               selectedFormat === 'svg'
                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 ring-1 ring-blue-500/40'
@@ -181,6 +278,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           {/* JSON Option */}
           <div
             onClick={() => setSelectedFormat('json')}
+            data-testid="export-format-json"
             className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-start gap-3.5 ${
               selectedFormat === 'json'
                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 ring-1 ring-blue-500/40'
@@ -203,13 +301,26 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
         {/* Status / Progress feedback */}
         {progressText && (
-          <div className="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg flex items-center gap-2 text-xs text-blue-600 dark:text-blue-300">
+          <div
+            data-testid="export-progress"
+            className="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg flex items-center gap-2 text-xs text-blue-600 dark:text-blue-300"
+          >
             {isDone ? (
               <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
             ) : (
               <div className="w-3.5 h-3.5 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin shrink-0" />
             )}
             <span className="truncate">{progressText}</span>
+          </div>
+        )}
+
+        {jobId && (
+          <div
+            className="text-[10px] font-mono text-slate-400 dark:text-slate-500"
+            data-testid="export-job-id"
+            data-job-id={jobId}
+          >
+            jobId: {jobId}
           </div>
         )}
 
@@ -222,15 +333,47 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             取消
           </button>
           <button
-            onClick={handleExport}
+            onClick={() => void handleExport()}
             disabled={isExporting}
+            data-testid="export-submit"
             className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 active:scale-98 text-white rounded-lg font-bold text-xs shadow-md shadow-blue-900/30 transition-all cursor-pointer disabled:opacity-50"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>确认导出</span>
+            <span>{isExporting ? '导出中…' : '确认导出'}</span>
           </button>
         </div>
       </div>
     </div>
   );
 };
+
+/**
+ * 下载产物并触发浏览器保存
+ * ---------------------------------------------------------------------------
+ * 用 `fetch` 而不是 `api.blob` 是因为要读 `content-disposition` 拿真实文件名
+ * （中文名经过 RFC 5987 编码），`api.blob` 只把 body 交出来。
+ */
+async function downloadArtifact(jobId: string, fallbackName: string): Promise<void> {
+  const res = await fetch(`/api/exports/${jobId}/download`, { credentials: 'include' });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`下载失败（HTTP ${res.status}）${text ? `：${text.slice(0, 200)}` : ''}`);
+  }
+
+  const disposition = res.headers.get('content-disposition') ?? '';
+  const match = /filename\*=UTF-8''([^;]+)/i.exec(disposition);
+  const filename = match
+    ? decodeURIComponent(match[1]!)
+    : (/filename="([^"]+)"/.exec(disposition)?.[1] ?? fallbackName);
+
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  // 立刻 revoke 会让部分浏览器拿不到内容 —— 延后释放
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}

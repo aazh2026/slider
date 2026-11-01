@@ -6,3 +6,6 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# 本地运行产物：PGlite 数据库、导出文件、E2E 产物（可达数 GB，绝不入库）
+.data/

@@ -23,10 +23,10 @@ import {
   ShieldCheck,
   FileCode,
 } from 'lucide-react';
-import { PresentationProject, TemplateIR } from '../types/slide';
-import { SVGRenderer } from '../engine/svgRenderer';
-import { BUILT_IN_TEMPLATES } from '../data/templates';
-import { ExportEngine } from '../engine/exportEngine';
+import { PresentationProject, TemplateIR } from '@ppt/core';
+import { SVGRenderer } from '@ppt/core';
+import { BUILT_IN_TEMPLATES } from '@ppt/core';
+import { ExportEngine } from '@ppt/core';
 
 interface ProjectsManagerProps {
   projects: PresentationProject[];
@@ -174,6 +174,7 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
             {/* New Project Button */}
             <button
               onClick={() => setIsNewModalOpen(true)}
+              data-testid="new-project"
               className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-500 active:scale-98 text-white rounded-lg font-bold text-xs shadow-md shadow-blue-900/30 transition-all cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
@@ -265,6 +266,8 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
               return (
                 <div
                   key={p.id}
+                  data-testid="project-card"
+                  data-project-id={p.id}
                   className={`bg-white dark:bg-slate-900 rounded-xl border flex flex-col justify-between transition-all shadow-sm group hover:shadow-md ${
                     isCurrent
                       ? 'border-blue-500 ring-2 ring-blue-500/30'
@@ -398,6 +401,7 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
                             onDeleteProject(p.id);
                           }
                         }}
+                        data-testid="project-delete"
                         disabled={projects.length <= 1}
                         className="p-1.5 text-slate-400 hover:text-rose-600 dark:text-slate-500 dark:hover:text-rose-400 rounded hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                         title="删除作品"
@@ -443,6 +447,7 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
                   type="text"
                   value={newProjectName}
                   onChange={(e) => setNewProjectName(e.target.value)}
+                  data-testid="new-project-name"
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
                   required
                 />
@@ -494,6 +499,7 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
               </button>
               <button
                 type="submit"
+                data-testid="new-project-submit"
                 className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold text-xs shadow-md transition-colors cursor-pointer"
               >
                 立即创建并进入工作台

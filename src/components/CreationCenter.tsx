@@ -5,8 +5,8 @@
 
 import React, { useState } from 'react';
 import { Sparkles, FileText, Upload, Sliders, CheckCircle2, ArrowRight, Wand2, Sun, Moon } from 'lucide-react';
-import { PresentationRequirement, TemplateIR } from '../types/slide';
-import { BUILT_IN_TEMPLATES } from '../data/templates';
+import { PresentationRequirement, TemplateIR } from '@ppt/core';
+import { BUILT_IN_TEMPLATES } from '@ppt/core';
 
 interface CreationCenterProps {
   requirement: PresentationRequirement;
@@ -122,6 +122,7 @@ export const CreationCenter: React.FC<CreationCenterProps> = ({
                 rows={5}
                 value={topicPrompt}
                 onChange={(e) => setTopicPrompt(e.target.value)}
+                data-testid="topic-prompt"
                 placeholder="例如：帮我制作一份企业 AI Agent 技术架构规划汇报，重点阐述分层架构与实施路线..."
                 className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-3.5 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors resize-none leading-relaxed"
                 required
@@ -276,6 +277,7 @@ export const CreationCenter: React.FC<CreationCenterProps> = ({
             <button
               type="submit"
               disabled={isGenerating || !topicPrompt.trim()}
+              data-testid="generate-outline"
               className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-98 text-white rounded-lg font-bold text-sm shadow-md shadow-blue-900/30 flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {isGenerating ? (

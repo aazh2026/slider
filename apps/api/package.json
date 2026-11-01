@@ -1,0 +1,20 @@
+{
+  "name": "@ppt/api",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "bun --hot src/index.ts",
+    "start": "bun src/index.ts"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.14",
+    "@google/genai": "^2.32.0",
+    "@ppt/core": "workspace:*",
+    "drizzle-orm": "^0.45.4",
+    "hono": "^4.13.16",
+    "postgres": "^4.0.0",
+    "zod": "^4.6.7"
+  }
+}

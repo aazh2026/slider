@@ -16,8 +16,8 @@ import {
   Maximize2,
   Volume2,
 } from 'lucide-react';
-import { PresentationProject } from '../types/slide';
-import { SVGRenderer } from '../engine/svgRenderer';
+import { PresentationProject } from '@ppt/core';
+import { SVGRenderer } from '@ppt/core';
 
 interface PresentationModeProps {
   project: PresentationProject;

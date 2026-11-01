@@ -1,0 +1,355 @@
+{
+  "slideId": "s1",
+  "order": 1,
+  "title": "黄金快照夹具标题",
+  "purpose": "黄金快照夹具目的",
+  "keyMessage": "黄金快照夹具核心结论",
+  "speakerNotes": "黄金快照夹具演讲者备注",
+  "visualIntent": "golden snapshot visual intent",
+  "layout": {
+    "type": "timeline_roadmap"
+  },
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "elements": [
+    {
+      "id": "bg_s1",
+      "type": "shape",
+      "role": "background",
+      "content": "",
+      "geometry": {
+        "x": 0,
+        "y": 0,
+        "width": 1920,
+        "height": 1080
+      },
+      "style": {
+        "backgroundColor": "#ffffff"
+      },
+      "editable": false,
+      "zIndex": 0
+    },
+    {
+      "id": "header_s1",
+      "type": "text",
+      "role": "subtitle",
+      "content": "GOLDEN SNAPSHOT VISUAL INTENT",
+      "geometry": {
+        "x": 100,
+        "y": 55,
+        "width": 800,
+        "height": 30
+      },
+      "style": {
+        "fontSize": 14,
+        "fontWeight": 700,
+        "color": "#dc2626",
+        "letterSpacing": "0.12em"
+      },
+      "editable": true,
+      "zIndex": 5
+    },
+    {
+      "id": "title_s1",
+      "type": "text",
+      "role": "title",
+      "content": "黄金快照夹具标题",
+      "geometry": {
+        "x": 100,
+        "y": 90,
+        "width": 1350,
+        "height": 60
+      },
+      "style": {
+        "fontSize": 38,
+        "fontWeight": 700,
+        "fontFamily": "Plus Jakarta Sans, system-ui, sans-serif",
+        "color": "#002060"
+      },
+      "editable": true,
+      "zIndex": 10
+    },
+    {
+      "id": "keymsg_s1",
+      "type": "text",
+      "role": "subtitle",
+      "content": "核心结论：黄金快照夹具核心结论",
+      "geometry": {
+        "x": 100,
+        "y": 155,
+        "width": 1450,
+        "height": 36
+      },
+      "style": {
+        "fontSize": 18,
+        "fontWeight": 500,
+        "color": "#475569"
+      },
+      "editable": true,
+      "zIndex": 10
+    },
+    {
+      "id": "pagenum_s1",
+      "type": "text",
+      "role": "footer",
+      "content": "01 / 12",
+      "geometry": {
+        "x": 1760,
+        "y": 1015,
+        "width": 80,
+        "height": 30
+      },
+      "style": {
+        "fontSize": 14,
+        "fontWeight": 600,
+        "color": "#475569",
+        "textAlign": "right"
+      },
+      "editable": false,
+      "zIndex": 5
+    },
+    {
+      "id": "footernote_s1",
+      "type": "text",
+      "role": "footer",
+      "content": "黄金快照夹具目的",
+      "geometry": {
+        "x": 100,
+        "y": 1015,
+        "width": 600,
+        "height": 30
+      },
+      "style": {
+        "fontSize": 13,
+        "fontWeight": 400,
+        "color": "#475569",
+        "opacity": 0.7
+      },
+      "editable": false,
+      "zIndex": 5
+    },
+    {
+      "id": "timeline_bar_s1",
+      "type": "shape",
+      "role": "divider",
+      "content": "",
+      "geometry": {
+        "x": 100,
+        "y": 320,
+        "width": 1720,
+        "height": 4
+      },
+      "style": {
+        "backgroundColor": "#e2e8f0"
+      },
+      "editable": false,
+      "zIndex": 2
+    },
+    {
+      "id": "timeline_node_s1_0",
+      "type": "shape",
+      "role": "badge",
+      "content": "1",
+      "geometry": {
+        "x": 120,
+        "y": 302,
+        "width": 40,
+        "height": 40
+      },
+      "style": {
+        "backgroundColor": "#dc2626",
+        "borderRadius": 20,
+        "color": "#ffffff",
+        "fontWeight": 700,
+        "fontSize": 16,
+        "textAlign": "center",
+        "lineHeight": 40
+      },
+      "editable": false,
+      "zIndex": 5
+    },
+    {
+      "id": "timeline_card_s1_0",
+      "type": "card",
+      "role": "card",
+      "content": {
+        "phase": "PHASE 01",
+        "time": "",
+        "title": "",
+        "deliverables": [
+          "快照要点一"
+        ]
+      },
+      "geometry": {
+        "x": 100,
+        "y": 370,
+        "width": 405,
+        "height": 550
+      },
+      "style": {
+        "backgroundColor": "#f8fafc",
+        "borderColor": "#e2e8f0",
+        "borderWidth": 1,
+        "borderRadius": 12,
+        "padding": 24
+      },
+      "editable": true,
+      "zIndex": 5
+    },
+    {
+      "id": "timeline_node_s1_1",
+      "type": "shape",
+      "role": "badge",
+      "content": "2",
+      "geometry": {
+        "x": 558,
+        "y": 302,
+        "width": 40,
+        "height": 40
+      },
+      "style": {
+        "backgroundColor": "#002060",
+        "borderRadius": 20,
+        "color": "#ffffff",
+        "fontWeight": 700,
+        "fontSize": 16,
+        "textAlign": "center",
+        "lineHeight": 40
+      },
+      "editable": false,
+      "zIndex": 5
+    },
+    {
+      "id": "timeline_card_s1_1",
+      "type": "card",
+      "role": "card",
+      "content": {
+        "phase": "PHASE 02",
+        "time": "",
+        "title": "",
+        "deliverables": [
+          "快照要点二"
+        ]
+      },
+      "geometry": {
+        "x": 538,
+        "y": 370,
+        "width": 405,
+        "height": 550
+      },
+      "style": {
+        "backgroundColor": "#f8fafc",
+        "borderColor": "#e2e8f0",
+        "borderWidth": 1,
+        "borderRadius": 12,
+        "padding": 24
+      },
+      "editable": true,
+      "zIndex": 5
+    },
+    {
+      "id": "timeline_node_s1_2",
+      "type": "shape",
+      "role": "badge",
+      "content": "3",
+      "geometry": {
+        "x": 996,
+        "y": 302,
+        "width": 40,
+        "height": 40
+      },
+      "style": {
+        "backgroundColor": "#002060",
+        "borderRadius": 20,
+        "color": "#ffffff",
+        "fontWeight": 700,
+        "fontSize": 16,
+        "textAlign": "center",
+        "lineHeight": 40
+      },
+      "editable": false,
+      "zIndex": 5
+    },
+    {
+      "id": "timeline_card_s1_2",
+      "type": "card",
+      "role": "card",
+      "content": {
+        "phase": "PHASE 03",
+        "time": "",
+        "title": "",
+        "deliverables": [
+          "快照要点三"
+        ]
+      },
+      "geometry": {
+        "x": 976,
+        "y": 370,
+        "width": 405,
+        "height": 550
+      },
+      "style": {
+        "backgroundColor": "#f8fafc",
+        "borderColor": "#e2e8f0",
+        "borderWidth": 1,
+        "borderRadius": 12,
+        "padding": 24
+      },
+      "editable": true,
+      "zIndex": 5
+    },
+    {
+      "id": "timeline_node_s1_3",
+      "type": "shape",
+      "role": "badge",
+      "content": "4",
+      "geometry": {
+        "x": 1434,
+        "y": 302,
+        "width": 40,
+        "height": 40
+      },
+      "style": {
+        "backgroundColor": "#002060",
+        "borderRadius": 20,
+        "color": "#ffffff",
+        "fontWeight": 700,
+        "fontSize": 16,
+        "textAlign": "center",
+        "lineHeight": 40
+      },
+      "editable": false,
+      "zIndex": 5
+    },
+    {
+      "id": "timeline_card_s1_3",
+      "type": "card",
+      "role": "card",
+      "content": {
+        "phase": "PHASE 04",
+        "time": "",
+        "title": "",
+        "deliverables": [
+          "快照要点四"
+        ]
+      },
+      "geometry": {
+        "x": 1414,
+        "y": 370,
+        "width": 405,
+        "height": 550
+      },
+      "style": {
+        "backgroundColor": "#f8fafc",
+        "borderColor": "#e2e8f0",
+        "borderWidth": 1,
+        "borderRadius": 12,
+        "padding": 24
+      },
+      "editable": true,
+      "zIndex": 5
+    }
+  ]
+}

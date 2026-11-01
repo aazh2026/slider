@@ -61,17 +61,29 @@ import {
   QualityReport,
   SlideLayoutType,
   SlideOutlineItem,
-} from '../types/slide';
-import { SVGRenderer } from '../engine/svgRenderer';
-import { BUILT_IN_TEMPLATES } from '../data/templates';
-import { AIService } from '../services/aiService';
-import { QualityEngine } from '../engine/qualityEngine';
-import { LayoutEngine } from '../engine/layoutEngine';
+} from '@ppt/core';
+import { SVGRenderer } from '@ppt/core';
+import { BUILT_IN_TEMPLATES } from '@ppt/core';
+import { defaultVisualIntent } from '@ppt/core';
+import { QualityEngine } from '@ppt/core';
+import { LayoutEngine } from '@ppt/core';
 
 interface WorkbenchProps {
   project: PresentationProject;
   onUpdateProject: (p: PresentationProject) => void;
   onStartPresent: () => void;
+  /**
+   * AI 编辑 —— 由 **服务端** 施加 IRPatch 协议
+   * ---------------------------------------------------------------------------
+   * Workbench 不再自己调用模型、自己改元素数组。补丁在服务端施加并落库，
+   * 返回的是**施加之后的 IR**与新版本号 —— 前端只负责把结果画出来。
+   * 这样乐观锁、版本历史、AI 输出校验都只有一处实现。
+   */
+  onAiEdit: (
+    slideId: string,
+    instruction: string,
+    mode: 'content' | 'style' | 'layout'
+  ) => Promise<{ message: string; degraded: boolean }>;
 }
 
 type InspectorTab = 'ai' | 'props' | 'theme' | 'quality';
@@ -80,6 +92,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
   project,
   onUpdateProject,
   onStartPresent,
+  onAiEdit,
 }) => {
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
@@ -102,6 +115,10 @@ export const Workbench: React.FC<WorkbenchProps> = ({
   const [aiInstruction, setAiInstruction] = useState('');
   const [isAiProcessing, setIsAiProcessing] = useState(false);
   const [aiMessage, setAiMessage] = useState<string | null>(null);
+  /** 本轮 AI 编辑是否走了服务端降级路径 —— 显式暴露，不靠文案猜 */
+  const [aiDegraded, setAiDegraded] = useState(false);
+  /** 编辑意图 —— 与后端 IRPatch 协议的 mode 一一对应 */
+  const [aiMode, setAiMode] = useState<'content' | 'style' | 'layout'>('content');
 
   // Inline text editing state
   const [editingTextElementId, setEditingTextElementId] = useState<string | null>(null);
@@ -238,7 +255,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
       purpose: '阐述业务目标、关键举措与技术支撑',
       keyMessage: '以统一平台规范与高保真架构保障业务持续创新',
       speakerNotes: '本页重点介绍核心逻辑与落地实施路径。',
-      visualIntent: layoutType,
+      visualIntent: defaultVisualIntent(layoutType),
       layoutPreference: layoutType,
       bulletPoints: ['建立核心数据链路与标准化集成模型', '引入智能调度体系提升端到端执行效率', '打造全流程监控与敏捷响应机制'],
       requiredElements: ['title', 'content'],
@@ -562,34 +579,32 @@ export const Workbench: React.FC<WorkbenchProps> = ({
   }, [selectedElementId, editingTextElementId, currentSlide, handleUndo, handleRedo, handleDeleteSelectedElement]);
 
   // AI Modification handler
+  // ---------------------------------------------------------------------------
+  // 补丁在**服务端**施加：App 把 IRPatch 请求发给后端，后端用 patchApplier
+  // 改 IR、校验、写库、生成新版本，然后把施加后的 IR 送回来。
+  // 这里不再自己"改元素数组" —— 否则前端和后端会有两套补丁语义。
   const handleRunAiEdit = async (customPrompt?: string) => {
     const instruction = customPrompt || aiInstruction;
     if (!instruction.trim() || isAiProcessing) return;
+    if (!currentSlide) return;
 
     setIsAiProcessing(true);
     setAiMessage(null);
-
-    const mode = selectedElementId ? 'selected_element' : 'whole_slide';
+    setAiDegraded(false);
 
     try {
-      const result = await AIService.editSlideWithAI(
-        currentSlide,
-        instruction,
-        selectedElementId || undefined,
-        mode
-      );
+      const result = await onAiEdit(currentSlide.slideId, instruction, aiMode);
 
-      const updatedSlide: SlideIR = {
-        ...currentSlide,
-        elements: result.updatedElements,
-        lastModified: Date.now(),
-      };
-
-      updateCurrentSlide(updatedSlide, `AI编辑: ${instruction.slice(0, 20)}`);
-      setAiMessage(result.message || '修改已成功应用！');
+      // 服务端返回的 IR 会通过 project prop 回来 —— 这里只负责反馈
+      const suffix = result.degraded ? '（模型不可用，已本地降级）' : '';
+      setAiMessage(`${result.message || '修改已成功应用！'}${suffix}`);
+      setAiDegraded(result.degraded);
       setAiInstruction('');
-    } catch (err: any) {
-      setAiMessage(`AI 编辑失败: ${err.message || '网络繁忙'}`);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : '网络繁忙或服务不可用';
+      setAiMessage(`AI 编辑失败: ${message}`);
+      setAiDegraded(false);
     } finally {
       setIsAiProcessing(false);
     }
@@ -754,9 +769,28 @@ export const Workbench: React.FC<WorkbenchProps> = ({
     onUpdateProject(fixed);
   };
 
-  const currentVersions = project.versions[currentSlide.slideId] || [];
+  const currentVersions = currentSlide ? project.versions[currentSlide.slideId] || [] : [];
   const lightTemplates = BUILT_IN_TEMPLATES.filter((t) => !t.theme.isDark);
   const darkTemplates = BUILT_IN_TEMPLATES.filter((t) => t.theme.isDark);
+
+  // 一页都没有 —— 不能往下渲染。
+  //
+  // `currentSlide` 来自 `project.slides[activeSlideIndex] || project.slides[0]`，
+  // 列表为空时它是 undefined；而下面（画布、元素覆盖层、版本历史）
+  // 到处都在解引用它 —— 一个 undefined 就能把整个应用打崩（React 没有错误边界）。
+  //
+  // 「列表为空」不是理论状态：项目**摘要**接口返回的 slides 就是空的，
+  // 摘要覆盖掉已加载的全量时会短暂出现这个状态。
+  if (!currentSlide) {
+    return (
+      <div
+        data-testid="workbench-empty"
+        className="flex-1 flex h-full items-center justify-center bg-slate-100 dark:bg-slate-950 text-slate-500 dark:text-slate-400 text-sm"
+      >
+        还没有可编辑的页面 —— 请先在「大纲」里生成并编译。
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex h-full overflow-hidden bg-slate-100 dark:bg-slate-950 select-none transition-colors duration-150">
@@ -837,6 +871,8 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                   setActiveSlideIndex(index);
                   setSelectedElementId(null);
                 }}
+                data-testid="slide-thumb"
+                data-slide-id={s.slideId}
                 className={`relative group rounded-lg border transition-all cursor-pointer p-1.5 ${
                   isActive
                     ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 shadow-md ring-1 ring-blue-500/30'
@@ -1136,6 +1172,9 @@ export const Workbench: React.FC<WorkbenchProps> = ({
           >
             {/* Layer 1: Pixel-Perfect Slide Vector SVG (100% Identical to Left Thumbnail & Presentation Mode) */}
             <div
+              data-testid="slide-canvas"
+              data-slide-id={currentSlide.slideId}
+              data-slide-title={currentSlide.title}
               className="absolute inset-0 w-full h-full pointer-events-none select-none [&>svg]:w-full [&>svg]:h-full [&>svg]:block"
               dangerouslySetInnerHTML={{
                 __html: SVGRenderer.renderInlineSvg(currentSlide, project.template.theme),
@@ -1159,6 +1198,10 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                       e.stopPropagation();
                       handleElementDoubleClick(el);
                     }}
+                    data-testid="slide-element"
+                    data-element-id={el.id}
+                    data-role={el.role}
+                    data-editable={el.editable ? 'true' : 'false'}
                     className={`absolute rounded-sm transition-all ${
                       el.editable ? 'cursor-move' : 'cursor-pointer'
                     } ${
@@ -1197,6 +1240,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                         value={inlineTextValue}
                         onChange={(e) => setInlineTextValue(e.target.value)}
                         onBlur={handleSaveInlineText}
+                        data-testid="inline-text-editor"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' && !e.shiftKey) {
                             e.preventDefault();
@@ -1330,6 +1374,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
               className={`p-2 rounded-lg transition-colors ${
                 activeTab === 'ai' ? 'text-blue-600 bg-blue-50 dark:bg-blue-500/10' : 'hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
+              data-testid="wb-tab-ai-collapsed"
               title="AI 智能编辑"
             >
               <Sparkles className="w-4 h-4" />
@@ -1380,6 +1425,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                 className={`flex items-center justify-center gap-1 border-b-2 transition-colors ${
                   activeTab === 'ai' ? 'text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-500 bg-slate-50 dark:bg-slate-800/40' : 'border-transparent hover:text-slate-900 dark:hover:text-white'
                 }`}
+                data-testid="wb-tab-ai"
                 title="AI 智能编辑与版本"
               >
                 <Sparkles className="w-3.5 h-3.5" />
@@ -1448,6 +1494,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                       rows={3}
                       value={aiInstruction}
                       onChange={(e) => setAiInstruction(e.target.value)}
+                      data-testid="ai-instruction"
                       placeholder={
                         selectedElement
                           ? '对选中元素的修改，如：加粗标题并改为橙色，精简成要点...'
@@ -1457,9 +1504,35 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                     />
                   </div>
 
+                  {/* 编辑意图 —— 直接对应后端 IRPatch 的 mode */}
+                  <div className="flex rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5" data-testid="ai-mode">
+                    {(
+                      [
+                        { value: 'content', label: '内容' },
+                        { value: 'style', label: '样式' },
+                        { value: 'layout', label: '布局' },
+                      ] as const
+                    ).map((m) => (
+                      <button
+                        key={m.value}
+                        type="button"
+                        data-testid={`ai-mode-${m.value}`}
+                        onClick={() => setAiMode(m.value)}
+                        className={`flex-1 py-1 rounded-md text-[11px] font-bold transition-all ${
+                          aiMode === m.value
+                            ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
+                            : 'text-slate-500 dark:text-slate-400'
+                        }`}
+                      >
+                        {m.label}
+                      </button>
+                    ))}
+                  </div>
+
                   <button
                     onClick={() => handleRunAiEdit()}
                     disabled={isAiProcessing || !aiInstruction.trim()}
+                    data-testid="ai-run"
                     className="w-full py-1.5 px-3 bg-blue-600 hover:bg-blue-500 active:scale-98 text-white rounded-lg font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 transition-all disabled:opacity-50 cursor-pointer"
                   >
                     {isAiProcessing ? (
@@ -1476,7 +1549,11 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                   </button>
 
                   {aiMessage && (
-                    <div className="p-2 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-lg text-xs text-blue-700 dark:text-blue-300">
+                    <div
+                      data-testid="ai-message"
+                      data-degraded={String(aiDegraded)}
+                      className="p-2 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-lg text-xs text-blue-700 dark:text-blue-300"
+                    >
                       {aiMessage}
                     </div>
                   )}

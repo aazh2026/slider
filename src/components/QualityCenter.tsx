@@ -5,8 +5,8 @@
 
 import React from 'react';
 import { ShieldCheck, AlertCircle, CheckCircle2, Wand2, Layers, ArrowRight } from 'lucide-react';
-import { PresentationProject, QualityReport } from '../types/slide';
-import { QualityEngine } from '../engine/qualityEngine';
+import { PresentationProject, QualityReport } from '@ppt/core';
+import { QualityEngine } from '@ppt/core';
 
 interface QualityCenterProps {
   project: PresentationProject;

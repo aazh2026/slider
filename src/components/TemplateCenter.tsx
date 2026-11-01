@@ -5,8 +5,8 @@
 
 import React, { useState } from 'react';
 import { Palette, Upload, CheckCircle2, Sparkles, Sliders, ArrowRight, Layers, FileCode, Sun, Moon } from 'lucide-react';
-import { TemplateIR, PresentationProject } from '../types/slide';
-import { BUILT_IN_TEMPLATES } from '../data/templates';
+import { TemplateIR, PresentationProject } from '@ppt/core';
+import { BUILT_IN_TEMPLATES } from '@ppt/core';
 
 interface TemplateCenterProps {
   currentTemplate: TemplateIR;

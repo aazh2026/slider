@@ -16,7 +16,8 @@ import {
   Check,
   RotateCcw,
 } from 'lucide-react';
-import { SlideOutlineItem, SlideLayoutType } from '../types/slide';
+import { SlideOutlineItem, SlideLayoutType } from '@ppt/core';
+import { defaultVisualIntent } from '@ppt/core';
 
 interface OutlineEditorProps {
   outline: SlideOutlineItem[];
@@ -79,7 +80,7 @@ export const OutlineEditor: React.FC<OutlineEditorProps> = ({
       title: '新页面主题：技术落地与保障措施',
       purpose: '阐述配套工程措施与技术风险防御方案',
       keyMessage: '以成熟的工程实践与全生命周期监控守护系统平稳运行',
-      visualIntent: 'cards_grid',
+      visualIntent: defaultVisualIntent('cards_grid'),
       layoutPreference: 'cards_grid',
       requiredElements: ['保障维度', '核心策略'],
       speakerNotes: '介绍技术安全与容灾保障体系。',
@@ -147,6 +148,7 @@ export const OutlineEditor: React.FC<OutlineEditorProps> = ({
             return (
               <div
                 key={item.slideId || index}
+                data-testid={`outline-item-${index}`}
                 className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700/80 rounded-xl p-5 transition-all shadow-sm group"
               >
                 <div className="flex items-start justify-between gap-4">
@@ -163,6 +165,7 @@ export const OutlineEditor: React.FC<OutlineEditorProps> = ({
                           type="text"
                           value={item.title}
                           onChange={(e) => handleFieldChange(index, 'title', e.target.value)}
+                          data-testid={`outline-title-input-${index}`}
                           className="w-full bg-slate-50 dark:bg-slate-950 border border-blue-500 rounded px-2.5 py-1 text-sm font-bold text-slate-900 dark:text-white focus:outline-none"
                         />
                       ) : (
@@ -223,6 +226,7 @@ export const OutlineEditor: React.FC<OutlineEditorProps> = ({
                       {/* Edit toggle button */}
                       <button
                         onClick={() => setEditingIndex(isEditing ? null : index)}
+                        data-testid={`outline-edit-${index}`}
                         className="p-1.5 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                         title={isEditing ? '保存' : '编辑细节'}
                       >
@@ -292,6 +296,7 @@ export const OutlineEditor: React.FC<OutlineEditorProps> = ({
           <button
             onClick={onConfirmAndGenerateSlides}
             disabled={isCompiling}
+            data-testid="confirm-outline"
             className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 active:scale-98 text-white rounded-lg font-bold text-xs shadow-md shadow-blue-900/30 transition-all cursor-pointer disabled:opacity-50"
           >
             {isCompiling ? (
