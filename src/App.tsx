@@ -87,6 +87,26 @@ export default function App() {
     return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onExpired);
   }, []);
 
+  /**
+   * 登出。
+   *
+   * 顺序很重要：**先让服务端作废会话，再清前端状态**。
+   * 反过来的话，服务端不知道这个会话已经不要了 —— Cookie 还在，
+   * 30 天内同一个 Cookie 仍然有效（`Max-Age=2592000`），
+   * 等于「点了退出登录」只是把界面藏起来，会话其实没断。
+   */
+  const handleLogout = useCallback(async () => {
+    try {
+      await AuthService.logout();
+    } catch {
+      // 服务端登出失败也要把本地状态清掉 ——
+      // 否则用户被困在一个已经出问题的会话里，连重试的入口都没有。
+    }
+    setUser(null);
+    setProjects([]);
+    setActiveProjectId('');
+  }, []);
+
   /* ---------------------------------------------------------------- */
   /* 工作台状态                                                         */
   /* ---------------------------------------------------------------- */
@@ -627,6 +647,8 @@ export default function App() {
           allProjects={projects}
           onSwitchProject={(id) => setActiveProjectId(id)}
           onCreateNewProject={() => setCurrentTab('projects')}
+          onLogout={() => void handleLogout()}
+          userEmail={user.email}
         />
         <main className="flex-1 flex flex-col h-full overflow-hidden relative">
           {currentTab === 'projects' ? (
@@ -695,6 +717,8 @@ export default function App() {
         allProjects={projects}
         onSwitchProject={(id) => setActiveProjectId(id)}
         onCreateNewProject={() => setCurrentTab('projects')}
+        onLogout={() => void handleLogout()}
+        userEmail={user.email}
       />
 
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">

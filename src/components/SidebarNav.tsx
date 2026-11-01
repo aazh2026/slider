@@ -23,6 +23,7 @@ import {
   Edit2,
   Sliders,
   ExternalLink,
+  LogOut,
 } from 'lucide-react';
 import { PresentationProject, QualityReport } from '@ppt/core';
 
@@ -45,6 +46,16 @@ interface SidebarNavProps {
   allProjects?: PresentationProject[];
   onSwitchProject?: (projectId: string) => void;
   onCreateNewProject?: () => void;
+  /**
+   * 登出。
+   *
+   * 以前这个按钮**根本不存在** —— `authService.logout()` 定义了却没有任何调用方，
+   * 于是用户在浏览器里无法结束会话（Cookie 一直有效到 30 天后过期）。
+   * 既然「登出」是会话生命周期的一部分，就得有一个入口，
+   * 而且它必须可测 —— 见 e2e/auth.e2e.ts。
+   */
+  onLogout?: () => void;
+  userEmail?: string;
 }
 
 export const SidebarNav: React.FC<SidebarNavProps> = ({
@@ -64,6 +75,8 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   allProjects = [],
   onSwitchProject,
   onCreateNewProject,
+  onLogout,
+  userEmail,
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
@@ -499,6 +512,21 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
             {!isCollapsed && <span>导出演示文稿</span>}
           </button>
         </div>
+
+        {/* 登出 —— 会话在服务端也要作废，不能只清前端状态 */}
+        {onLogout && (
+          <button
+            onClick={onLogout}
+            data-testid="logout"
+            className={`w-full flex items-center rounded-lg text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all ${
+              isCollapsed ? 'justify-center p-2' : 'justify-center gap-2 py-2'
+            }`}
+            title={userEmail ? `退出登录（${userEmail}）` : '退出登录'}
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            {!isCollapsed && <span>退出登录</span>}
+          </button>
+        )}
       </div>
     </aside>
   );
