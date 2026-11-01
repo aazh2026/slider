@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "bun run --hot apps/api/src/index.ts",
     "dev:web": "vite",
+    "dev:all": "bun run scripts/dev.ts",
     "build": "vite build",
     "start": "bun run apps/api/src/index.ts",
     "preview": "vite preview",
