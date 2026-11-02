@@ -713,6 +713,12 @@ apps/web/src/
 - **备选**：① 保持现状（放弃：编辑定位错误是功能级缺陷）② 只在 `autoFixProject` 里修（放弃：修复前仍然错，且会破坏渲染器对 ID 语义的依赖）。
 - **后果**：编辑定位可靠、质量分不再被跨页重复污染；代价是快照基线需要重建（64 组），且 `svgRenderer` 里 `el.id.includes('problem')` 这类**基于 ID 字符串的语义判断必须改为显式字段**（见 ADR-004 的 `metadata.variant`）。
 
+### ADR-013 · 不引入 slides-master 作为运行时依赖，但采纳它的 DPI 语义
+- **背景**：`slides-master`（.NET 9 / Open XML SDK）是社区里成熟的 SVG↔PPTX 转换实现，看上去可以直接替掉本项目的 `pptxgenjs` 导出链路。实测（本项目真实 SVG，21 个文本运行）后发现它会丢加粗（`font-weight` 400/500/600/700 → 21 个 `<a:r>` 里 0 个 `b="1"`）、丢换行（4 个 `<tspan>` → 0 个 `<a:br/>`，PowerPoint 并排成一行）、无 `<a:ea>`（CJK 字体无声明）、无 notesSlide —— 后者直接违反 SPEC-EXP-002。它也没有文本排版引擎，本项目的折行/截断（ADR-011 自研的那套）无处安放；部署侧还要多带一套 .NET 运行时与 libgdiplus 硬依赖。
+- **决策**：**不引入 slides-master 作为运行时依赖**，SVG→PPTX 继续用 `pptxgenjs`。但**采纳它的 DPI 语义**：SVG 不携带分辨率，CSS 默认 96 DPI，而本项目设计画布 1920×1080 铺满 12192000 EMU 的幻灯片意味着 **1 设计 px = 6350 EMU = 0.5pt**；这个换算收敛到 `packages/core/src/engine/typography.ts` 单一真相源，SVG 渲染与 PPTX 导出共用。同时把 slides-master 的 `ConversionOptions.Dpi`（原本是死字段）实现成真开关并验证 —— 144 DPI 时 1920 画布正好铺满 13.33in 幻灯片。
+- **备选**：① 整体换成 slides-master（放弃：丢加粗/换行/CJK 字体/备注，且引入异构运行时）② 把它当 .NET 侧车服务（放弃：保真损失照旧，却多一跳网络与一套进程编排）③ 换成 slides-master 的 SVG 生成（放弃：它没有排版引擎，等于重写本项目的折行算法）。
+- **后果**：导出链路保持单一技术栈（ADR-006 的服务端导出结论不变），且**当场查出了本项目自己的一个 bug** —— `exportEngine.ts` 用 CSS 的 96dpi 系数 `px * 0.72` 换算字号，而设计画布下应是 `px * 0.5`，导致导出比预览大 44%～100%，同一份 IR 两种样子（已修，见 `typography.ts`）。代价是 `<a:br/>`、`<a:ea>`、字体栈 fallback 这三件 slides-master 也没做到的事要自己写；slides-master 退化为**建模参照物**与**上游修复的落点**（同一个 GitHub owner）。完整评估见 [`slides-master-integration.md`](./slides-master-integration.md)。
+
 ---
 
 ## 13. 质量属性场景
@@ -805,6 +811,7 @@ AI 直接产 SlideIR                 AI 产内容槽位 → 确定性编译
 | **本文件** | 产品技术架构总览、分层、场景、ADR、质量属性 | 全员 |
 | [`backend-design.md`](./backend-design.md) | 后端详细设计：选型论证、数据模型、API 契约、Agent 实现、渲染管线 | 后端 |
 | [`backend-features.md`](./backend-features.md) | 187 项后端特性清单与优先级、阶段归属 | 产品 / PM / 后端 |
+| [`slides-master-integration.md`](./slides-master-integration.md) | slides-master 集成评估：DPI 语义落地、PPTX 导出的真实缺口、导出字号比例缺陷 | 全员 / 导出链路 |
 | 前端重构方案（待补） | `apps/web` 目标结构、状态迁移、性能优化 | 前端 |
 
 ---
