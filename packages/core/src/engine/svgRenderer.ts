@@ -5,6 +5,7 @@
 
 import { SlideIR, TemplateTheme, SlideElement } from '../types/slide';
 import { wrapText } from './textMetrics';
+import { CONTENT_TYPE_SCALE } from './typography';
 
 /**
  * Escapes characters for safe inclusion in SVG / XML
@@ -191,7 +192,7 @@ function contentBlocks(el: SlideElement, theme: TemplateTheme): TextBlock[] {
 
   if (typeof content === 'string') {
     return content.trim().length > 0
-      ? [{ text: content, fontSize: 15, color: textSecondary, lineHeight: 1.6 }]
+      ? [{ text: content, fontSize: CONTENT_TYPE_SCALE.plain, color: textSecondary, lineHeight: 1.6 }]
       : [];
   }
   if (!content || typeof content !== 'object') return [];
@@ -201,14 +202,14 @@ function contentBlocks(el: SlideElement, theme: TemplateTheme): TextBlock[] {
 
   // 时间轴阶段卡 { phase, time, title, deliverables[] }
   if ('phase' in c || Array.isArray(c.deliverables)) {
-    if (typeof c.phase === 'string') blocks.push({ text: c.phase, fontSize: 12, fontWeight: 700, color: primary });
-    if (typeof c.time === 'string') blocks.push({ text: c.time, fontSize: 12, color: textSecondary, gapBefore: 6 });
-    if (typeof c.title === 'string') blocks.push({ text: c.title, fontSize: 18, fontWeight: 700, color: textPrimary, gapBefore: 14, heading: true });
+    if (typeof c.phase === 'string') blocks.push({ text: c.phase, fontSize: CONTENT_TYPE_SCALE.phase, fontWeight: 700, color: primary });
+    if (typeof c.time === 'string') blocks.push({ text: c.time, fontSize: CONTENT_TYPE_SCALE.time, color: textSecondary, gapBefore: 6 });
+    if (typeof c.title === 'string') blocks.push({ text: c.title, fontSize: CONTENT_TYPE_SCALE.phaseTitle, fontWeight: 700, color: textPrimary, gapBefore: 14, heading: true });
     (Array.isArray(c.deliverables) ? c.deliverables : []).forEach((d) => {
       if (typeof d === 'string') {
         blocks.push({
           text: d,
-          fontSize: 14,
+          fontSize: CONTENT_TYPE_SCALE.deliverable,
           color: textSecondary,
           lineHeight: 1.5,
           gapBefore: 10,
@@ -221,12 +222,12 @@ function contentBlocks(el: SlideElement, theme: TemplateTheme): TextBlock[] {
 
   // 总结卡 { headline, points[] }
   if ('headline' in c || Array.isArray(c.points)) {
-    if (typeof c.headline === 'string') blocks.push({ text: c.headline, fontSize: 24, fontWeight: 700, color: textPrimary, heading: true });
+    if (typeof c.headline === 'string') blocks.push({ text: c.headline, fontSize: CONTENT_TYPE_SCALE.headline, fontWeight: 700, color: textPrimary, heading: true });
     (Array.isArray(c.points) ? c.points : []).forEach((p, i) => {
       if (typeof p === 'string') {
         blocks.push({
           text: p,
-          fontSize: 16,
+          fontSize: CONTENT_TYPE_SCALE.point,
           color: textSecondary,
           lineHeight: 1.6,
           gapBefore: 16,
@@ -239,21 +240,21 @@ function contentBlocks(el: SlideElement, theme: TemplateTheme): TextBlock[] {
 
   // 指标卡 { value, trend, title, desc }
   if ('value' in c) {
-    if (typeof c.value === 'string') blocks.push({ text: c.value, fontSize: 58, fontWeight: 800, color: primary, heading: true, tabular: true });
-    if (typeof c.trend === 'string') blocks.push({ text: c.trend, fontSize: 13, fontWeight: 700, color: accent, gapBefore: 8 });
-    if (typeof c.title === 'string') blocks.push({ text: c.title, fontSize: 20, fontWeight: 700, color: textPrimary, gapBefore: 18, heading: true });
-    if (typeof c.desc === 'string') blocks.push({ text: c.desc, fontSize: 15, color: textSecondary, lineHeight: 1.65, gapBefore: 12 });
+    if (typeof c.value === 'string') blocks.push({ text: c.value, fontSize: CONTENT_TYPE_SCALE.value, fontWeight: 800, color: primary, heading: true, tabular: true });
+    if (typeof c.trend === 'string') blocks.push({ text: c.trend, fontSize: CONTENT_TYPE_SCALE.trend, fontWeight: 700, color: accent, gapBefore: 8 });
+    if (typeof c.title === 'string') blocks.push({ text: c.title, fontSize: CONTENT_TYPE_SCALE.metricTitle, fontWeight: 700, color: textPrimary, gapBefore: 18, heading: true });
+    if (typeof c.desc === 'string') blocks.push({ text: c.desc, fontSize: CONTENT_TYPE_SCALE.metricDesc, color: textSecondary, lineHeight: 1.65, gapBefore: 12 });
     return blocks;
   }
 
   // 问题/方案卡与封面元信息卡 { title, items[] }
   if (Array.isArray(c.items)) {
-    if (typeof c.title === 'string') blocks.push({ text: c.title, fontSize: 22, fontWeight: 700, color: textPrimary, heading: true });
+    if (typeof c.title === 'string') blocks.push({ text: c.title, fontSize: CONTENT_TYPE_SCALE.itemsTitle, fontWeight: 700, color: textPrimary, heading: true });
     c.items.forEach((item, i) => {
       if (typeof item === 'string') {
         blocks.push({
           text: item,
-          fontSize: 15,
+          fontSize: CONTENT_TYPE_SCALE.item,
           color: textSecondary,
           lineHeight: 1.65,
           gapBefore: 16,
@@ -266,15 +267,15 @@ function contentBlocks(el: SlideElement, theme: TemplateTheme): TextBlock[] {
 
   // 通用卡片 { tag, title, desc }
   if ('tag' in c || 'desc' in c) {
-    if (typeof c.tag === 'string') blocks.push({ text: c.tag, fontSize: 12, fontWeight: 700, color: accent });
-    if (typeof c.title === 'string') blocks.push({ text: c.title, fontSize: 20, fontWeight: 700, color: textPrimary, gapBefore: 12, heading: true });
-    if (typeof c.desc === 'string') blocks.push({ text: c.desc, fontSize: 15, color: textSecondary, lineHeight: 1.65, gapBefore: 14 });
+    if (typeof c.tag === 'string') blocks.push({ text: c.tag, fontSize: CONTENT_TYPE_SCALE.tag, fontWeight: 700, color: accent });
+    if (typeof c.title === 'string') blocks.push({ text: c.title, fontSize: CONTENT_TYPE_SCALE.cardTitle, fontWeight: 700, color: textPrimary, gapBefore: 12, heading: true });
+    if (typeof c.desc === 'string') blocks.push({ text: c.desc, fontSize: CONTENT_TYPE_SCALE.cardDesc, color: textSecondary, lineHeight: 1.65, gapBefore: 14 });
     return blocks;
   }
 
   // 兜底：任何没见过的结构，都要把里面的字符串渲染出来 —— 不允许静默丢内容
   flattenStrings(content).forEach((text) => {
-    blocks.push({ text, fontSize: 15, color: textSecondary, lineHeight: 1.6, gapBefore: 8 });
+    blocks.push({ text, fontSize: CONTENT_TYPE_SCALE.fallback, color: textSecondary, lineHeight: 1.6, gapBefore: 8 });
   });
   return blocks;
 }

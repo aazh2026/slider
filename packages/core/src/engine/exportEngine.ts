@@ -7,6 +7,12 @@ import pptxgen from 'pptxgenjs';
 import { jsPDF } from 'jspdf';
 import { PresentationProject, SlideIR, TemplateTheme, SlideElement } from '../types/slide';
 import { SVGRenderer } from './svgRenderer';
+import {
+  CONTENT_TYPE_SCALE,
+  DESIGN_PX_TO_EMU,
+  DESIGN_PX_TO_PT,
+  EMU_PER_INCH,
+} from './typography';
 
 /**
  * 导出文件名清洗
@@ -56,6 +62,16 @@ function hex6(color: string | undefined, fallback = '000000'): string {
 }
 
 /**
+ * 设计 px → 磅
+ * ---------------------------------------------------------------------------
+ * 设计画布 1920px 铺满 960pt 的幻灯片，1 设计 px = 0.5pt（见 typography.ts）。
+ * 字号忘了乘这个系数，导出的字会比预览大一倍 —— 同一个 IR 两种样子。
+ */
+function pt(px: number): number {
+  return Math.round(px * DESIGN_PX_TO_PT);
+}
+
+/**
  * 把元素的 content 摊平成「一个 IR 字符串 = 一个文本运行」
  * ---------------------------------------------------------------------------
  * SPEC-EXP-001：IR 里出现的每个非空字符串，都必须能在导出产物里被完整找到。
@@ -64,6 +80,9 @@ function hex6(color: string | undefined, fallback = '000000'): string {
  *
  * 运行末尾带 breakLine，使每个字符串独占一段 —— 段落之间是排版间距，
  * 不会把两个 IR 字符串拼成一段而互相污染。
+ *
+ * 字号取自 `CONTENT_TYPE_SCALE`（设计 px）——与 SVG 渲染器同一张表，
+ * 再乘 DESIGN_PX_TO_PT 换成 PPTX 的磅。曾经两边各写各的数字，差了近一半。
  */
 function contentRuns(el: SlideElement, theme: TemplateTheme): TextRun[] {
   const primary = hex6(theme.primaryColor, 'f97316');
@@ -87,7 +106,7 @@ function contentRuns(el: SlideElement, theme: TemplateTheme): TextRun[] {
   const content = el.content;
 
   if (typeof content === 'string') {
-    push(content, { fontSize: 13, color: textPrimary });
+    push(content, { fontSize: pt(CONTENT_TYPE_SCALE.plain), color: textPrimary });
     return runs;
   }
   if (!content || typeof content !== 'object') return runs;
@@ -96,40 +115,40 @@ function contentRuns(el: SlideElement, theme: TemplateTheme): TextRun[] {
 
   // 时间轴阶段卡 { phase, time, title, deliverables[] }
   if ('phase' in c || Array.isArray(c.deliverables)) {
-    push(c.phase, { fontSize: 12, bold: true, color: primary });
-    push(c.time, { fontSize: 12, color: textSecondary });
-    push(c.title, { fontSize: 18, bold: true, color: textPrimary });
-    pushAll(c.deliverables, { fontSize: 14, color: textSecondary });
+    push(c.phase, { fontSize: pt(CONTENT_TYPE_SCALE.phase), bold: true, color: primary });
+    push(c.time, { fontSize: pt(CONTENT_TYPE_SCALE.time), color: textSecondary });
+    push(c.title, { fontSize: pt(CONTENT_TYPE_SCALE.phaseTitle), bold: true, color: textPrimary });
+    pushAll(c.deliverables, { fontSize: pt(CONTENT_TYPE_SCALE.deliverable), color: textSecondary });
     return runs;
   }
 
   // 总结卡 { headline, points[] }
   if ('headline' in c || Array.isArray(c.points)) {
-    push(c.headline, { fontSize: 24, bold: true, color: textPrimary });
-    pushAll(c.points, { fontSize: 16, color: textSecondary });
+    push(c.headline, { fontSize: pt(CONTENT_TYPE_SCALE.headline), bold: true, color: textPrimary });
+    pushAll(c.points, { fontSize: pt(CONTENT_TYPE_SCALE.point), color: textSecondary });
     return runs;
   }
 
   // 指标卡 { value, trend, title, desc }
   if ('value' in c) {
-    push(c.value, { fontSize: 32, bold: true, color: primary });
-    push(c.trend, { fontSize: 9, bold: true, color: accent });
-    push(c.title, { fontSize: 12, bold: true, color: textPrimary });
-    push(c.desc, { fontSize: 9.5, color: textSecondary });
+    push(c.value, { fontSize: pt(CONTENT_TYPE_SCALE.value), bold: true, color: primary });
+    push(c.trend, { fontSize: pt(CONTENT_TYPE_SCALE.trend), bold: true, color: accent });
+    push(c.title, { fontSize: pt(CONTENT_TYPE_SCALE.metricTitle), bold: true, color: textPrimary });
+    push(c.desc, { fontSize: pt(CONTENT_TYPE_SCALE.metricDesc), color: textSecondary });
     return runs;
   }
 
   // 问题/方案卡与封面元信息卡 { title, items[] }
   if (Array.isArray(c.items)) {
-    push(c.title, { fontSize: 22, bold: true, color: textPrimary });
-    pushAll(c.items, { fontSize: 15, color: textSecondary });
+    push(c.title, { fontSize: pt(CONTENT_TYPE_SCALE.itemsTitle), bold: true, color: textPrimary });
+    pushAll(c.items, { fontSize: pt(CONTENT_TYPE_SCALE.item), color: textSecondary });
     return runs;
   }
 
   // 通用卡片 { tag, title, desc }
-  push(c.tag, { fontSize: 12, bold: true, color: accent });
-  push(c.title, { fontSize: 20, bold: true, color: textPrimary });
-  push(c.desc, { fontSize: 15, color: textSecondary });
+  push(c.tag, { fontSize: pt(CONTENT_TYPE_SCALE.tag), bold: true, color: accent });
+  push(c.title, { fontSize: pt(CONTENT_TYPE_SCALE.cardTitle), bold: true, color: textPrimary });
+  push(c.desc, { fontSize: pt(CONTENT_TYPE_SCALE.cardDesc), color: textSecondary });
   return runs;
 }
 
@@ -244,9 +263,10 @@ export class ExportEngine {
     const theme = project.template.theme;
     const total = project.slides.length;
 
-    // Convert pixels to inches (1920px -> 13.33 inches, 1080px -> 7.5 inches)
-    const scaleX = 13.33 / 1920;
-    const scaleY = 7.5 / 1080;
+    // 设计 px → 英寸。1920px 铺满 12192000 EMU（13.333in）的幻灯片，
+    // 1 设计 px = 6350 EMU —— 换算走 EMU 而不是 13.33/1920，除得干净。
+    const scaleX = DESIGN_PX_TO_EMU / EMU_PER_INCH;
+    const scaleY = scaleX;
 
     for (let i = 0; i < total; i++) {
       if (onProgress) onProgress(i + 1, total);
@@ -271,7 +291,7 @@ export class ExportEngine {
           if (textContent.trim().length === 0) continue;
 
           const textColor = hex6(el.style.color || theme.textPrimary, 'ffffff');
-          const fontSize = Math.round((el.style.fontSize || 16) * 0.72); // pt conversion
+          const fontSize = pt(el.style.fontSize || 16); // 设计 px → 磅
 
           pptSlide.addText(textContent, {
             x,
@@ -302,7 +322,7 @@ export class ExportEngine {
             y,
             w,
             h,
-            fontSize: 10,
+            fontSize: pt(el.style.fontSize || 14),
             fontFace: PPTX_FONT,
             bold: true,
             color: accentColor,
@@ -335,7 +355,7 @@ export class ExportEngine {
               y,
               w,
               h,
-              fontSize: Math.round((el.style.fontSize || 16) * 0.72),
+              fontSize: pt(el.style.fontSize || 16),
               fontFace: PPTX_FONT,
               color: hex6(el.style.color || '#ffffff', 'ffffff'),
               bold: (Number(el.style.fontWeight) || 500) >= 700,
