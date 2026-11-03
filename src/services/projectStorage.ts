@@ -342,15 +342,6 @@ export const ProjectStorage = {
     }>(`/api/projects/${projectId}/slides/${slideId}/patches`, { baseVersionId, instruction, mode });
   },
 
-  /** 质量评估（服务端权威） */
-  async evaluateQuality(projectId: string): Promise<PresentationProject['qualityReport']> {
-    const data = await api.post<{ report: PresentationProject['qualityReport'] }>(
-      '/api/quality/evaluate',
-      { projectId }
-    );
-    return data.report;
-  },
-
   /** 导入 IR JSON */
   async importProjectFromJson(jsonString: string): Promise<PresentationProject> {
     const parsed = JSON.parse(jsonString);
