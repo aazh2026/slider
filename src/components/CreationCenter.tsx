@@ -102,6 +102,7 @@ export const CreationCenter: React.FC<CreationCenterProps> = ({
             <button
               key={idx}
               type="button"
+              data-testid={`cc-preset-${idx}`}
               onClick={() => applyPreset(preset)}
               className="text-xs font-medium px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-800 transition-colors shadow-xs"
             >
@@ -142,6 +143,7 @@ export const CreationCenter: React.FC<CreationCenterProps> = ({
                 rows={4}
                 value={docContent}
                 onChange={(e) => setDocContent(e.target.value)}
+                data-testid="cc-reference-notes"
                 placeholder="粘贴技术白皮书、架构规范、产品 PRD 或关键数据要点，AI 将自动分析提取结构化内容..."
                 className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-3.5 text-xs text-slate-900 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors resize-none font-mono"
               />
@@ -165,6 +167,7 @@ export const CreationCenter: React.FC<CreationCenterProps> = ({
                     <button
                       key={t.templateId}
                       type="button"
+                      data-testid={`cc-template-${t.templateId}`}
                       onClick={() => onSelectTemplate(t)}
                       className={`text-left p-3 rounded-lg border transition-all text-xs relative cursor-pointer ${
                         isSelected
@@ -217,6 +220,7 @@ export const CreationCenter: React.FC<CreationCenterProps> = ({
                   type="text"
                   value={purpose}
                   onChange={(e) => setPurpose(e.target.value)}
+                  data-testid="cc-purpose"
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500"
                 />
               </div>
@@ -227,6 +231,7 @@ export const CreationCenter: React.FC<CreationCenterProps> = ({
                   type="text"
                   value={audience}
                   onChange={(e) => setAudience(e.target.value)}
+                  data-testid="cc-audience"
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500"
                 />
               </div>
@@ -243,6 +248,7 @@ export const CreationCenter: React.FC<CreationCenterProps> = ({
                   step={1}
                   value={pageCount}
                   onChange={(e) => setPageCount(Number(e.target.value))}
+                  data-testid="cc-page-count"
                   className="w-full accent-blue-600 cursor-pointer"
                 />
                 <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500 mt-1 font-mono">
@@ -258,6 +264,7 @@ export const CreationCenter: React.FC<CreationCenterProps> = ({
                   type="text"
                   value={styleDesc}
                   onChange={(e) => setStyleDesc(e.target.value)}
+                  data-testid="cc-style"
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500"
                 />
               </div>

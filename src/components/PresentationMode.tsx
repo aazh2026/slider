@@ -106,6 +106,9 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
 
   return (
     <div
+      data-testid="presentation-mode"
+      data-slide-index={currentIndex}
+      data-slide-total={total}
       onMouseMove={handleMouseMove}
       className={`fixed inset-0 z-50 bg-black flex flex-col items-center justify-center select-none overflow-hidden ${
         isLaserPointerActive ? 'cursor-none' : 'cursor-default'
@@ -129,6 +132,7 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
           <span className="font-bold text-white tracking-widest">{formatTimer(elapsedSeconds)}</span>
           <button
             onClick={() => setElapsedSeconds(0)}
+            data-testid="presentation-timer-reset"
             className="text-white/40 hover:text-white transition-colors"
             title="重置计时"
           >
@@ -136,7 +140,10 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
           </button>
         </div>
 
-        <div className="bg-black/60 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 font-sans text-xs font-semibold text-white truncate max-w-md">
+        <div
+          data-testid="presentation-title"
+          className="bg-black/60 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 font-sans text-xs font-semibold text-white truncate max-w-md"
+        >
           {currentSlide.title}
         </div>
 
@@ -156,6 +163,7 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
       {/* Main 16:9 Slide Display */}
       <div className="w-full h-full max-w-[1920px] max-h-[1080px] aspect-[16/9] relative flex items-center justify-center p-4">
         <div
+          data-testid="presentation-canvas"
           className="w-full h-full pointer-events-none select-none flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:block"
           dangerouslySetInnerHTML={{
             __html: SVGRenderer.renderInlineSvg(currentSlide, project.template.theme),
@@ -254,7 +262,10 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
           <ChevronLeft className="w-5 h-5" />
         </button>
 
-        <span className="font-mono text-xs font-bold px-1 tracking-wider">
+        <span
+          data-testid="presentation-pager"
+          className="font-mono text-xs font-bold px-1 tracking-wider"
+        >
           {String(currentIndex + 1).padStart(2, '0')} / {String(total).padStart(2, '0')}
         </span>
 
@@ -306,6 +317,7 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
 
         {/* Exit Presentation */}
         <button
+          data-testid="presentation-close"
           onClick={onClose}
           className="p-1.5 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
           title="退出全屏演示 (Esc)"

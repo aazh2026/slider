@@ -117,7 +117,10 @@ export const TemplateCenter: React.FC<TemplateCenterProps> = ({
   };
 
   return (
-    <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-950 p-6 md:p-10 flex flex-col items-center transition-colors">
+    <div
+      data-testid="template-center"
+      className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-950 p-6 md:p-10 flex flex-col items-center transition-colors"
+    >
       <div className="w-full max-w-6xl space-y-8">
         {/* Title Header */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">

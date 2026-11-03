@@ -168,6 +168,7 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
             {/* Backup All Projects Button */}
             <button
               onClick={handleExportAllProjects}
+              data-testid="pm-backup-all"
               className="hidden sm:flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg transition-colors cursor-pointer shadow-xs"
               title="一键将所有作品导出为一个完整 JSON 备份文件"
             >
@@ -181,10 +182,12 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
                 type="file"
                 accept=".json"
                 onChange={handleFileImport}
+                data-testid="pm-import-input"
                 className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
               />
               <button
                 type="button"
+                data-testid="pm-import-trigger"
                 className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg transition-colors cursor-pointer shadow-xs"
               >
                 <Upload className="w-3.5 h-3.5 text-indigo-500" />
@@ -212,6 +215,7 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              data-testid="pm-search"
               placeholder="搜索演示文稿名称..."
               className="w-full pl-9 pr-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-500 shadow-xs"
             />
@@ -222,6 +226,7 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
             <div className="flex items-center gap-1 p-0.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-xs">
               <button
                 onClick={() => setFilterTheme('all')}
+                data-testid="pm-filter-all"
                 className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-colors ${
                   filterTheme === 'all'
                     ? 'bg-blue-600 text-white shadow-xs'
@@ -232,6 +237,7 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
               </button>
               <button
                 onClick={() => setFilterTheme('light')}
+                data-testid="pm-filter-light"
                 className={`flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-md transition-colors ${
                   filterTheme === 'light'
                     ? 'bg-blue-600 text-white shadow-xs'
@@ -243,6 +249,7 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
               </button>
               <button
                 onClick={() => setFilterTheme('dark')}
+                data-testid="pm-filter-dark"
                 className={`flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-md transition-colors ${
                   filterTheme === 'dark'
                     ? 'bg-blue-600 text-white shadow-xs'
@@ -258,6 +265,7 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
+              data-testid="pm-sort"
               className="px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-blue-500 shadow-xs cursor-pointer font-medium"
             >
               <option value="updated">最近修改优先</option>
@@ -299,6 +307,7 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
                     {/* Miniature 16:9 Cover preview */}
                     <div
                       onClick={() => onSelectProject(p.id)}
+                      data-testid={`pm-cover-${p.id}`}
                       className="w-full aspect-[16/9] rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 relative cursor-pointer group/thumb shadow-xs"
                       style={{ backgroundColor: p.template.theme.backgroundColor }}
                     >
@@ -318,6 +327,7 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
                             e.stopPropagation();
                             onStartPresentProject(p);
                           }}
+                          data-testid={`pm-present-${p.id}`}
                           className="px-3 py-1.5 bg-white/95 text-slate-900 rounded-lg text-xs font-bold shadow-lg flex items-center gap-1.5 hover:bg-white transition-colors"
                         >
                           <Play className="w-3.5 h-3.5 fill-slate-900" />
@@ -343,6 +353,7 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
                       <div className="flex items-start justify-between gap-2">
                         <h3
                           onClick={() => onSelectProject(p.id)}
+                          data-testid={`pm-title-${p.id}`}
                           className="font-bold text-sm text-slate-900 dark:text-white line-clamp-1 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
                           title={p.name}
                         >
@@ -370,6 +381,7 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
                     <div className="flex items-center gap-3">
                       <button
                         onClick={() => onSelectProject(p.id)}
+                        data-testid={`pm-open-${p.id}`}
                         className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors cursor-pointer"
                       >
                         打开工作台 →
@@ -379,6 +391,7 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
                       <button
                         onClick={() => handleDirectExportPptx(p)}
                         disabled={exportingProjectId === p.id}
+                        data-testid={`pm-pptx-${p.id}`}
                         className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 transition-colors"
                         title="直接下载为 PowerPoint .pptx"
                       >
@@ -400,6 +413,7 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
                       {/* Duplicate */}
                       <button
                         onClick={() => onDuplicateProject(p.id)}
+                        data-testid={`pm-duplicate-${p.id}`}
                         className="p-1.5 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
                         title="复制作品 (创建独立副本)"
                       >
@@ -454,6 +468,7 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
               <button
                 type="button"
                 onClick={() => setIsNewModalOpen(false)}
+                data-testid="pm-new-modal-close"
                 className="text-slate-400 hover:text-slate-700 dark:hover:text-white text-sm"
               >
                 ✕
@@ -486,6 +501,7 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
                       <div
                         key={t.templateId}
                         onClick={() => setSelectedTemplateId(t.templateId)}
+                        data-testid={`pm-template-option-${t.templateId}`}
                         className={`p-2.5 rounded-lg border cursor-pointer transition-all flex items-center justify-between ${
                           isSelected
                             ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10'
@@ -515,6 +531,7 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
               <button
                 type="button"
                 onClick={() => setIsNewModalOpen(false)}
+                data-testid="pm-new-cancel"
                 className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg"
               >
                 取消

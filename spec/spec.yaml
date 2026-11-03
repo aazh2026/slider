@@ -1422,6 +1422,32 @@ clauses:
           pass_when: "退出码 0，且该用例未被 skip"
         maturity: automated
 
+      - id: AC-E2E-023
+        criterion: "在真实浏览器中把工作台停在第 2 页并导出 PNG/SVG，断言导出任务的 scope 只含服务端那一页的 slideId（不含第 1 页）"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-design.md §5.2 API 路由表 —— 导出任务以 scope 决定范围；scope 必须由当前页推导"
+          confidence: high
+        verification:
+          kind: test
+          target: "e2e/navigation.e2e.ts::AC-E2E-023 PNG/SVG 导出 → scope 只含当前页"
+          command: "bun test ./e2e/navigation.e2e.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+      - id: AC-E2E-024
+        criterion: "在真实浏览器中把工作台停在第 2 页并打开导出弹窗，断言 PNG 那张卡片上的说明写的是「当前第 2 页」"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-design.md §5.2 API 路由表 —— 导出范围由当前页推导，界面文案必须如实回显当前页码"
+          confidence: high
+        verification:
+          kind: test
+          target: "e2e/navigation.e2e.ts::AC-E2E-024 导出弹窗的 PNG 说明 → 页码跟着当前页走"
+          command: "bun test ./e2e/navigation.e2e.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
   # ---- SPEC-E2E-006 跨租户隔离在浏览器链路上同样成立 ----
   - id: SPEC-E2E-006
     title: 浏览器链路上，跨租户访问同样是 404 而不是 403
@@ -1486,6 +1512,64 @@ clauses:
           command: "bun test ./e2e/integration.e2e.ts"
           pass_when: "退出码 0，且该用例未被 skip"
         maturity: automated
+
+  # ---- SPEC-E2E-013 放映的起点是当前页，而不是恒从第一页 ----
+  - id: SPEC-E2E-013
+    title: 浏览器链路上，演示模式从当前页开始，而不是恒从第一页开始
+    type: business
+    risk: medium
+    status: active
+    maturity: automated
+    statement: "工作台停在第 N 页时点放映，演示模式必须从第 N 页开始 —— 放映画的就是当前页，放映的起点也必须是当前页"
+    source:
+      doc: "docs/backend-design.md"
+      section: "§3 Presentation Mode —— 全屏放映 + 缩略图"
+      quote: "Presentation Mode —— 全屏放映 + 缩略图"
+    derived_from: SPEC-E2E-002
+    inference: "导出范围与放映起点都必须由「当前页」推导 —— 导出已经按当前页取范围（见 SPEC-E2E-005），放映若恒从第一页开始，同一份文稿在工作台、导出、放映三处呈现的就不是同一页"
+    acceptance:
+      - id: AC-E2E-025
+        criterion: "在真实浏览器中把工作台停在第 2 页并进入演示模式，断言放映画布从第 2 页开始（页码显示 02 / N，标题与服务端第 2 页的 IR 一致）"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-design.md §3「Presentation Mode —— 全屏放映 + 缩略图」—— 放映的起点是当前页，不是恒定的第一页"
+          confidence: high
+        verification:
+          kind: test
+          target: "e2e/navigation.e2e.ts::AC-E2E-025 工作台第 2 页点放映 → 从第 2 页开始"
+          command: "bun test ./e2e/navigation.e2e.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-E2E-014 模板提取失败必须显示为失败 ----
+  #
+  # 这条挂着一条 known_gaps：提取失败目前**界面上一声不吭** ——
+  # TemplateCenter 的 handleSimulateExtract 的 catch 只 console.warn，
+  # 用户看到的是「点了没反应」。判据已定义，验证器尚未建成。
+  - id: SPEC-E2E-014
+    title: 浏览器链路上，模板提取失败必须显示为失败
+    type: technical
+    risk: medium
+    status: active
+    maturity: planned
+    statement: "浏览器里上传模板让服务端提取时，若提取失败，界面必须明说失败并说明原因 —— 不能只 console.warn 然后让用户以为「点了没反应」"
+    source:
+      doc: "docs/backend-design.md"
+      section: "§5.3 统一响应与错误规范"
+      quote: "服务端返回错误信封时，前端必须把这次操作显示为失败并说明原因；绝不能显示成成功"
+    acceptance:
+      - id: AC-E2E-026
+        criterion: "在真实浏览器中让服务端的模板提取失败，断言界面明确显示失败（而不是「点了没反应」），且服务端的模板集未被改动"
+        oracle:
+          tier: expert
+          source: "docs/backend-design.md §5.3 —— 失败必须显示为失败；「点了没反应」是最糟的实现"
+          confidence: medium
+        verification:
+          kind: test
+          target: "e2e/template-extract.e2e.ts::模板提取失败 → 界面明说失败，服务端模板集未被改动"
+          command: "bun test ./e2e/template-extract.e2e.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: none
 
 # ===========================================================================
 # H. 非功能
@@ -1818,6 +1902,22 @@ known_gaps:
   - clause: SPEC-NFR-001
     reason: "验证器**已建成**（apps/api/tests/perf/outline-latency.bench.ts，100 次采样），但本轮只跑了**降级模式**：模型不可用时采样到的是本地确定性实现，模型往返延迟根本没被采样到。真实模型下的 P95 仍未测过 —— 结论为 INCONCLUSIVE，不能用降级模式的通过顶替"
     plan: "在有真实 GEMINI_API_KEY 的评估环境设 BENCH_REAL_MODEL=1 重跑 `bun test ./apps/api/tests/perf/outline-latency.bench.ts`，把结果并入 spec/evidence/junit.xml"
+
+  - clause: SPEC-E2E-003
+    reason: "**页级**编辑（加页 / 复制页 / 删页 / 上移下移）不落库。App.tsx 的 syncProject 有两条硬规则：没有 baseVersionId 的新页直接跳过；剩下页的 IR 一个字节没变就不写。于是删掉的页刷新后会回来、新加的页刷新后会丢。这一条已由 AC-E2E-004（元素级编辑落库）覆盖了实质，但**页级**这条路径至今没有判据 —— 现有用例只能断言界面侧（缩略图数、顺序、画布 data-slide-id），不能断言服务端。"
+    plan: "补 POST / DELETE /api/projects/:id/slides 端点，并让 syncProject 在页集合变化时写 order；届时把页级用例从「UI 侧断言」升级为「服务端侧断言」并在本条款补一条判据"
+
+  - clause: SPEC-E2E-014
+    reason: "**模板提取**失败没有任何界面提示：TemplateCenter 的 handleSimulateExtract 的 catch 只 console.warn，用户看到的是「点了没反应」。判据已定义（AC-E2E-026），验证器尚未建成。"
+    plan: "给 TemplateCenter 加一条提取失败的可读提示（复用 sync-notice 那条横幅），并补上 e2e/template-extract.e2e.ts 这条链"
+
+  - clause: SPEC-E2E-007
+    reason: "作品库的「备份全库」导出的文件**恢复不回来**：它导的是内存里那份摘要列表（每份作品没有 slides、也没有 orderIndex），而导入端 POST /api/projects/import 只认单份作品的形状 {name, slides:[{slideId, orderIndex, ir}]}。两者对不上 —— 单份作品的导出/导入已经修好（走服务端 bundle），但「一次备份整个库」这条路仍然是个死胡同。之所以不直接补：备份文件的**格式**（单份 bundle 的数组？还是 {projects:[...]}？）决定了导入端要不要改契约，那是产品决定，不该由实现侧替用户定。"
+    plan: "由产品定下备份文件格式；定了之后让「备份全库」按该格式导出，并让导入端按同一格式读回，补一条「备份 → 清空 → 导入 → 作品库恢复原样」的端到端判据"
+
+  - clause: SPEC-E2E-007
+    reason: "作品库里**没打开过**的作品没有封面缩略图：列表接口只回摘要（不含每一页的 IR），前端渲染封面要靠第一页的 IR 画 SVG，于是摘要里 slides 恒为空 → 封面只剩一块模板底色的空框。这与「摘要里补页数 / 模板 id」是同一类问题（摘要信息不足），但补封面需要摘要带第一页的 IR 或服务端生成封面缩略图 —— 后者要给列表接口加一条渲染路径。"
+    plan: "给列表摘要补 firstSlide 的 IR（只带第一页，体积可控）或由服务端生成封面缩略图；届时给作品库卡片补一条「封面画的是这一份作品的第一页」的判据"
 
 
 

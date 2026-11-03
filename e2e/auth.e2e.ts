@@ -18,6 +18,7 @@ import {
   API_BASE,
   TEST_TIMEOUT,
   apiFetch,
+  arrangeProjectWithSlides,
   assertServersUp,
   createAccountInOtherContext,
   launchHarness,
@@ -51,6 +52,48 @@ async function registerViaUi(
   await session.page.getByTestId('auth-email').fill(account.email);
   await session.page.getByTestId('auth-password').fill(account.password);
   await session.page.getByTestId('auth-submit').click();
+}
+
+/** 折叠 / 展开侧边栏的那个按钮 —— 它只有 aria-label，没有 testid */
+function sidebarCollapseButton(session: Session) {
+  return session.page.locator('button[aria-label="Toggle Sidebar"]');
+}
+
+/** 切换工作室（UI）主题的那个按钮 —— 同样只有 aria-label */
+function uiThemeButton(session: Session) {
+  return session.page.locator('button[aria-label="Toggle UI Theme"]');
+}
+
+/** 服务端那份模板（模板是服务端权威，断言落在它身上） */
+async function fetchServerTemplate(
+  session: Session,
+  projectId: string
+): Promise<{ templateId: string; isDark: boolean }> {
+  const res = await apiFetch<{
+    project: { template: { templateId: string; theme: { isDark: boolean } } };
+  }>(session.page, `/api/projects/${projectId}`);
+  const t = res.body.data?.project?.template;
+  if (!t) throw new Error(`读服务端模板失败：HTTP ${res.status}`);
+  return { templateId: t.templateId, isDark: Boolean(t.theme?.isDark) };
+}
+
+/** 等服务端的模板换成别的 */
+async function waitForTemplateChange(
+  session: Session,
+  projectId: string,
+  previousId: string,
+  timeoutMs = 25_000
+): Promise<{ templateId: string; isDark: boolean }> {
+  let last: { templateId: string; isDark: boolean } = { templateId: '', isDark: false };
+  await waitFor(
+    async () => {
+      last = await fetchServerTemplate(session, projectId);
+      return last.templateId !== previousId;
+    },
+    timeoutMs,
+    '服务端的模板换掉了'
+  );
+  return last;
 }
 
 describe('认证链（真实浏览器 + 真实服务端）', () => {
@@ -228,6 +271,172 @@ describe('认证链（真实浏览器 + 真实服务端）', () => {
       await session.page.getByTestId('new-project-submit').click();
 
       await session.page.getByTestId('auth-form').waitFor({ state: 'visible', timeout: 20_000 });
+    } finally {
+      await session.close();
+    }
+  }, TEST_TIMEOUT);
+
+  /* ---------------------------------------------------------------- */
+  /* 侧边栏外壳                                                        */
+  /* ---------------------------------------------------------------- */
+
+  test('侧边栏折叠与展开 → 折叠态留一个当前项目圆点，展开后项目卡片回来', async () => {
+    const session = await harness.newSession();
+    try {
+      const account = makeAccount();
+      await registerViaUi(session, account);
+      await session.page.getByTestId('nav-projects').waitFor({ state: 'visible', timeout: 20_000 });
+
+      // 展开态：当前项目卡片在，圆点不在
+      await session.page.getByTestId('project-name-button').waitFor({ state: 'visible', timeout: 15_000 });
+      expect(await session.page.getByTestId('nav-current-project-dot').count()).toBe(0);
+
+      // 折叠 → 只剩一个代表"当前作品"的小圆点
+      await sidebarCollapseButton(session).click();
+      await session.page.getByTestId('nav-current-project-dot').waitFor({ state: 'visible', timeout: 15_000 });
+      expect(await session.page.getByTestId('project-name-button').count()).toBe(0);
+
+      // 展开 → 卡片回来
+      await sidebarCollapseButton(session).click();
+      await session.page.getByTestId('project-name-button').waitFor({ state: 'visible', timeout: 15_000 });
+      expect(await session.page.getByTestId('nav-current-project-dot').count()).toBe(0);
+
+      expect(uncaughtErrors(session.logs)).toEqual([]);
+    } finally {
+      await session.close();
+    }
+  }, TEST_TIMEOUT);
+
+  test('工作室主题切换 → <html> 上的 dark 类真的跟着变', async () => {
+    const session = await harness.newSession();
+    try {
+      const account = makeAccount();
+      await registerViaUi(session, account);
+      await session.page.getByTestId('nav-projects').waitFor({ state: 'visible', timeout: 20_000 });
+
+      const html = session.page.locator('html');
+      const isDark = async () =>
+        html.evaluate((el) => el.classList.contains('dark'));
+
+      expect(await isDark()).toBe(false);
+
+      await uiThemeButton(session).click();
+      await waitFor(async () => (await isDark()) === true, 10_000, '<html> 加上 dark 类');
+
+      await uiThemeButton(session).click();
+      await waitFor(async () => (await isDark()) === false, 10_000, '<html> 去掉 dark 类');
+
+      expect(uncaughtErrors(session.logs)).toEqual([]);
+    } finally {
+      await session.close();
+    }
+  }, TEST_TIMEOUT);
+
+  test('PPT 底色快切 → 服务端的模板真的从浅色翻成深色', async () => {
+    const session = await harness.newSession();
+    try {
+      const account = makeAccount();
+      await registerViaUi(session, account);
+      await session.page.getByTestId('nav-projects').waitFor({ state: 'visible', timeout: 20_000 });
+
+      const fixture = await arrangeProjectWithSlides(session.page, {
+        topic: '底色快切',
+        name: '底色快切',
+        pageCount: 2,
+      });
+
+      await session.page.goto('/');
+      await session.page.getByTestId('slide-canvas').waitFor({ state: 'visible', timeout: 40_000 });
+
+      const before = await fetchServerTemplate(session, fixture.projectId);
+
+      await session.page.getByTestId('nav-toggle-slide-theme').click();
+
+      // 模板是**服务端权威** —— 换完必须落库，不能只是界面变了
+      const after = await waitForTemplateChange(session, fixture.projectId, before.templateId);
+
+      expect(after.templateId).not.toBe(before.templateId);
+      // 深浅真的翻过来了
+      expect(after.isDark).toBe(!before.isDark);
+
+      expect(uncaughtErrors(session.logs)).toEqual([]);
+    } finally {
+      await session.close();
+    }
+  }, TEST_TIMEOUT);
+
+  test('项目下拉切换器 → 点另一份作品，当前作品就换了', async () => {
+    const session = await harness.newSession();
+    try {
+      const account = makeAccount();
+      await registerViaUi(session, account);
+      await session.page.getByTestId('nav-projects').waitFor({ state: 'visible', timeout: 20_000 });
+
+      const first = await arrangeProjectWithSlides(session.page, {
+        topic: '甲作品',
+        name: '甲作品',
+        pageCount: 1,
+      });
+      const second = await arrangeProjectWithSlides(session.page, {
+        topic: '乙作品',
+        name: '乙作品',
+        pageCount: 2,
+      });
+
+      await session.page.goto('/');
+      await session.page.getByTestId('slide-canvas').waitFor({ state: 'visible', timeout: 40_000 });
+
+      // 当前选中的是哪一份（默认选列表里的第一份）—— 读完再决定切到哪一份
+      const currentName = (
+        (await session.page.getByTestId('project-name-button').textContent()) ?? ''
+      ).trim();
+      const target =
+        currentName.includes('甲作品')
+          ? { id: second.projectId, name: '乙作品' }
+          : { id: first.projectId, name: '甲作品' };
+
+      await session.page.getByTestId('nav-project-dropdown').click();
+      await session.page.getByTestId(`nav-project-item-${target.id}`).waitFor({
+        state: 'visible',
+        timeout: 15_000,
+      });
+      await session.page.getByTestId(`nav-project-item-${target.id}`).click();
+
+      await waitFor(
+        async () => {
+          const name = (
+            (await session.page.getByTestId('project-name-button').textContent()) ?? ''
+          ).trim();
+          return name.includes(target.name);
+        },
+        20_000,
+        '侧边栏的当前作品换成了另一份'
+      );
+
+      expect(uncaughtErrors(session.logs)).toEqual([]);
+    } finally {
+      await session.close();
+    }
+  }, TEST_TIMEOUT);
+
+  test('侧边栏六个页签 → 没有作品时，只有不依赖作品的三个能点', async () => {
+    const session = await harness.newSession();
+    try {
+      const account = makeAccount();
+      await registerViaUi(session, account);
+      await session.page.getByTestId('nav-projects').waitFor({ state: 'visible', timeout: 20_000 });
+
+      // 不依赖作品内容的三个
+      expect(await session.page.getByTestId('nav-projects').isDisabled()).toBe(false);
+      expect(await session.page.getByTestId('nav-create').isDisabled()).toBe(false);
+      expect(await session.page.getByTestId('nav-templates').isDisabled()).toBe(false);
+
+      // 依赖大纲 / 页面的三个 —— 没有作品就该是禁用的
+      expect(await session.page.getByTestId('nav-outline').isDisabled()).toBe(true);
+      expect(await session.page.getByTestId('nav-workbench').isDisabled()).toBe(true);
+      expect(await session.page.getByTestId('nav-quality').isDisabled()).toBe(true);
+
+      expect(uncaughtErrors(session.logs)).toEqual([]);
     } finally {
       await session.close();
     }

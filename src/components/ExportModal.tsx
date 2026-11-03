@@ -246,7 +246,10 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                 <span className="text-xs font-bold text-slate-900 dark:text-white">2x 超清光栅化图片 (.png)</span>
                 <span className="text-[10px] text-slate-400 font-mono">3840×2160</span>
               </div>
-              <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
+              <p
+                data-testid="export-png-hint"
+                className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5"
+              >
                 当前第 {currentSlideIndex + 1} 页超清渲染图，可用于飞书/钉钉分享或嵌入文档。
               </p>
             </div>

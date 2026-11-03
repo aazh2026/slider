@@ -161,6 +161,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
           <div className="flex items-center gap-2.5 overflow-hidden">
             <button
               onClick={() => onSelectTab('projects')}
+              data-testid="nav-brand"
               className="flex items-center gap-2.5 focus:outline-none group text-left cursor-pointer"
               title="回到作品管理"
             >
@@ -208,6 +209,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => setIsProjectDropdownOpen(!isProjectDropdownOpen)}
+                      data-testid="nav-project-dropdown"
                       className="p-1 rounded text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700/80 transition-colors"
                       title="切换工程"
                     >
@@ -265,6 +267,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                           setIsProjectDropdownOpen(false);
                           onCreateNewProject();
                         }}
+                        data-testid="nav-dropdown-create"
                         className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-0.5"
                       >
                         <Plus className="w-3 h-3" />
@@ -282,6 +285,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                             onSwitchProject?.(proj.id);
                             setIsProjectDropdownOpen(false);
                           }}
+                          data-testid={`nav-project-item-${proj.id}`}
                           className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between transition-colors ${
                             isActive
                               ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold border border-blue-500/20'
@@ -312,6 +316,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                         setIsProjectDropdownOpen(false);
                         onSelectTab('projects');
                       }}
+                      data-testid="nav-open-library"
                       className="w-full text-center py-1 text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center justify-center gap-1"
                     >
                       <span>进入完整作品库管理</span>
@@ -326,6 +331,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
           <div className="py-2 flex justify-center border-b border-slate-100 dark:border-slate-800/80">
             <button
               onClick={() => onSelectTab('projects')}
+              data-testid="nav-current-project-dot"
               className="p-2 text-slate-500 hover:text-slate-800 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               title={`当前作品: ${projectName}`}
             >
@@ -430,6 +436,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
         {hasSlides && (
           <button
             onClick={onToggleSlideTheme}
+            data-testid="nav-toggle-slide-theme"
             className={`w-full flex items-center rounded-lg border text-xs font-semibold transition-colors ${
               isCollapsed ? 'justify-center p-2.5' : 'justify-between px-3 py-2'
             } ${

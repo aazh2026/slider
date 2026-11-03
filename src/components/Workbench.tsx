@@ -997,6 +997,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
             <div className="flex items-center border-l border-slate-200 dark:border-slate-800 pl-1.5 ml-1 shrink-0">
               <button
                 onClick={handleUndo}
+                data-testid="wb-undo"
                 disabled={undoStack.length === 0}
                 className="p-1 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-25 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 title="撤销 (Ctrl+Z)"
@@ -1660,6 +1661,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                         <div className="grid grid-cols-4 gap-1 text-xs">
                           <button
                             onClick={handleBringToFront}
+                            data-testid="wb-el-bring-front"
                             className="p-1 bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded flex flex-col items-center gap-0.5 text-slate-700 dark:text-slate-300"
                             title="置顶图层"
                           >
@@ -1668,6 +1670,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                           </button>
                           <button
                             onClick={handleSendToBack}
+                            data-testid="wb-el-send-back"
                             className="p-1 bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded flex flex-col items-center gap-0.5 text-slate-700 dark:text-slate-300"
                             title="置底图层"
                           >
@@ -1676,6 +1679,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                           </button>
                           <button
                             onClick={handleAlignCenterHorizontally}
+                            data-testid="wb-el-align-h-center"
                             className="p-1 bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded flex flex-col items-center gap-0.5 text-slate-700 dark:text-slate-300"
                             title="水平居中"
                           >
@@ -1684,6 +1688,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                           </button>
                           <button
                             onClick={handleAlignCenterVertically}
+                            data-testid="wb-el-align-v-center"
                             className="p-1 bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded flex flex-col items-center gap-0.5 text-slate-700 dark:text-slate-300"
                             title="垂直居中"
                           >
@@ -1695,6 +1700,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                         <div className="flex gap-1.5 pt-1">
                           <button
                             onClick={handleDuplicateSelectedElement}
+                            data-testid="wb-el-duplicate"
                             className="flex-1 py-1 px-1.5 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-[11px] font-medium text-slate-700 dark:text-slate-300 flex items-center justify-center gap-1"
                           >
                             <Copy className="w-3 h-3" />
@@ -1702,6 +1708,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                           </button>
                           <button
                             onClick={handleDeleteSelectedElement}
+                            data-testid="wb-el-delete"
                             className="py-1 px-2.5 rounded bg-rose-50 hover:bg-rose-100 dark:bg-rose-500/10 dark:hover:bg-rose-500/20 text-[11px] font-medium text-rose-600 dark:text-rose-400 flex items-center justify-center gap-1"
                           >
                             <Trash2 className="w-3 h-3" />
@@ -1728,6 +1735,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                                 );
                                 updateCurrentSlide({ ...currentSlide, elements: updated });
                               }}
+                              data-testid="wb-el-x"
                               className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-1.5 py-1 text-slate-800 dark:text-slate-200 font-mono text-[11px]"
                             />
                           </div>
@@ -1743,6 +1751,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                                 );
                                 updateCurrentSlide({ ...currentSlide, elements: updated });
                               }}
+                              data-testid="wb-el-y"
                               className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-1.5 py-1 text-slate-800 dark:text-slate-200 font-mono text-[11px]"
                             />
                           </div>
@@ -1758,6 +1767,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                                 );
                                 updateCurrentSlide({ ...currentSlide, elements: updated });
                               }}
+                              data-testid="wb-el-width"
                               className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-1.5 py-1 text-slate-800 dark:text-slate-200 font-mono text-[11px]"
                             />
                           </div>
@@ -1773,6 +1783,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                                 );
                                 updateCurrentSlide({ ...currentSlide, elements: updated });
                               }}
+                              data-testid="wb-el-height"
                               className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-1.5 py-1 text-slate-800 dark:text-slate-200 font-mono text-[11px]"
                             />
                           </div>
@@ -1799,6 +1810,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                                 );
                                 updateCurrentSlide({ ...currentSlide, elements: updated });
                               }}
+                              data-testid="wb-el-font-size"
                               className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-1.5 py-1 text-slate-800 dark:text-slate-200 font-mono text-[11px]"
                             />
                           </div>
@@ -1815,6 +1827,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                                 );
                                 updateCurrentSlide({ ...currentSlide, elements: updated });
                               }}
+                              data-testid="wb-el-font-weight"
                               className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-1.5 py-1 text-slate-800 dark:text-slate-200 text-[11px]"
                             >
                               <option value={400}>Regular</option>
@@ -1843,9 +1856,13 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                               );
                               updateCurrentSlide({ ...currentSlide, elements: updated });
                             }}
+                            data-testid="wb-el-bg-color"
                             className="w-7 h-7 rounded border border-slate-300 dark:border-slate-700 bg-transparent cursor-pointer"
                           />
-                          <span className="text-xs font-mono text-slate-700 dark:text-slate-300 text-[11px]">
+                          <span
+                            data-testid="wb-el-bg-color-value"
+                            className="text-xs font-mono text-slate-700 dark:text-slate-300 text-[11px]"
+                          >
                             {selectedElement.style.backgroundColor || project.template.theme.surfaceColor}
                           </span>
                         </div>
@@ -1868,6 +1885,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                               updateCurrentSlide({ ...currentSlide, elements: updated });
                             }}
                             className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 resize-none font-medium leading-relaxed"
+                            data-testid="wb-el-content-text"
                             placeholder="输入文本内容..."
                           />
                         ) : typeof selectedElement.content === 'object' && selectedElement.content !== null ? (
@@ -1887,6 +1905,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                                     updateCurrentSlide({ ...currentSlide, elements: updated });
                                   }}
                                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-2 py-1 text-slate-800 dark:text-slate-200 text-xs"
+                                  data-testid="wb-el-content-tag"
                                 />
                               </div>
                             )}
@@ -1905,6 +1924,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                                     updateCurrentSlide({ ...currentSlide, elements: updated });
                                   }}
                                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-2 py-1 text-slate-800 dark:text-slate-200 text-xs font-semibold"
+                                  data-testid="wb-el-content-title"
                                 />
                               </div>
                             )}
@@ -1923,6 +1943,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                                     updateCurrentSlide({ ...currentSlide, elements: updated });
                                   }}
                                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-2 py-1 text-slate-800 dark:text-slate-200 text-xs resize-none"
+                                  data-testid="wb-el-content-desc"
                                 />
                               </div>
                             )}
@@ -1941,6 +1962,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                                     updateCurrentSlide({ ...currentSlide, elements: updated });
                                   }}
                                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-2 py-1 text-slate-800 dark:text-slate-200 font-mono text-xs font-bold"
+                                  data-testid="wb-el-content-value"
                                 />
                               </div>
                             )}
@@ -1959,6 +1981,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                                     updateCurrentSlide({ ...currentSlide, elements: updated });
                                   }}
                                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-2 py-1 text-slate-800 dark:text-slate-200 text-xs"
+                                  data-testid="wb-el-content-trend"
                                 />
                               </div>
                             )}
