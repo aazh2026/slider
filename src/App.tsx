@@ -117,6 +117,15 @@ export default function App() {
   const [isCompiling, setIsCompiling] = useState(false);
   const [isUiDark, setIsUiDark] = useState<boolean>(false);
 
+  /**
+   * 当前页码 —— 由 Workbench 上报（见 Workbench 的 onActiveSlideChange）。
+   * ---------------------------------------------------------------------------
+   * 导出（PNG/SVG 只导当前页）与放映（从当前页开始）都要知道"用户停在第几页"。
+   * 页码的真源只有 Workbench 里的 activeSlideIndex 一份 —— 这里存的是**镜像**，
+   * 只读不写，免得父子两个真源互相打架。
+   */
+  const [activeSlideIndex, setActiveSlideIndex] = useState(0);
+
   const [projects, setProjects] = useState<PresentationProject[]>([]);
   const [activeProjectId, setActiveProjectId] = useState<string>('');
   const [isLoadingProjects, setIsLoadingProjects] = useState(false);
@@ -223,6 +232,17 @@ export default function App() {
   const currentProject =
     projects.find((p) => p.id === activeProjectId) ?? projects[0] ?? null;
 
+  /**
+   * 传给导出与放映的页码 —— **必须夹紧**。
+   * ---------------------------------------------------------------------------
+   * 页数会变（删页），页码可能越界；越界的 index 会让 ExportModal 的
+   * slideIds 变成空、PresentationMode 直接渲染成 null（整块黑屏）。
+   */
+  const safeSlideIndex = Math.min(
+    activeSlideIndex,
+    Math.max(0, (currentProject?.slides.length ?? 1) - 1)
+  );
+
   /* ---------------------------------------------------------------- */
   /* 同步（防抖 + 乐观锁）                                              */
   /* ---------------------------------------------------------------- */
@@ -317,6 +337,8 @@ export default function App() {
   const handleSelectProject = useCallback((projectId: string) => {
     setActiveProjectId(projectId);
     setCurrentTab('workbench');
+    // 换项目 → 页码归零（上一份文稿的页码对这份没有意义）
+    setActiveSlideIndex(0);
   }, []);
 
   const handleCreateNewProject = useCallback(
@@ -761,6 +783,7 @@ export default function App() {
             project={currentProject}
             onUpdateProject={handleUpdateCurrentProject}
             onStartPresent={() => setIsPresenting(true)}
+            onActiveSlideChange={setActiveSlideIndex}
             onAiEdit={handleAiEdit}
           />
         )}
@@ -784,12 +807,16 @@ export default function App() {
       </main>
 
       {isPresenting && (
-        <PresentationMode project={currentProject} onClose={() => setIsPresenting(false)} />
+        <PresentationMode
+          project={currentProject}
+          initialSlideIndex={safeSlideIndex}
+          onClose={() => setIsPresenting(false)}
+        />
       )}
 
       <ExportModal
         project={currentProject}
-        currentSlideIndex={0}
+        currentSlideIndex={safeSlideIndex}
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
       />

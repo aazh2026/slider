@@ -73,6 +73,14 @@ interface WorkbenchProps {
   onUpdateProject: (p: PresentationProject) => void;
   onStartPresent: () => void;
   /**
+   * 当前页码变化时上报 —— 让 App 侧知道"用户停在第几页"。
+   * ---------------------------------------------------------------------------
+   * 导出（PNG/SVG 只导当前页）与放映（从当前页开始）都需要这个信息，
+   * 而页码的真源只有 Workbench 里的 activeSlideIndex 一份。
+   * 父组件只**读**这个值，不反过来下发 —— 免得父子形成同步环。
+   */
+  onActiveSlideChange?: (index: number) => void;
+  /**
    * AI 编辑 —— 由 **服务端** 施加 IRPatch 协议
    * ---------------------------------------------------------------------------
    * Workbench 不再自己调用模型、自己改元素数组。补丁在服务端施加并落库，
@@ -92,6 +100,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
   project,
   onUpdateProject,
   onStartPresent,
+  onActiveSlideChange,
   onAiEdit,
 }) => {
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
@@ -133,6 +142,16 @@ export const Workbench: React.FC<WorkbenchProps> = ({
 
   const currentSlide = project.slides[activeSlideIndex] || project.slides[0];
   const selectedElement = currentSlide?.elements.find((el) => el.id === selectedElementId);
+
+  /**
+   * 把当前页码上报给 App —— 导出与放映需要知道"用户停在第几页"。
+   * ---------------------------------------------------------------------------
+   * 这里用 effect 而不是把 setState 逐个包一层，是为了**只有一个上报点**：
+   * 上面所有 setActiveSlideIndex 的调用点无论怎么改都会流经这里，不会漏报。
+   */
+  useEffect(() => {
+    onActiveSlideChange?.(activeSlideIndex);
+  }, [activeSlideIndex, onActiveSlideChange]);
 
   // Auto-fit zoom on mount, resize, or rail collapse/expand
   const fitZoomToContainer = useCallback(() => {
