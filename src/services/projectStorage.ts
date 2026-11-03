@@ -77,6 +77,8 @@ interface ServerProjectRow {
   template: TemplateIR;
   outline: SlideOutlineItem[] | null;
   qualityReport?: PresentationProject['qualityReport'];
+  /** 真实页数 —— 服务端 `slides` 表的行数（列表摘要里一定有） */
+  slideCount?: number;
   createdAt: string | Date;
   updatedAt: string | Date;
 }
@@ -117,6 +119,8 @@ function toPresentationProject(row: ServerProjectRow, slides: SlideIR[] = []): P
     template: row.template,
     outline: row.outline ?? [],
     slides,
+    // 服务端给了页数就用服务端的；没给就退回"内存里加载了几页"
+    slideCount: row.slideCount ?? slides.length,
     versions: {},
     qualityReport: row.qualityReport ?? undefined,
     createdAt: new Date(row.createdAt).getTime(),
@@ -129,6 +133,16 @@ function isOffline(err: unknown): boolean {
   return err instanceof ApiClientError && err.code === 'NETWORK_ERROR';
 }
 
+/**
+ * 模板 id → 内置模板
+ * ---------------------------------------------------------------------------
+ * 服务端只报 `templateId`（不报整份模板），前端据此还原深/浅底。
+ * 找不到就回落到默认模板 —— 宁可显示成浅底，也不能让整个列表渲染不出来。
+ */
+function templateById(templateId: string): TemplateIR {
+  return BUILT_IN_TEMPLATES.find((t) => t.templateId === templateId) ?? BUILT_IN_TEMPLATES[0]!;
+}
+
 /* -------------------------------------------------------------------------- */
 /* 服务                                                                        */
 /* -------------------------------------------------------------------------- */
@@ -138,6 +152,12 @@ export const ProjectStorage = {
    * 项目列表
    * ---------------------------------------------------------------------------
    * 返回的是**摘要**（不含 IR）。点开某个项目时再拉全量。
+   *
+   * 摘要里带着两样"列表要显示、但正文里没有"的东西：
+   *   · `templateId` —— 用来还原这份文稿用的是哪份模板（深底还是浅底）；
+   *   · `slideCount` —— 真实页数（摘要里没有每一页的 IR，`slides` 恒为空数组）。
+   *
+   * 少了它们，作品库的深/浅筛选永远筛不出东西、每张卡片都写"0 页"。
    */
   async listProjects(): Promise<PresentationProject[]> {
     try {
@@ -148,6 +168,8 @@ export const ProjectStorage = {
           topic: string;
           pageCount: number;
           outlineCount: number;
+          templateId: string;
+          slideCount: number;
           createdAt: string | Date;
           updatedAt: string | Date;
         }>;
@@ -176,9 +198,10 @@ export const ProjectStorage = {
           depth: '',
           aspectRatio: '16:9' as const,
         },
-        template: BUILT_IN_TEMPLATES[0]!,
+        template: templateById(p.templateId),
         outline: [],
         slides: [],
+        slideCount: p.slideCount,
         versions: {},
         createdAt: new Date(p.createdAt).getTime(),
         updatedAt: new Date(p.updatedAt).getTime(),
@@ -282,6 +305,42 @@ export const ProjectStorage = {
     return toPresentationProject(data.project);
   },
 
+  /**
+   * 导出 bundle —— 服务端那份**完整的**（含每一页的 IR 与页序）。
+   * ---------------------------------------------------------------------------
+   * 作品库里那份是摘要，`slides` 恒为空数组 —— 直接导它会得到一份没有页面的
+   * 空壳，再导入回去什么也恢复不了。所以导之前必须回服务端取 bundle。
+   *
+   * bundle 的形状正是导入端（`POST /api/projects/import`）认的形状：
+   * `slides: [{slideId, orderIndex, ir}]`。
+   */
+  async exportProjectBundle(projectId: string): Promise<{
+    name: string;
+    requirement: PresentationRequirement;
+    template: TemplateIR;
+    outline: SlideOutlineItem[];
+    slides: Array<{ slideId: string; orderIndex: number; ir: SlideIR }>;
+  }> {
+    const data = await api.get<{
+      bundle: {
+        name: string;
+        requirement: PresentationRequirement;
+        template: TemplateIR;
+        outline: SlideOutlineItem[] | null;
+        slides: Array<{ slideId: string; orderIndex: number; ir: SlideIR }> | null;
+      };
+    }>(`/api/projects/${projectId}/export`);
+
+    const b = data.bundle;
+    return {
+      name: b.name,
+      requirement: b.requirement,
+      template: b.template,
+      outline: b.outline ?? [],
+      slides: b.slides ?? [],
+    };
+  },
+
   /** 大纲 → 幻灯片（服务端编译，权威） */
   async compileProject(
     projectId: string
@@ -355,7 +414,9 @@ export const ProjectStorage = {
       outline: parsed.outline ?? [],
       slides: parsed.slides,
     });
-    return toPresentationProject(data.project);
+    // 导入接口只回项目行、不回页数 —— 页数就是这份 JSON 里的页数
+    const slideCount = Array.isArray(parsed.slides) ? parsed.slides.length : 0;
+    return { ...toPresentationProject(data.project), slideCount };
   },
 
   /* ------------------------------------------------------------------ */

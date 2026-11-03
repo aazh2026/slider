@@ -411,6 +411,29 @@ export class ExportEngine {
   }
 
   /**
+   * 6b. Export as JSON IR format —— **导 bundle**（服务端那份完整的）
+   * ---------------------------------------------------------------------------
+   * 为什么不能只导内存里的 `PresentationProject`：
+   *
+   *   · 作品库只有**摘要** —— `slides` 恒为空数组，导出来是一份没有页面的空壳；
+   *   · 就算内存里有全量，`slides` 也是 `SlideIR[]`（只有 `slideId`/`order`），
+   *     而导入端要的是 `[{slideId, orderIndex, ir}]` —— `orderIndex` 对不上，
+   *     落库时 NOT NULL 约束直接报错。
+   *
+   * bundle 的形状（`GET /api/projects/:id/export` 的载荷）**就是导入端认的形状**：
+   * 导出去能再导回来，中间不丢东西。
+   */
+  static exportBundleAsJson(bundle: {
+    name: string;
+    slides: Array<{ slideId: string; orderIndex: number; ir: SlideIR }>;
+    [key: string]: unknown;
+  }) {
+    const jsonStr = JSON.stringify(bundle, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    this.triggerDownload(blob, `${sanitizeFilename(bundle.name)}_slide_ir.json`);
+  }
+
+  /**
    * Rasterizes an SVG string onto a canvas at 2x resolution and returns data URL
    */
   private static renderSvgToCanvasDataUrl(

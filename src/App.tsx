@@ -36,7 +36,7 @@ import {
 import { BUILT_IN_TEMPLATES } from '@ppt/core';
 import { QualityEngine } from '@ppt/core';
 import { ProjectStorage } from './services/projectStorage';
-import { mergeProjectSummaries } from './services/projectMerge';
+import { mergeProjectSummaries, pageCountOf } from './services/projectMerge';
 import { AuthService, type AuthUser } from './services/authService';
 import { ApiClientError, SESSION_EXPIRED_EVENT, describeError } from './services/apiClient';
 import { SidebarNav, NavTab } from './components/SidebarNav';
@@ -369,7 +369,14 @@ export default function App() {
   const handleDuplicateProject = useCallback(async (projectId: string) => {
     try {
       const created = await ProjectStorage.duplicateProject(projectId);
-      applyProjects((prev) => [created, ...prev]);
+      // 副本的页数与原件相同。复制接口只回项目行、不回页数，
+      // 这里用原件的权威页数补上 —— 否则新卡片会写"0 页"。
+      const source = projectsRef.current.find((p) => p.id === projectId);
+      const withCount: PresentationProject = {
+        ...created,
+        slideCount: source ? pageCountOf(source) : created.slideCount,
+      };
+      applyProjects((prev) => [withCount, ...prev]);
       setActiveProjectId(created.id);
     } catch (err) {
       setSyncNotice(`复制项目失败：${describeError(err)}`);

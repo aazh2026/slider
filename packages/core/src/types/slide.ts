@@ -223,6 +223,17 @@ export interface PresentationProject {
   template: TemplateIR;
   outline: SlideOutlineItem[];
   slides: SlideIR[];
+  /**
+   * 真实页数 —— 服务端 `slides` 表里的行数。
+   *
+   * 为什么单独留一个字段：作品库只拉**摘要**，摘要里没有每一页的 IR，
+   * 于是 `slides` 恒为空数组。列表上要显示"N 页"时，光看 `slides.length`
+   * 永远是 0 —— 除非这份文稿刚好被完整加载过。
+   *
+   * 这个字段是服务端给的权威页数；`slides.length` 是"当前内存里加载了几页"。
+   * 两者不一致时以本字段为准。
+   */
+  slideCount?: number;
   versions: Record<string, SlideVersion[]>; // slideId -> history
   qualityReport?: QualityReport;
   createdAt: number;

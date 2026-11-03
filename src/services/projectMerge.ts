@@ -54,3 +54,16 @@ export function mergeProjectSummaries(
     };
   });
 }
+
+/**
+ * 一份文稿的**真实页数**。
+ * ---------------------------------------------------------------------------
+ * `slideCount` 是服务端 `slides` 表的行数（权威）；`slides.length` 只是
+ * "当前内存里加载了几页" —— 作品库只拉摘要，没打开过的文稿恒为 0。
+ *
+ * 列表上要显示"N 页"、要按页数排序，都必须走这个函数：
+ * 直接看 `slides.length` 会把没打开过的文稿全当成 0 页。
+ */
+export function pageCountOf(project: PresentationProject): number {
+  return project.slideCount ?? project.slides.length;
+}

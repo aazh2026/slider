@@ -39,6 +39,7 @@ import {
 import { ApiError } from '../errors';
 import { requireAuth, requireProject, requireSlide } from '../middleware/auth';
 import {
+  countSlidesByProject,
   createProject,
   defaultTemplate,
   deleteProject,
@@ -128,6 +129,14 @@ projectRoutes.get('/', requireAuth, async (c) => {
     tag: tag ?? undefined,
   });
 
+  // 摘要要带上**作品库卡片真正要显示的两样东西**：模板与页数。
+  // 少了它们，前端只能瞎猜：模板一律当成默认的浅色（深色筛选于是永远筛不出东西），
+  // 页数一律当成 0（每张卡片都写"0 页"）。见 known_gaps 里对应的一条。
+  const slideCounts = await countSlidesByProject(
+    c.get('db'),
+    rows.map((r) => r.id)
+  );
+
   return respond(c, {
     projects: rows.map((p) => ({
       id: p.id,
@@ -135,6 +144,10 @@ projectRoutes.get('/', requireAuth, async (c) => {
       topic: p.requirement?.topic ?? '',
       pageCount: p.requirement?.pageCount ?? 0,
       outlineCount: p.outline?.length ?? 0,
+      /** 模板 id —— 前端据此还原深/浅底，不再一律当成默认模板 */
+      templateId: p.template?.templateId ?? '',
+      /** 真实页数 —— slides 表里的行数，不是"打算做几页" */
+      slideCount: slideCounts.get(p.id) ?? 0,
       createdAt: p.createdAt,
       updatedAt: p.updatedAt,
     })),

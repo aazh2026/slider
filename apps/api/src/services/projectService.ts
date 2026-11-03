@@ -7,7 +7,7 @@
  * **每一个查询都带 userId 条件** —— 这是跨租户防护的唯一凭据。
  */
 
-import { and, desc, eq, isNull, sql } from 'drizzle-orm';
+import { and, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 
 import { BUILT_IN_TEMPLATES, type SlideOutlineItem, type TemplateIR } from '@ppt/core';
 
@@ -55,6 +55,30 @@ export async function listProjects(
     .orderBy(desc(projects.updatedAt))
     .limit(limit)
     .offset(offset);
+}
+
+/**
+ * 每份文稿的**真实页数** —— `slides` 表里的行数。
+ *
+ * 为什么不能拿 `requirement.pageCount` 顶替：那是"当初打算做几页"，
+ * 编译之后大纲改了、页被加过，两边就对不上了。
+ * 作品库卡片上写的那句"N 页"要的是**现在真的有几页**。
+ *
+ * 一次分组查询拿全所有项目的页数 —— 不按项目逐个查（N+1）。
+ */
+export async function countSlidesByProject(
+  db: DbHandle,
+  projectIds: string[]
+): Promise<Map<string, number>> {
+  if (projectIds.length === 0) return new Map();
+
+  const rows = await db.db
+    .select({ projectId: slides.projectId, n: count() })
+    .from(slides)
+    .where(inArray(slides.projectId, projectIds))
+    .groupBy(slides.projectId);
+
+  return new Map(rows.map((r) => [r.projectId, Number(r.n)]));
 }
 
 export async function findProject(

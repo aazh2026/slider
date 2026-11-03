@@ -28,6 +28,9 @@ import { SVGRenderer } from '@ppt/core';
 import { BUILT_IN_TEMPLATES } from '@ppt/core';
 import { ExportEngine } from '@ppt/core';
 
+import { pageCountOf } from '../services/projectMerge';
+import { ProjectStorage } from '../services/projectStorage';
+
 interface ProjectsManagerProps {
   projects: PresentationProject[];
   currentProjectId: string;
@@ -81,6 +84,22 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
     }
   };
 
+  /**
+   * 导出 Slide IR JSON 备份。
+   * ---------------------------------------------------------------------------
+   * 导的是**服务端那份 bundle**，不是卡片上这份摘要 ——
+   * 摘要的 `slides` 是空数组，直接导会得到一份没有页面的空壳，
+   * 再导入回去什么也恢复不了。
+   */
+  const handleExportJson = async (p: PresentationProject) => {
+    try {
+      const bundle = await ProjectStorage.exportProjectBundle(p.id);
+      ExportEngine.exportBundleAsJson(bundle);
+    } catch (err: any) {
+      alert(`导出 JSON 失败: ${err.message || '未知错误'}`);
+    }
+  };
+
   // Filter & Sort
   const filteredProjects = projects
     .filter((p) => {
@@ -96,7 +115,9 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
     .sort((a, b) => {
       if (sortBy === 'updated') return b.updatedAt - a.updatedAt;
       if (sortBy === 'created') return b.createdAt - a.createdAt;
-      if (sortBy === 'pages') return b.slides.length - a.slides.length;
+      // 页数用服务给的 `slideCount`；没加载过的文稿 `slides` 是空的，
+      // 只看 `slides.length` 会把所有没打开过的文稿都当成 0 页。
+      if (sortBy === 'pages') return pageCountOf(b) - pageCountOf(a);
       return 0;
     });
 
@@ -335,7 +356,7 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
                       </div>
 
                       <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-mono">
-                        <span>{p.slides.length} 页</span>
+                        <span data-testid={`pm-pages-${p.id}`}>{pageCountOf(p)} 页</span>
                         <span>·</span>
                         <span>{new Date(p.updatedAt).toLocaleDateString()}</span>
                         <span>·</span>
@@ -387,7 +408,8 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
 
                       {/* Export JSON */}
                       <button
-                        onClick={() => ExportEngine.exportProjectAsJson(p)}
+                        onClick={() => void handleExportJson(p)}
+                        data-testid={`pm-export-json-${p.id}`}
                         className="p-1.5 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
                         title="导出 Slide IR JSON 备份"
                       >
