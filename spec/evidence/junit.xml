@@ -1,28 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="bun test" tests="191" assertions="1664" failures="0" skipped="0" time="74.036967">
+<testsuites name="bun test" tests="339" assertions="4012" failures="0" skipped="0" time="79.994947">
   <testsuite name="spec/verify/core-content.test.ts" file="spec/verify/core-content.test.ts" tests="4" assertions="6" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
     <testsuite name="SPEC-CORE-008 消费 bullets 的 7 种版式必须使用 outline.bulletPoints" file="spec/verify/core-content.test.ts" line="19" tests="1" assertions="1" failures="0" skipped="0" time="0.001" hostname="AarondeMacBook-Pro.local">
-      <testcase name="bullet-consuming-layouts-use-outline-bullets" classname="SPEC-CORE-008 消费 bullets 的 7 种版式必须使用 outline.bulletPoints" time="0.001127" file="spec/verify/core-content.test.ts" line="20" assertions="1" />
+      <testcase name="bullet-consuming-layouts-use-outline-bullets" classname="SPEC-CORE-008 消费 bullets 的 7 种版式必须使用 outline.bulletPoints" time="0.001096" file="spec/verify/core-content.test.ts" line="20" assertions="1" />
     </testsuite>
     <testsuite name="SPEC-CORE-009 封面内容必须可追溯到 outline 字段" file="spec/verify/core-content.test.ts" line="36" tests="1" assertions="1" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="cover-content-traceable-to-outline" classname="SPEC-CORE-009 封面内容必须可追溯到 outline 字段" time="0.0001" file="spec/verify/core-content.test.ts" line="37" assertions="1" />
+      <testcase name="cover-content-traceable-to-outline" classname="SPEC-CORE-009 封面内容必须可追溯到 outline 字段" time="0" file="spec/verify/core-content.test.ts" line="37" assertions="1" />
     </testsuite>
     <testsuite name="SPEC-CORE-010 渲染结果必须随 outline.bulletPoints 改变而改变" file="spec/verify/core-content.test.ts" line="69" tests="1" assertions="1" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="render-output-follows-outline-bullets" classname="SPEC-CORE-010 渲染结果必须随 outline.bulletPoints 改变而改变" time="0.000345" file="spec/verify/core-content.test.ts" line="70" assertions="1" />
+      <testcase name="render-output-follows-outline-bullets" classname="SPEC-CORE-010 渲染结果必须随 outline.bulletPoints 改变而改变" time="0.000634" file="spec/verify/core-content.test.ts" line="70" assertions="1" />
     </testsuite>
     <testsuite name="夹具自检 —— 标记串不得与任何固定演示文案重合" file="spec/verify/core-content.test.ts" line="96" tests="1" assertions="3" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="marker-prefix-is-unique-to-fixture" classname="夹具自检 —— 标记串不得与任何固定演示文案重合" time="0.000024" file="spec/verify/core-content.test.ts" line="97" assertions="3" />
+      <testcase name="marker-prefix-is-unique-to-fixture" classname="夹具自检 —— 标记串不得与任何固定演示文案重合" time="0" file="spec/verify/core-content.test.ts" line="97" assertions="3" />
+    </testsuite>
+  </testsuite>
+  <testsuite name="spec/verify/text-metrics.test.ts" file="spec/verify/text-metrics.test.ts" tests="2" assertions="381" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+    <testsuite name="SPEC-RND-007 宽度模型必须区分全角与半角" file="spec/verify/text-metrics.test.ts" line="48" tests="1" assertions="55" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="text-width-model-is-calibrated" classname="SPEC-RND-007 宽度模型必须区分全角与半角" time="0.000188" file="spec/verify/text-metrics.test.ts" line="49" assertions="55" />
+    </testsuite>
+    <testsuite name="SPEC-RND-007 折出来的每一行都不得超过可用宽度" file="spec/verify/text-metrics.test.ts" line="108" tests="1" assertions="326" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="wrapped-lines-never-exceed-the-available-width" classname="SPEC-RND-007 折出来的每一行都不得超过可用宽度" time="0.000539" file="spec/verify/text-metrics.test.ts" line="109" assertions="326" />
     </testsuite>
   </testsuite>
   <testsuite name="spec/verify/chain-isolation.test.ts" file="spec/verify/chain-isolation.test.ts" tests="9" assertions="15" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
     <testsuite name="进程树解析" file="spec/verify/chain-isolation.test.ts" line="56" tests="3" assertions="4" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="父 pid 映射到子 pid 列表" classname="进程树解析" time="0" file="spec/verify/chain-isolation.test.ts" line="57" assertions="2" />
+      <testcase name="父 pid 映射到子 pid 列表" classname="进程树解析" time="0.000014" file="spec/verify/chain-isolation.test.ts" line="57" assertions="2" />
       <testcase name="没有子进程的 pid 不在映射里" classname="进程树解析" time="0" file="spec/verify/chain-isolation.test.ts" line="63" assertions="1" />
       <testcase name="三列输出也能解析（命令里有空格也不影响 pid/ppid）" classname="进程树解析" time="0" file="spec/verify/chain-isolation.test.ts" line="68" assertions="1" />
     </testsuite>
     <testsuite name="浏览器归属 —— 缺陷回放" file="spec/verify/chain-isolation.test.ts" line="74" tests="6" assertions="11" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="认领得到本链的浏览器（含渲染子进程）" classname="浏览器归属 —— 缺陷回放" time="0" file="spec/verify/chain-isolation.test.ts" line="75" assertions="1" />
-      <testcase name="**别人的**浏览器不在本链的名单里" classname="浏览器归属 —— 缺陷回放" time="0.000983" file="spec/verify/chain-isolation.test.ts" line="80" assertions="2" />
+      <testcase name="认领得到本链的浏览器（含渲染子进程）" classname="浏览器归属 —— 缺陷回放" time="0.000156" file="spec/verify/chain-isolation.test.ts" line="75" assertions="1" />
+      <testcase name="**别人的**浏览器不在本链的名单里" classname="浏览器归属 —— 缺陷回放" time="0" file="spec/verify/chain-isolation.test.ts" line="80" assertions="2" />
       <testcase name="反过来也一样：两条链各认各的" classname="浏览器归属 —— 缺陷回放" time="0" file="spec/verify/chain-isolation.test.ts" line="88" assertions="3" />
       <testcase name="被 init 收养的孤儿不属于任何链 —— 谁都不该杀它" classname="浏览器归属 —— 缺陷回放" time="0" file="spec/verify/chain-isolation.test.ts" line="96" assertions="2" />
       <testcase name="树里没有的非浏览器进程不算浏览器" classname="浏览器归属 —— 缺陷回放" time="0" file="spec/verify/chain-isolation.test.ts" line="105" assertions="2" />
@@ -31,59 +39,88 @@
   </testsuite>
   <testsuite name="spec/verify/core-layout.test.ts" file="spec/verify/core-layout.test.ts" tests="8" assertions="14" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
     <testsuite name="SPEC-CORE-001 画布尺寸恒为 1920×1080" file="spec/verify/core-layout.test.ts" line="19" tests="1" assertions="2" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="canvas-is-always-1920x1080" classname="SPEC-CORE-001 画布尺寸恒为 1920×1080" time="0.000433" file="spec/verify/core-layout.test.ts" line="20" assertions="2" />
+      <testcase name="canvas-is-always-1920x1080" classname="SPEC-CORE-001 画布尺寸恒为 1920×1080" time="0.000322" file="spec/verify/core-layout.test.ts" line="20" assertions="2" />
     </testsuite>
     <testsuite name="SPEC-CORE-002 版式元素不得越出画布" file="spec/verify/core-layout.test.ts" line="38" tests="1" assertions="1" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="no-element-out-of-canvas" classname="SPEC-CORE-002 版式元素不得越出画布" time="0.000381" file="spec/verify/core-layout.test.ts" line="39" assertions="1" />
+      <testcase name="no-element-out-of-canvas" classname="SPEC-CORE-002 版式元素不得越出画布" time="0.000721" file="spec/verify/core-layout.test.ts" line="39" assertions="1" />
     </testsuite>
     <testsuite name="SPEC-CORE-003 元素 ID 在整个项目内全局唯一" file="spec/verify/core-layout.test.ts" line="63" tests="1" assertions="2" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
       <testcase name="element-ids-unique-across-slides" classname="SPEC-CORE-003 元素 ID 在整个项目内全局唯一" time="0" file="spec/verify/core-layout.test.ts" line="64" assertions="2" />
     </testsuite>
     <testsuite name="SPEC-CORE-004 版式专属元素 ID 必须携带 slideId" file="spec/verify/core-layout.test.ts" line="88" tests="1" assertions="1" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="layout-element-ids-contain-slide-id" classname="SPEC-CORE-004 版式专属元素 ID 必须携带 slideId" time="0.00034" file="spec/verify/core-layout.test.ts" line="89" assertions="1" />
+      <testcase name="layout-element-ids-contain-slide-id" classname="SPEC-CORE-004 版式专属元素 ID 必须携带 slideId" time="0" file="spec/verify/core-layout.test.ts" line="89" assertions="1" />
     </testsuite>
-    <testsuite name="SPEC-CORE-005 版式引擎是纯函数" file="spec/verify/core-layout.test.ts" line="104" tests="1" assertions="1" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="layout-engine-is-pure" classname="SPEC-CORE-005 版式引擎是纯函数" time="0.000541" file="spec/verify/core-layout.test.ts" line="105" assertions="1" />
+    <testsuite name="SPEC-CORE-005 版式引擎是纯函数" file="spec/verify/core-layout.test.ts" line="104" tests="1" assertions="1" failures="0" skipped="0" time="0.001" hostname="AarondeMacBook-Pro.local">
+      <testcase name="layout-engine-is-pure" classname="SPEC-CORE-005 版式引擎是纯函数" time="0.001432" file="spec/verify/core-layout.test.ts" line="105" assertions="1" />
     </testsuite>
     <testsuite name="SPEC-CORE-006 封面页不渲染母版元素" file="spec/verify/core-layout.test.ts" line="119" tests="1" assertions="2" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="cover-page-has-no-master-elements" classname="SPEC-CORE-006 封面页不渲染母版元素" time="0.000349" file="spec/verify/core-layout.test.ts" line="120" assertions="2" />
+      <testcase name="cover-page-has-no-master-elements" classname="SPEC-CORE-006 封面页不渲染母版元素" time="0.000083" file="spec/verify/core-layout.test.ts" line="120" assertions="2" />
     </testsuite>
-    <testsuite name="SPEC-CORE-007 页码格式为 NN / TT" file="spec/verify/core-layout.test.ts" line="130" tests="1" assertions="2" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="page-number-format" classname="SPEC-CORE-007 页码格式为 NN / TT" time="0" file="spec/verify/core-layout.test.ts" line="131" assertions="2" />
+    <testsuite name="SPEC-CORE-007 页码格式为 NN / TT" file="spec/verify/core-layout.test.ts" line="131" tests="1" assertions="2" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="page-number-format" classname="SPEC-CORE-007 页码格式为 NN / TT" time="0.000008" file="spec/verify/core-layout.test.ts" line="132" assertions="2" />
     </testsuite>
-    <testsuite name="夹具自检 —— 确认 8 种版式 / 8 套主题确实被枚举" file="spec/verify/core-layout.test.ts" line="139" tests="1" assertions="3" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="fixture-surface-is-complete" classname="夹具自检 —— 确认 8 种版式 / 8 套主题确实被枚举" time="0" file="spec/verify/core-layout.test.ts" line="140" assertions="3" />
+    <testsuite name="夹具自检 —— 确认 8 种版式 / 8 套主题确实被枚举" file="spec/verify/core-layout.test.ts" line="140" tests="1" assertions="3" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="fixture-surface-is-complete" classname="夹具自检 —— 确认 8 种版式 / 8 套主题确实被枚举" time="0" file="spec/verify/core-layout.test.ts" line="141" assertions="3" />
     </testsuite>
   </testsuite>
   <testsuite name="spec/verify/mutationLock.test.ts" file="spec/verify/mutationLock.test.ts" tests="7" assertions="17" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
     <testsuite name="注入检查跑批互斥锁" file="spec/verify/mutationLock.test.ts" line="37" tests="7" assertions="17" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="锁在别人手里时抢不到（并且说得清是谁占着）" classname="注入检查跑批互斥锁" time="0.000547" file="spec/verify/mutationLock.test.ts" line="38" assertions="3" />
-      <testcase name="持锁进程死了 → 废锁可以被接管（一次 Ctrl-C 不能把仓库锁死）" classname="注入检查跑批互斥锁" time="0.000338" file="spec/verify/mutationLock.test.ts" line="51" assertions="2" />
-      <testcase name="坏锁文件不能把仓库锁死（拿不到持有者 = 无人持有）" classname="注入检查跑批互斥锁" time="0.000251" file="spec/verify/mutationLock.test.ts" line="62" assertions="1" />
-      <testcase name="释放只能删自己的锁（不能把别人的锁删掉）" classname="注入检查跑批互斥锁" time="0.000201" file="spec/verify/mutationLock.test.ts" line="70" assertions="2" />
-      <testcase name="释放后可以再拿（跑批结束后不留残余）" classname="注入检查跑批互斥锁" time="0.000316" file="spec/verify/mutationLock.test.ts" line="83" assertions="2" />
-      <testcase name="进程探活：自己在，999999 不在" classname="注入检查跑批互斥锁" time="0.000017" file="spec/verify/mutationLock.test.ts" line="94" assertions="4" />
-      <testcase name="锁文件内容能被人读懂（要能看出是谁、什么时候开始的）" classname="注入检查跑批互斥锁" time="0.000233" file="spec/verify/mutationLock.test.ts" line="101" assertions="3" />
+      <testcase name="锁在别人手里时抢不到（并且说得清是谁占着）" classname="注入检查跑批互斥锁" time="0.000672" file="spec/verify/mutationLock.test.ts" line="38" assertions="3" />
+      <testcase name="持锁进程死了 → 废锁可以被接管（一次 Ctrl-C 不能把仓库锁死）" classname="注入检查跑批互斥锁" time="0.00036" file="spec/verify/mutationLock.test.ts" line="51" assertions="2" />
+      <testcase name="坏锁文件不能把仓库锁死（拿不到持有者 = 无人持有）" classname="注入检查跑批互斥锁" time="0.000276" file="spec/verify/mutationLock.test.ts" line="62" assertions="1" />
+      <testcase name="释放只能删自己的锁（不能把别人的锁删掉）" classname="注入检查跑批互斥锁" time="0.000313" file="spec/verify/mutationLock.test.ts" line="70" assertions="2" />
+      <testcase name="释放后可以再拿（跑批结束后不留残余）" classname="注入检查跑批互斥锁" time="0.000388" file="spec/verify/mutationLock.test.ts" line="83" assertions="2" />
+      <testcase name="进程探活：自己在，999999 不在" classname="注入检查跑批互斥锁" time="0.00002" file="spec/verify/mutationLock.test.ts" line="94" assertions="4" />
+      <testcase name="锁文件内容能被人读懂（要能看出是谁、什么时候开始的）" classname="注入检查跑批互斥锁" time="0.000127" file="spec/verify/mutationLock.test.ts" line="101" assertions="3" />
+    </testsuite>
+  </testsuite>
+  <testsuite name="spec/verify/anchorHealth.test.ts" file="spec/verify/anchorHealth.test.ts" tests="19" assertions="43" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+    <testsuite name="锚点计数" file="spec/verify/anchorHealth.test.ts" line="51" tests="2" assertions="5" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="出现 0 / 1 / 多次都要数对" classname="锚点计数" time="0" file="spec/verify/anchorHealth.test.ts" line="52" assertions="4" />
+      <testcase name="空模式串不算出现（否则每个空串都会命中）" classname="锚点计数" time="0" file="spec/verify/anchorHealth.test.ts" line="59" assertions="1" />
+    </testsuite>
+    <testsuite name="锚点健康状况" file="spec/verify/anchorHealth.test.ts" line="64" tests="5" assertions="11" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="锚点在、且只出现一次 → ok" classname="锚点健康状况" time="0" file="spec/verify/anchorHealth.test.ts" line="65" assertions="2" />
+      <testcase name="锚点找不到了 → missing（这条用例现在跑不起来）" classname="锚点健康状况" time="0" file="spec/verify/anchorHealth.test.ts" line="71" assertions="3" />
+      <testcase name="锚点出现多次 → ambiguous（注入只会落到第一处）" classname="锚点健康状况" time="0" file="spec/verify/anchorHealth.test.ts" line="78" assertions="2" />
+      <testcase name="文件不在树里了 → file-missing" classname="锚点健康状况" time="0" file="spec/verify/anchorHealth.test.ts" line="84" assertions="2" />
+      <testcase name="附加锚点也要一起查 —— 漏一条就等于注入不完整" classname="锚点健康状况" time="0" file="spec/verify/anchorHealth.test.ts" line="90" assertions="2" />
+    </testsuite>
+    <testsuite name="定义 ↔ 报告 ↔ 当前代码" file="spec/verify/anchorHealth.test.ts" line="100" tests="5" assertions="11" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="锚点全好 → 没有跑不起来的用例" classname="定义 ↔ 报告 ↔ 当前代码" time="0" file="spec/verify/anchorHealth.test.ts" line="106" assertions="3" />
+      <testcase name="锚点失配 → 点名，并且说清这条结论在报告里出现过" classname="定义 ↔ 报告 ↔ 当前代码" time="0" file="spec/verify/anchorHealth.test.ts" line="119" assertions="3" />
+      <testcase name="定义里有、报告里没有 → 还没进过全量证据" classname="定义 ↔ 报告 ↔ 当前代码" time="0" file="spec/verify/anchorHealth.test.ts" line="127" assertions="2" />
+      <testcase name="报告里有、定义里没有 → 报告里的孤儿条目" classname="定义 ↔ 报告 ↔ 当前代码" time="0" file="spec/verify/anchorHealth.test.ts" line="141" assertions="1" />
+      <testcase name="同一条判据的多条用例按「判据 + 描述」分别对账" classname="定义 ↔ 报告 ↔ 当前代码" time="0.000373" file="spec/verify/anchorHealth.test.ts" line="146" assertions="2" />
+    </testsuite>
+    <testsuite name="对账结论怎么说出口" file="spec/verify/anchorHealth.test.ts" line="155" tests="7" assertions="16" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="一切正常 → 说「现在重跑还跑得起来」" classname="对账结论怎么说出口" time="0.000015" file="spec/verify/anchorHealth.test.ts" line="160" assertions="2" />
+      <testcase name="锚点失配 → 点名，并且明说报告里那条结论不能算数" classname="对账结论怎么说出口" time="0" file="spec/verify/anchorHealth.test.ts" line="166" assertions="4" />
+      <testcase name="还没进过全量证据的 → 单列出来" classname="对账结论怎么说出口" time="0" file="spec/verify/anchorHealth.test.ts" line="175" assertions="3" />
+      <testcase name="汇总句的限定语：锚点全好时不啰嗦" classname="对账结论怎么说出口" time="0" file="spec/verify/anchorHealth.test.ts" line="187" assertions="1" />
+      <testcase name="汇总句的限定语：锚点失配时明说「不合格 0 个」不能算数" classname="对账结论怎么说出口" time="0" file="spec/verify/anchorHealth.test.ts" line="192" assertions="2" />
+      <testcase name="报告里的孤儿 → 单列出来，并说清无从核对" classname="对账结论怎么说出口" time="0.000159" file="spec/verify/anchorHealth.test.ts" line="199" assertions="3" />
+      <testcase name="既没定义也没报告 → 明说没有内容" classname="对账结论怎么说出口" time="0.000032" file="spec/verify/anchorHealth.test.ts" line="211" assertions="1" />
     </testsuite>
   </testsuite>
   <testsuite name="spec/verify/testid-contract.test.ts" file="spec/verify/testid-contract.test.ts" tests="12" assertions="18" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
     <testsuite name="E2E 用到的 testid，前端全都提供得出来" file="spec/verify/testid-contract.test.ts" line="185" tests="2" assertions="3" failures="0" skipped="0" time="0.002" hostname="AarondeMacBook-Pro.local">
-      <testcase name="至少扫到一些 testid —— 扫描器没坏" classname="E2E 用到的 testid，前端全都提供得出来" time="0.000016" file="spec/verify/testid-contract.test.ts" line="189" assertions="2" />
-      <testcase name="每一条 E2E 用法都有前端提供的 testid 对得上" classname="E2E 用到的 testid，前端全都提供得出来" time="0.002607" file="spec/verify/testid-contract.test.ts" line="194" assertions="1" />
+      <testcase name="至少扫到一些 testid —— 扫描器没坏" classname="E2E 用到的 testid，前端全都提供得出来" time="0" file="spec/verify/testid-contract.test.ts" line="189" assertions="2" />
+      <testcase name="每一条 E2E 用法都有前端提供的 testid 对得上" classname="E2E 用到的 testid，前端全都提供得出来" time="0.002373" file="spec/verify/testid-contract.test.ts" line="194" assertions="1" />
     </testsuite>
     <testsuite name="匹配规则 —— 缺陷回放" file="spec/verify/testid-contract.test.ts" line="212" tests="7" assertions="11" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
       <testcase name="前端改名之后，老的 testid 判成对不上" classname="匹配规则 —— 缺陷回放" time="0" file="spec/verify/testid-contract.test.ts" line="217" assertions="1" />
       <testcase name="新名字立刻对得上" classname="匹配规则 —— 缺陷回放" time="0" file="spec/verify/testid-contract.test.ts" line="223" assertions="1" />
       <testcase name="没被碰过的 testid 不受影响" classname="匹配规则 —— 缺陷回放" time="0" file="spec/verify/testid-contract.test.ts" line="227" assertions="1" />
-      <testcase name="模板 testid 能对上具体的一个值" classname="匹配规则 —— 缺陷回放" time="0.000066" file="spec/verify/testid-contract.test.ts" line="231" assertions="2" />
-      <testcase name="E2E 侧是模板时，前端的字面量也能对上" classname="匹配规则 —— 缺陷回放" time="0.000008" file="spec/verify/testid-contract.test.ts" line="236" assertions="2" />
+      <testcase name="模板 testid 能对上具体的一个值" classname="匹配规则 —— 缺陷回放" time="0" file="spec/verify/testid-contract.test.ts" line="231" assertions="2" />
+      <testcase name="E2E 侧是模板时，前端的字面量也能对上" classname="匹配规则 —— 缺陷回放" time="0" file="spec/verify/testid-contract.test.ts" line="236" assertions="2" />
       <testcase name="前缀用法：前端是模板、E2E 用 ^= 也能对上" classname="匹配规则 —— 缺陷回放" time="0" file="spec/verify/testid-contract.test.ts" line="248" assertions="3" />
       <testcase name="空列表什么都对不上" classname="匹配规则 —— 缺陷回放" time="0" file="spec/verify/testid-contract.test.ts" line="256" assertions="1" />
     </testsuite>
     <testsuite name="解析器 —— 缺陷回放" file="spec/verify/testid-contract.test.ts" line="261" tests="3" assertions="4" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
       <testcase name="前端的字面量与模板都能收进来" classname="解析器 —— 缺陷回放" time="0" file="spec/verify/testid-contract.test.ts" line="262" assertions="1" />
       <testcase name="解不出来的写法不收，也不报错" classname="解析器 —— 缺陷回放" time="0" file="spec/verify/testid-contract.test.ts" line="270" assertions="1" />
-      <testcase name="E2E 的三种写法都能收进来" classname="解析器 —— 缺陷回放" time="0.000073" file="spec/verify/testid-contract.test.ts" line="275" assertions="2" />
+      <testcase name="E2E 的三种写法都能收进来" classname="解析器 —— 缺陷回放" time="0" file="spec/verify/testid-contract.test.ts" line="275" assertions="2" />
     </testsuite>
   </testsuite>
   <testsuite name="spec/verify/junit.test.ts" file="spec/verify/junit.test.ts" tests="9" assertions="13" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
@@ -101,48 +138,167 @@
       <testcase name="every-parsed-case-can-be-found-by-its-own-name" classname="junit 解析 —— 缺陷回放" time="0" file="spec/verify/junit.test.ts" line="98" assertions="1" />
     </testsuite>
   </testsuite>
-  <testsuite name="spec/verify/quality-engine.test.ts" file="spec/verify/quality-engine.test.ts" tests="14" assertions="46" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-    <testsuite name="夹具自检 —— 零缺陷基线必须是四维满分" file="spec/verify/quality-engine.test.ts" line="19" tests="1" assertions="2" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="clean-baseline-scores-100" classname="夹具自检 —— 零缺陷基线必须是四维满分" time="0.000196" file="spec/verify/quality-engine.test.ts" line="20" assertions="2" />
+  <testsuite name="spec/verify/mutationRestore.test.ts" file="spec/verify/mutationRestore.test.ts" tests="19" assertions="57" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+    <testsuite name="注入检查的还原策略" file="spec/verify/mutationRestore.test.ts" line="43" tests="7" assertions="18" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="没人动过这个文件 → 直接写回原文" classname="注入检查的还原策略" time="0" file="spec/verify/mutationRestore.test.ts" line="44" assertions="2" />
+      <testcase name="磁盘上的内容已经等于原文（有人替我们还原过）→ 写回原文即可" classname="注入检查的还原策略" time="0" file="spec/verify/mutationRestore.test.ts" line="50" assertions="2" />
+      <testcase name="别人在别处改了 → 反向打补丁：去掉注入，保住对方的改动" classname="注入检查的还原策略" time="0" file="spec/verify/mutationRestore.test.ts" line="56" assertions="4" />
+      <testcase name="对方改写了注入段本身 → 冲突：一个字节都不写" classname="注入检查的还原策略" time="0" file="spec/verify/mutationRestore.test.ts" line="69" assertions="3" />
+      <testcase name="注入片段在当前文件里出现多次 → 冲突：不敢猜该改哪一处" classname="注入检查的还原策略" time="0" file="spec/verify/mutationRestore.test.ts" line="79" assertions="3" />
+      <testcase name="同一文件里多处编辑 → 必须**倒序**反向还原" classname="注入检查的还原策略" time="0" file="spec/verify/mutationRestore.test.ts" line="87" assertions="2" />
+      <testcase name="还原后文件里不能残留注入的痕迹" classname="注入检查的还原策略" time="0" file="spec/verify/mutationRestore.test.ts" line="104" assertions="2" />
     </testsuite>
-    <testsuite name="SPEC-QLT-001 质量分公式" file="spec/verify/quality-engine.test.ts" line="39" tests="1" assertions="6" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="quality-formula-weights" classname="SPEC-QLT-001 质量分公式" time="0.000135" file="spec/verify/quality-engine.test.ts" line="40" assertions="6" />
+    <testsuite name="还原落盘" file="spec/verify/mutationRestore.test.ts" line="111" tests="3" assertions="11" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="正常路径：把文件写回原文" classname="还原落盘" time="0.000506" file="spec/verify/mutationRestore.test.ts" line="112" assertions="2" />
+      <testcase name="冲突路径：源文件**不被改写**，当前内容被备份下来" classname="还原落盘" time="0.000415" file="spec/verify/mutationRestore.test.ts" line="133" assertions="5" />
+      <testcase name="端到端：注入 → 对方改了别处 → 还原，文件里既有原文也有对方的改动" classname="还原落盘" time="0.000301" file="spec/verify/mutationRestore.test.ts" line="163" assertions="4" />
     </testsuite>
-    <testsuite name="SPEC-QLT-002 画布尺寸不符扣结构分 15" file="spec/verify/quality-engine.test.ts" line="106" tests="1" assertions="3" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="canvas-mismatch-penalty" classname="SPEC-QLT-002 画布尺寸不符扣结构分 15" time="0" file="spec/verify/quality-engine.test.ts" line="107" assertions="3" />
+    <testsuite name="整批还原（跑批收尾走的就是这条路）" file="spec/verify/mutationRestore.test.ts" line="196" tests="4" assertions="16" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="没人动过 → 文件写回原文，没有外来改动也没有冲突" classname="整批还原（跑批收尾走的就是这条路）" time="0.000243" file="spec/verify/mutationRestore.test.ts" line="197" assertions="3" />
+      <testcase name="别人改了别处 → 文件里有原文也有对方的改动，并被记成「外来改动」" classname="整批还原（跑批收尾走的就是这条路）" time="0.000308" file="spec/verify/mutationRestore.test.ts" line="219" assertions="5" />
+      <testcase name="冲突 → 文件一个字节都不动，当前内容备份到 backupDir" classname="整批还原（跑批收尾走的就是这条路）" time="0.000401" file="spec/verify/mutationRestore.test.ts" line="245" assertions="4" />
+      <testcase name="我们没写过的文件 → 一个字节都不动（哪怕别人改了它）" classname="整批还原（跑批收尾走的就是这条路）" time="0.000111" file="spec/verify/mutationRestore.test.ts" line="274" assertions="4" />
     </testsuite>
-    <testsuite name="SPEC-QLT-003 元素 ID 重复扣结构分 5" file="spec/verify/quality-engine.test.ts" line="117" tests="1" assertions="2" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="duplicate-id-penalty" classname="SPEC-QLT-003 元素 ID 重复扣结构分 5" time="0.00006" file="spec/verify/quality-engine.test.ts" line="118" assertions="2" />
+    <testsuite name="还原的时间戳" file="spec/verify/mutationRestore.test.ts" line="323" tests="5" assertions="12" failures="0" skipped="0" time="0.129" hostname="AarondeMacBook-Pro.local">
+      <testcase name="**缺陷回放**：内容还原成原样 → 修改时间也必须还原回去" classname="还原的时间戳" time="0.000375" file="spec/verify/mutationRestore.test.ts" line="324" assertions="3" />
+      <testcase name="内容真的变了（反向打补丁）→ 时间戳必须留在新的那一边" classname="还原的时间戳" time="0.000265" file="spec/verify/mutationRestore.test.ts" line="351" assertions="3" />
+      <testcase name="没给原始时间戳 → 只还原内容，不动时间戳（老调用方不受影响）" classname="还原的时间戳" time="0.000296" file="spec/verify/mutationRestore.test.ts" line="382" assertions="2" />
+      <testcase name="**端到端**：还原之后，追溯矩阵的新鲜度判定仍然说「结论成立」" classname="还原的时间戳" time="0.065969" file="spec/verify/mutationRestore.test.ts" line="405" assertions="2" />
+      <testcase name="**对照**：不还原时间戳的话，同一条结论会被判成「过期」" classname="还原的时间戳" time="0.064278" file="spec/verify/mutationRestore.test.ts" line="474" assertions="2" />
     </testsuite>
-    <testsuite name="SPEC-QLT-004 元素几何越界扣视觉分 10" file="spec/verify/quality-engine.test.ts" line="130" tests="1" assertions="3" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="out-of-bounds-penalty" classname="SPEC-QLT-004 元素几何越界扣视觉分 10" time="0.000027" file="spec/verify/quality-engine.test.ts" line="131" assertions="3" />
+  </testsuite>
+  <testsuite name="spec/verify/font-fallback.test.ts" file="spec/verify/font-fallback.test.ts" tests="2" assertions="1285" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+    <testsuite name="SPEC-EXP-006 SVG 的字体 fallback 链必须显式覆盖中英混排" file="spec/verify/font-fallback.test.ts" line="105" tests="1" assertions="1280" failures="0" skipped="0" time="0.005" hostname="AarondeMacBook-Pro.local">
+      <testcase name="svg-font-stack-has-cjk-fallback" classname="SPEC-EXP-006 SVG 的字体 fallback 链必须显式覆盖中英混排" time="0.005131" file="spec/verify/font-fallback.test.ts" line="106" assertions="1280" />
     </testsuite>
-    <testsuite name="SPEC-QLT-005 卡片 AABB 碰撞扣视觉分 8" file="spec/verify/quality-engine.test.ts" line="154" tests="1" assertions="3" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="aabb-collision-penalty" classname="SPEC-QLT-005 卡片 AABB 碰撞扣视觉分 8" time="0.000047" file="spec/verify/quality-engine.test.ts" line="155" assertions="3" />
+    <testsuite name="SPEC-EXP-006 PPTX 必须用一个同时覆盖中英的字体名" file="spec/verify/font-fallback.test.ts" line="138" tests="1" assertions="5" failures="0" skipped="0" time="0.01" hostname="AarondeMacBook-Pro.local">
+      <testcase name="pptx-uses-cjk-capable-font" classname="SPEC-EXP-006 PPTX 必须用一个同时覆盖中英的字体名" time="0.010244" file="spec/verify/font-fallback.test.ts" line="139" assertions="5" />
     </testsuite>
-    <testsuite name="SPEC-QLT-006 标题缺失或过短扣内容分 15" file="spec/verify/quality-engine.test.ts" line="180" tests="1" assertions="2" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="missing-title-penalty" classname="SPEC-QLT-006 标题缺失或过短扣内容分 15" time="0.000022" file="spec/verify/quality-engine.test.ts" line="181" assertions="2" />
+  </testsuite>
+  <testsuite name="spec/verify/verdictFreshness.test.ts" file="spec/verify/verdictFreshness.test.ts" tests="36" assertions="78" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+    <testsuite name="import 说明符" file="spec/verify/verdictFreshness.test.ts" line="66" tests="3" assertions="13" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="四种写法都要抓到" classname="import 说明符" time="0" file="spec/verify/verdictFreshness.test.ts" line="67" assertions="5" />
+      <testcase name="import.meta 不该被当成模块说明符" classname="import 说明符" time="0" file="spec/verify/verdictFreshness.test.ts" line="81" assertions="1" />
+      <testcase name="外部包不算本地依赖" classname="import 说明符" time="0" file="spec/verify/verdictFreshness.test.ts" line="85" assertions="7" />
     </testsuite>
-    <testsuite name="SPEC-QLT-007 核心结论缺失扣内容分 8" file="spec/verify/quality-engine.test.ts" line="192" tests="1" assertions="2" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="missing-keymessage-penalty" classname="SPEC-QLT-007 核心结论缺失扣内容分 8" time="0.000029" file="spec/verify/quality-engine.test.ts" line="193" assertions="2" />
+    <testsuite name="本地路径解析" file="spec/verify/verdictFreshness.test.ts" line="96" tests="4" assertions="4" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="相对路径按被导入文件所在目录解析" classname="本地路径解析" time="0" file="spec/verify/verdictFreshness.test.ts" line="97" assertions="1" />
+      <testcase name="上跳目录要能归一化" classname="本地路径解析" time="0" file="spec/verify/verdictFreshness.test.ts" line="103" assertions="1" />
+      <testcase name="@ppt/core 指向内核入口" classname="本地路径解析" time="0" file="spec/verify/verdictFreshness.test.ts" line="113" assertions="1" />
+      <testcase name="解析不出来就返回 null（不猜）" classname="本地路径解析" time="0" file="spec/verify/verdictFreshness.test.ts" line="119" assertions="1" />
     </testsuite>
-    <testsuite name="SPEC-QLT-008 页数不足与缺封面各扣一致性分" file="spec/verify/quality-engine.test.ts" line="204" tests="1" assertions="3" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="consistency-penalties" classname="SPEC-QLT-008 页数不足与缺封面各扣一致性分" time="0.000038" file="spec/verify/quality-engine.test.ts" line="205" assertions="3" />
+    <testsuite name="依赖闭包" file="spec/verify/verdictFreshness.test.ts" line="124" tests="2" assertions="6" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="传递闭包要带上间接依赖" classname="依赖闭包" time="0" file="spec/verify/verdictFreshness.test.ts" line="125" assertions="4" />
+      <testcase name="本地 import 解析不了 → 记进 unresolved，不能装作依赖已扫干净" classname="依赖闭包" time="0" file="spec/verify/verdictFreshness.test.ts" line="133" assertions="2" />
     </testsuite>
-    <testsuite name="SPEC-QLT-009 自动修复只把真越出画布的元素挪回安全区" file="spec/verify/quality-engine.test.ts" line="276" tests="1" assertions="6" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="autofix-restores-bounds" classname="SPEC-QLT-009 自动修复只把真越出画布的元素挪回安全区" time="0.000356" file="spec/verify/quality-engine.test.ts" line="277" assertions="6" />
+    <testsuite name="一条结论的新鲜度" file="spec/verify/verdictFreshness.test.ts" line="141" tests="9" assertions="22" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="依赖都没动 → fresh" classname="一条结论的新鲜度" time="0.000296" file="spec/verify/verdictFreshness.test.ts" line="142" assertions="1" />
+      <testcase name="依赖在证据之后被改过 → stale，并点名是哪个文件" classname="一条结论的新鲜度" time="0" file="spec/verify/verdictFreshness.test.ts" line="153" assertions="3" />
+      <testcase name="验证器自己被改过 → stale" classname="一条结论的新鲜度" time="0.000066" file="spec/verify/verdictFreshness.test.ts" line="166" assertions="2" />
+      <testcase name="验证器文件不在树里了 → file-missing" classname="一条结论的新鲜度" time="0" file="spec/verify/verdictFreshness.test.ts" line="178" assertions="2" />
+      <testcase name="依赖的文件不在树里了 → unknown（说清不了），**不能**是 fresh" classname="一条结论的新鲜度" time="0" file="spec/verify/verdictFreshness.test.ts" line="190" assertions="4" />
+      <testcase name="动态 import 的路径不是字面量 → unknown（依赖扫不干净）" classname="一条结论的新鲜度" time="0" file="spec/verify/verdictFreshness.test.ts" line="205" assertions="3" />
+      <testcase name="既扫不干净、又确实有依赖被改过 → stale（确定的事实优先）" classname="一条结论的新鲜度" time="0" file="spec/verify/verdictFreshness.test.ts" line="213" assertions="1" />
+      <testcase name="闭包之外、但确实依赖的文件被动过 → stale" classname="一条结论的新鲜度" time="0" file="spec/verify/verdictFreshness.test.ts" line="225" assertions="3" />
+      <testcase name="额外依赖里有一个文件不在树里了 → unknown（说清不了）" classname="一条结论的新鲜度" time="0" file="spec/verify/verdictFreshness.test.ts" line="244" assertions="3" />
     </testsuite>
-    <testsuite name="SPEC-QLT-010 自动修复重排 ID：保留语义前缀且全局唯一" file="spec/verify/quality-engine.test.ts" line="325" tests="1" assertions="4" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="autofix-restores-id-uniqueness" classname="SPEC-QLT-010 自动修复重排 ID：保留语义前缀且全局唯一" time="0.000084" file="spec/verify/quality-engine.test.ts" line="326" assertions="4" />
+    <testsuite name="数据依赖的声明与展开" file="spec/verify/verdictFreshness.test.ts" line="278" tests="6" assertions="6" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="声明写在验证器旁边，要能抽出来" classname="数据依赖的声明与展开" time="0.000169" file="spec/verify/verdictFreshness.test.ts" line="279" assertions="1" />
+      <testcase name="一行可以声明多个（逗号分隔）" classname="数据依赖的声明与展开" time="0.000019" file="spec/verify/verdictFreshness.test.ts" line="289" assertions="1" />
+      <testcase name="没写声明的文件 → 没有数据依赖" classname="数据依赖的声明与展开" time="0" file="spec/verify/verdictFreshness.test.ts" line="296" assertions="1" />
+      <testcase name="字符串字面量里的声明不算数（免得凭空多出一堆依赖）" classname="数据依赖的声明与展开" time="0.000015" file="spec/verify/verdictFreshness.test.ts" line="300" assertions="1" />
+      <testcase name="目录 → 其下所有文件；文件 → 它自己" classname="数据依赖的声明与展开" time="0" file="spec/verify/verdictFreshness.test.ts" line="310" assertions="1" />
+      <testcase name="声明的路径在树里不存在 → 原样带出去（让调用方说清「声明了、找不到」）" classname="数据依赖的声明与展开" time="0" file="spec/verify/verdictFreshness.test.ts" line="329" assertions="1" />
     </testsuite>
-    <testsuite name="SPEC-QLT-010 自动修复不得挪动母版元素" file="spec/verify/quality-engine.test.ts" line="370" tests="1" assertions="1" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="autofix-leaves-master-elements-alone" classname="SPEC-QLT-010 自动修复不得挪动母版元素" time="0.000201" file="spec/verify/quality-engine.test.ts" line="371" assertions="1" />
+    <testsuite name="数据依赖进新鲜度判定" file="spec/verify/verdictFreshness.test.ts" line="335" tests="4" assertions="8" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="**缺陷回放**：基线在跑批之后被刷新 → 那条结论必须变成 stale" classname="数据依赖进新鲜度判定" time="0.000131" file="spec/verify/verdictFreshness.test.ts" line="372" assertions="3" />
+      <testcase name="**对照**：基线没被动过 → 那条结论仍然成立" classname="数据依赖进新鲜度判定" time="0.00002" file="spec/verify/verdictFreshness.test.ts" line="387" assertions="1" />
+      <testcase name="**为什么必须声明**：没声明的话，闭包确实扫不到那个基线" classname="数据依赖进新鲜度判定" time="0.000041" file="spec/verify/verdictFreshness.test.ts" line="400" assertions="2" />
+      <testcase name="声明的路径不在树里了 → 说清不了（不能是 fresh）" classname="数据依赖进新鲜度判定" time="0.000026" file="spec/verify/verdictFreshness.test.ts" line="415" assertions="2" />
     </testsuite>
-    <testsuite name="SPEC-QLT-011 自动修复不得让文稿变得更糟" file="spec/verify/quality-engine.test.ts" line="399" tests="1" assertions="5" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="autofix-never-lowers-score" classname="SPEC-QLT-011 自动修复不得让文稿变得更糟" time="0.00008" file="spec/verify/quality-engine.test.ts" line="400" assertions="5" />
+    <testsuite name="仓库里的声明（锚点）" file="spec/verify/verdictFreshness.test.ts" line="434" tests="2" assertions="2" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="快照测试必须声明它依赖那 64 个基线" classname="仓库里的声明（锚点）" time="0.000027" file="spec/verify/verdictFreshness.test.ts" line="439" assertions="1" />
+      <testcase name="声明的那个目录里确实有基线（别声明了个空目录）" classname="仓库里的声明（锚点）" time="0.000096" file="spec/verify/verdictFreshness.test.ts" line="444" assertions="1" />
     </testsuite>
-    <testsuite name="SPEC-QLT-012 每条诊断必须声明可否自动修复" file="spec/verify/quality-engine.test.ts" line="428" tests="1" assertions="4" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="issues-declare-fixability" classname="SPEC-QLT-012 每条诊断必须声明可否自动修复" time="0" file="spec/verify/quality-engine.test.ts" line="429" assertions="4" />
+    <testsuite name="汇总与措辞" file="spec/verify/verdictFreshness.test.ts" line="450" tests="6" assertions="17" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="过期与说清不了的判据要能被点名" classname="汇总与措辞" time="0.000052" file="spec/verify/verdictFreshness.test.ts" line="464" assertions="5" />
+      <testcase name="矩阵那一节要说清「已过期不能当成对当前代码的证明」" classname="汇总与措辞" time="0.000134" file="spec/verify/verdictFreshness.test.ts" line="473" assertions="3" />
+      <testcase name="全部新鲜时说得干脆" classname="汇总与措辞" time="0.000009" file="spec/verify/verdictFreshness.test.ts" line="481" assertions="2" />
+      <testcase name="限定语要带上「仍然成立 N 条 / 已过期 M 条」" classname="汇总与措辞" time="0" file="spec/verify/verdictFreshness.test.ts" line="488" assertions="2" />
+      <testcase name="兜底清单要被说出来（运行时才读到的文件不在闭包里）" classname="汇总与措辞" time="0" file="spec/verify/verdictFreshness.test.ts" line="495" assertions="2" />
+      <testcase name="同一个验证器管着多条判据 → 归并成一行，判据写明 ×N" classname="汇总与措辞" time="0" file="spec/verify/verdictFreshness.test.ts" line="506" assertions="3" />
+    </testsuite>
+  </testsuite>
+  <testsuite name="spec/verify/quality-engine.test.ts" file="spec/verify/quality-engine.test.ts" tests="18" assertions="63" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+    <testsuite name="夹具自检 —— 零缺陷基线必须是四维满分" file="spec/verify/quality-engine.test.ts" line="20" tests="1" assertions="2" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="clean-baseline-scores-100" classname="夹具自检 —— 零缺陷基线必须是四维满分" time="0.000588" file="spec/verify/quality-engine.test.ts" line="21" assertions="2" />
+    </testsuite>
+    <testsuite name="SPEC-QLT-001 质量分公式" file="spec/verify/quality-engine.test.ts" line="40" tests="1" assertions="6" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="quality-formula-weights" classname="SPEC-QLT-001 质量分公式" time="0.000436" file="spec/verify/quality-engine.test.ts" line="41" assertions="6" />
+    </testsuite>
+    <testsuite name="SPEC-QLT-002 画布尺寸不符扣结构分 15" file="spec/verify/quality-engine.test.ts" line="107" tests="1" assertions="3" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="canvas-mismatch-penalty" classname="SPEC-QLT-002 画布尺寸不符扣结构分 15" time="0" file="spec/verify/quality-engine.test.ts" line="108" assertions="3" />
+    </testsuite>
+    <testsuite name="SPEC-QLT-003 元素 ID 重复扣结构分 5" file="spec/verify/quality-engine.test.ts" line="118" tests="1" assertions="2" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="duplicate-id-penalty" classname="SPEC-QLT-003 元素 ID 重复扣结构分 5" time="0" file="spec/verify/quality-engine.test.ts" line="119" assertions="2" />
+    </testsuite>
+    <testsuite name="SPEC-QLT-004 元素几何越界扣视觉分 10" file="spec/verify/quality-engine.test.ts" line="131" tests="1" assertions="3" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="out-of-bounds-penalty" classname="SPEC-QLT-004 元素几何越界扣视觉分 10" time="0.000144" file="spec/verify/quality-engine.test.ts" line="132" assertions="3" />
+    </testsuite>
+    <testsuite name="SPEC-QLT-005 卡片 AABB 碰撞扣视觉分 8" file="spec/verify/quality-engine.test.ts" line="155" tests="1" assertions="6" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="aabb-collision-penalty" classname="SPEC-QLT-005 卡片 AABB 碰撞扣视觉分 8" time="0.000149" file="spec/verify/quality-engine.test.ts" line="156" assertions="6" />
+    </testsuite>
+    <testsuite name="SPEC-QLT-006 标题缺失或过短扣内容分 15" file="spec/verify/quality-engine.test.ts" line="188" tests="1" assertions="2" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="missing-title-penalty" classname="SPEC-QLT-006 标题缺失或过短扣内容分 15" time="0" file="spec/verify/quality-engine.test.ts" line="189" assertions="2" />
+    </testsuite>
+    <testsuite name="SPEC-QLT-007 核心结论缺失扣内容分 8" file="spec/verify/quality-engine.test.ts" line="200" tests="1" assertions="2" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="missing-keymessage-penalty" classname="SPEC-QLT-007 核心结论缺失扣内容分 8" time="0.000203" file="spec/verify/quality-engine.test.ts" line="201" assertions="2" />
+    </testsuite>
+    <testsuite name="SPEC-QLT-008 页数不足与缺封面各扣一致性分" file="spec/verify/quality-engine.test.ts" line="212" tests="1" assertions="3" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="consistency-penalties" classname="SPEC-QLT-008 页数不足与缺封面各扣一致性分" time="0" file="spec/verify/quality-engine.test.ts" line="213" assertions="3" />
+    </testsuite>
+    <testsuite name="SPEC-QLT-009 自动修复只把真越出画布的元素挪回安全区" file="spec/verify/quality-engine.test.ts" line="284" tests="1" assertions="6" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="autofix-restores-bounds" classname="SPEC-QLT-009 自动修复只把真越出画布的元素挪回安全区" time="0.000273" file="spec/verify/quality-engine.test.ts" line="285" assertions="6" />
+    </testsuite>
+    <testsuite name="SPEC-QLT-010 自动修复重排 ID：保留语义前缀且全局唯一" file="spec/verify/quality-engine.test.ts" line="339" tests="1" assertions="4" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="autofix-restores-id-uniqueness" classname="SPEC-QLT-010 自动修复重排 ID：保留语义前缀且全局唯一" time="0.00044" file="spec/verify/quality-engine.test.ts" line="340" assertions="4" />
+    </testsuite>
+    <testsuite name="SPEC-QLT-010 自动修复不得挪动母版元素" file="spec/verify/quality-engine.test.ts" line="384" tests="1" assertions="1" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="autofix-leaves-master-elements-alone" classname="SPEC-QLT-010 自动修复不得挪动母版元素" time="0.000125" file="spec/verify/quality-engine.test.ts" line="385" assertions="1" />
+    </testsuite>
+    <testsuite name="SPEC-QLT-011 自动修复不得让文稿变得更糟" file="spec/verify/quality-engine.test.ts" line="414" tests="1" assertions="5" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="autofix-never-lowers-score" classname="SPEC-QLT-011 自动修复不得让文稿变得更糟" time="0.000276" file="spec/verify/quality-engine.test.ts" line="415" assertions="5" />
+    </testsuite>
+    <testsuite name="SPEC-QLT-012 每条诊断必须声明可否自动修复" file="spec/verify/quality-engine.test.ts" line="443" tests="1" assertions="4" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="issues-declare-fixability" classname="SPEC-QLT-012 每条诊断必须声明可否自动修复" time="0" file="spec/verify/quality-engine.test.ts" line="444" assertions="4" />
+    </testsuite>
+    <testsuite name="SPEC-QLT-015 非封面页没有实质内容件扣内容分 8" file="spec/verify/quality-engine.test.ts" line="467" tests="1" assertions="4" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="thin-page-penalty" classname="SPEC-QLT-015 非封面页没有实质内容件扣内容分 8" time="0.000138" file="spec/verify/quality-engine.test.ts" line="468" assertions="4" />
+    </testsuite>
+    <testsuite name="SPEC-QLT-016 跨页核心结论重复扣内容分 10" file="spec/verify/quality-engine.test.ts" line="486" tests="1" assertions="4" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="duplicate-keymessage-penalty" classname="SPEC-QLT-016 跨页核心结论重复扣内容分 10" time="0.00008" file="spec/verify/quality-engine.test.ts" line="487" assertions="4" />
+    </testsuite>
+    <testsuite name="SPEC-QLT-017 内容只盖住版心 20% 以下扣视觉分 8" file="spec/verify/quality-engine.test.ts" line="510" tests="2" assertions="6" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="sparse-page-penalty" classname="SPEC-QLT-017 内容只盖住版心 20% 以下扣视觉分 8" time="0" file="spec/verify/quality-engine.test.ts" line="511" assertions="3" />
+      <testcase name="thin-page-not-double-charged" classname="SPEC-QLT-017 内容只盖住版心 20% 以下扣视觉分 8" time="0" file="spec/verify/quality-engine.test.ts" line="523" assertions="3" />
+    </testsuite>
+  </testsuite>
+  <testsuite name="spec/verify/element-variant.test.ts" file="spec/verify/element-variant.test.ts" tests="6" assertions="282" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+    <testsuite name="SPEC-CORE-010 版式引擎产出的每个元素都必须带 variant" file="spec/verify/element-variant.test.ts" line="43" tests="1" assertions="251" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="layout-engine-sets-variant-on-every-element" classname="SPEC-CORE-010 版式引擎产出的每个元素都必须带 variant" time="0.000214" file="spec/verify/element-variant.test.ts" line="44" assertions="251" />
+    </testsuite>
+    <testsuite name="SPEC-CORE-010 ID 重排的语义前缀来自 variant 字段" file="spec/verify/element-variant.test.ts" line="68" tests="1" assertions="21" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="id-repair-derives-prefix-from-variant" classname="SPEC-CORE-010 ID 重排的语义前缀来自 variant 字段" time="0.000211" file="spec/verify/element-variant.test.ts" line="69" assertions="21" />
+    </testsuite>
+    <testsuite name="SPEC-CORE-010 渲染分层与主题重映射只读 variant 字段" file="spec/verify/element-variant.test.ts" line="83" tests="2" assertions="4" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="render-and-theme-follow-variant-not-id" classname="SPEC-CORE-010 渲染分层与主题重映射只读 variant 字段" time="0.000238" file="spec/verify/element-variant.test.ts" line="84" assertions="2" />
+      <testcase name="accent-divider-follows-accent-color-on-theme-change" classname="SPEC-CORE-010 渲染分层与主题重映射只读 variant 字段" time="0" file="spec/verify/element-variant.test.ts" line="99" assertions="2" />
+    </testsuite>
+    <testsuite name="SPEC-CORE-010 旧数据缺 variant 时走唯一兼容层迁移" file="spec/verify/element-variant.test.ts" line="113" tests="1" assertions="4" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="legacy-slide-migrates-without-losing-semantics" classname="SPEC-CORE-010 旧数据缺 variant 时走唯一兼容层迁移" time="0.000135" file="spec/verify/element-variant.test.ts" line="114" assertions="4" />
+    </testsuite>
+    <testsuite name="SPEC-CORE-010 全仓不得有消费方解析元素 ID" file="spec/verify/element-variant.test.ts" line="138" tests="1" assertions="2" failures="0" skipped="0" time="0.006" hostname="AarondeMacBook-Pro.local">
+      <testcase name="no-consumer-parses-element-ids" classname="SPEC-CORE-010 全仓不得有消费方解析元素 ID" time="0.006903" file="spec/verify/element-variant.test.ts" line="139" assertions="2" />
     </testsuite>
   </testsuite>
   <testsuite name="spec/verify/evidence-target.test.ts" file="spec/verify/evidence-target.test.ts" tests="13" assertions="25" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
@@ -160,44 +316,96 @@
       <testcase name="the-canonical-name-never-appears-in-a-partial-run" classname="证据落盘位置 —— 缺陷回放" time="0" file="spec/verify/evidence-target.test.ts" line="104" assertions="3" />
     </testsuite>
     <testsuite name="证据读不出来 vs 证据里没有用例 —— 缺陷回放" file="spec/verify/evidence-target.test.ts" line="113" tests="4" assertions="7" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="missing-file-is-null-not-zero" classname="证据读不出来 vs 证据里没有用例 —— 缺陷回放" time="0.000004" file="spec/verify/evidence-target.test.ts" line="117" assertions="1" />
-      <testcase name="empty-evidence-is-zero-not-null" classname="证据读不出来 vs 证据里没有用例 —— 缺陷回放" time="0.000141" file="spec/verify/evidence-target.test.ts" line="123" assertions="3" />
-      <testcase name="a-real-report-counts-its-cases" classname="证据读不出来 vs 证据里没有用例 —— 缺陷回放" time="0.000077" file="spec/verify/evidence-target.test.ts" line="136" assertions="2" />
-      <testcase name="garbage-file-is-null" classname="证据读不出来 vs 证据里没有用例 —— 缺陷回放" time="0.000062" file="spec/verify/evidence-target.test.ts" line="147" assertions="1" />
+      <testcase name="missing-file-is-null-not-zero" classname="证据读不出来 vs 证据里没有用例 —— 缺陷回放" time="0.00049" file="spec/verify/evidence-target.test.ts" line="117" assertions="1" />
+      <testcase name="empty-evidence-is-zero-not-null" classname="证据读不出来 vs 证据里没有用例 —— 缺陷回放" time="0.000126" file="spec/verify/evidence-target.test.ts" line="123" assertions="3" />
+      <testcase name="a-real-report-counts-its-cases" classname="证据读不出来 vs 证据里没有用例 —— 缺陷回放" time="0.000083" file="spec/verify/evidence-target.test.ts" line="136" assertions="2" />
+      <testcase name="garbage-file-is-null" classname="证据读不出来 vs 证据里没有用例 —— 缺陷回放" time="0.000059" file="spec/verify/evidence-target.test.ts" line="147" assertions="1" />
+    </testsuite>
+  </testsuite>
+  <testsuite name="spec/verify/quality-rules.test.ts" file="spec/verify/quality-rules.test.ts" tests="6" assertions="72" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+    <testsuite name="SPEC-QLT-013 规则表与文档逐行对齐" file="spec/verify/quality-rules.test.ts" line="66" tests="4" assertions="68" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="rule-table-matches-doc" classname="SPEC-QLT-013 规则表与文档逐行对齐" time="0.000146" file="spec/verify/quality-rules.test.ts" line="67" assertions="34" />
+      <testcase name="every-rule-has-doc-anchor" classname="SPEC-QLT-013 规则表与文档逐行对齐" time="0.000008" file="spec/verify/quality-rules.test.ts" line="90" assertions="11" />
+      <testcase name="no-orphan-doc-anchors" classname="SPEC-QLT-013 规则表与文档逐行对齐" time="0" file="spec/verify/quality-rules.test.ts" line="97" assertions="1" />
+      <testcase name="rule-basis-points-at-doc" classname="SPEC-QLT-013 规则表与文档逐行对齐" time="0" file="spec/verify/quality-rules.test.ts" line="104" assertions="22" />
+    </testsuite>
+    <testsuite name="SPEC-QLT-014 每条诊断都能追溯到一条规则" file="spec/verify/quality-rules.test.ts" line="113" tests="1" assertions="3" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="diagnostic-ids-map-to-rules" classname="SPEC-QLT-014 每条诊断都能追溯到一条规则" time="0.000341" file="spec/verify/quality-rules.test.ts" line="114" assertions="3" />
+    </testsuite>
+    <testsuite name="SPEC-QLT-014 扣分幅度必须来自规则表而不是引擎里写死的数字" file="spec/verify/quality-rules.test.ts" line="188" tests="1" assertions="1" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="penalties-come-from-rule-table" classname="SPEC-QLT-014 扣分幅度必须来自规则表而不是引擎里写死的数字" time="0" file="spec/verify/quality-rules.test.ts" line="189" assertions="1" />
+    </testsuite>
+  </testsuite>
+  <testsuite name="spec/verify/pipelineVerdict.test.ts" file="spec/verify/pipelineVerdict.test.ts" tests="24" assertions="53" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+    <testsuite name="一步的状态" file="spec/verify/pipelineVerdict.test.ts" line="50" tests="4" assertions="4" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="退出码 0 → 通过" classname="一步的状态" time="0" file="spec/verify/pipelineVerdict.test.ts" line="51" assertions="1" />
+      <testcase name="跑完了、有结论、结论是坏的 → 未通过（**不是**「预期内」）" classname="一步的状态" time="0" file="spec/verify/pipelineVerdict.test.ts" line="55" assertions="1" />
+      <testcase name="证据不是本轮产出的 → 没跑出结论（旧证据不算数）" classname="一步的状态" time="0" file="spec/verify/pipelineVerdict.test.ts" line="60" assertions="1" />
+      <testcase name="没声明证据的步骤失败 → 没跑出结论（工具链坏了）" classname="一步的状态" time="0" file="spec/verify/pipelineVerdict.test.ts" line="65" assertions="1" />
+    </testsuite>
+    <testsuite name="退出码" file="spec/verify/pipelineVerdict.test.ts" line="70" tests="5" assertions="18" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="全通过 → 0" classname="退出码" time="0" file="spec/verify/pipelineVerdict.test.ts" line="71" assertions="3" />
+      <testcase name="**缺陷回放**：判据执行失败 → 退出码必须是 1，不能是 0" classname="退出码" time="0" file="spec/verify/pipelineVerdict.test.ts" line="78" assertions="3" />
+      <testcase name="**缺陷回放**：E2E 没跑出结论 → 退出码 2，不是 0" classname="退出码" time="0" file="spec/verify/pipelineVerdict.test.ts" line="88" assertions="3" />
+      <testcase name="tolerateFailure 不再影响退出码 —— 它只影响措辞" classname="退出码" time="0" file="spec/verify/pipelineVerdict.test.ts" line="98" assertions="4" />
+      <testcase name="没跑出结论优先于没通过 —— 前者连「哪里坏了」都说不出来" classname="退出码" time="0" file="spec/verify/pipelineVerdict.test.ts" line="112" assertions="5" />
+    </testsuite>
+    <testsuite name="措辞" file="spec/verify/pipelineVerdict.test.ts" line="126" tests="3" assertions="7" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="有环节没跑出结论时，不许出现「全绿」这种话" classname="措辞" time="0" file="spec/verify/pipelineVerdict.test.ts" line="127" assertions="2" />
+      <testcase name="「没跑出结论」要说清是哪份证据没更新" classname="措辞" time="0" file="spec/verify/pipelineVerdict.test.ts" line="135" assertions="2" />
+      <testcase name="三种退出码都有确定的意思" classname="措辞" time="0" file="spec/verify/pipelineVerdict.test.ts" line="141" assertions="3" />
+    </testsuite>
+    <testsuite name="证据的新鲜度" file="spec/verify/pipelineVerdict.test.ts" line="148" tests="4" assertions="4" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="文件不存在 → 快照是 0" classname="证据的新鲜度" time="0" file="spec/verify/pipelineVerdict.test.ts" line="149" assertions="1" />
+      <testcase name="证据被更新过 → 本轮产出" classname="证据的新鲜度" time="0" file="spec/verify/pipelineVerdict.test.ts" line="153" assertions="1" />
+      <testcase name="证据没动 → 不是本轮产出" classname="证据的新鲜度" time="0" file="spec/verify/pipelineVerdict.test.ts" line="157" assertions="1" />
+      <testcase name="跑之前文件不存在、跑之后有了 → 本轮产出" classname="证据的新鲜度" time="0" file="spec/verify/pipelineVerdict.test.ts" line="161" assertions="1" />
+    </testsuite>
+    <testsuite name="真正在跑的步骤表" file="spec/verify/pipelineVerdict.test.ts" line="166" tests="4" assertions="12" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="产出结论的四步都要声明自己产出哪份证据" classname="真正在跑的步骤表" time="0" file="spec/verify/pipelineVerdict.test.ts" line="167" assertions="4" />
+      <testcase name="结构校验与类型检查不产出结论 —— 它们失败就是「没跑出结论」" classname="真正在跑的步骤表" time="0" file="spec/verify/pipelineVerdict.test.ts" line="175" assertions="3" />
+      <testcase name="判据执行与 E2E 产出结论 —— 它们失败要阻断（退出码 1 或 2）" classname="真正在跑的步骤表" time="0" file="spec/verify/pipelineVerdict.test.ts" line="181" assertions="4" />
+      <testcase name="出口处不许再出现「全绿」这种话（注释里提旧行为不算）" classname="真正在跑的步骤表" time="0.000711" file="spec/verify/pipelineVerdict.test.ts" line="191" assertions="1" />
+    </testsuite>
+    <testsuite name="真跑一遍" file="spec/verify/pipelineVerdict.test.ts" line="203" tests="4" assertions="8" failures="0" skipped="0" time="0.028" hostname="AarondeMacBook-Pro.local">
+      <testcase name="判据执行真的失败了 → 退出码 1，而且**跑出了结论**" classname="真跑一遍" time="0.009793" file="spec/verify/pipelineVerdict.test.ts" line="206" assertions="3" />
+      <testcase name="服务起不来（证据压根没更新）→ 退出码 2" classname="真跑一遍" time="0.007314" file="spec/verify/pipelineVerdict.test.ts" line="234" assertions="3" />
+      <testcase name="跑完了、证据也更新了 → 退出码 0" classname="真跑一遍" time="0.012078" file="spec/verify/pipelineVerdict.test.ts" line="253" assertions="2" />
+      <testcase name="收尾：临时目录清掉" classname="真跑一遍" time="0.000004" file="spec/verify/pipelineVerdict.test.ts" line="271" assertions="0" />
     </testsuite>
   </testsuite>
   <testsuite name="spec/verify/render-svg.test.ts" file="spec/verify/render-svg.test.ts" tests="6" assertions="344" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
     <testsuite name="SPEC-RND-001 用户内容进入 SVG 必须转义" file="spec/verify/render-svg.test.ts" line="39" tests="1" assertions="13" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="user-content-is-xml-escaped" classname="SPEC-RND-001 用户内容进入 SVG 必须转义" time="0.000431" file="spec/verify/render-svg.test.ts" line="40" assertions="13" />
+      <testcase name="user-content-is-xml-escaped" classname="SPEC-RND-001 用户内容进入 SVG 必须转义" time="0.000101" file="spec/verify/render-svg.test.ts" line="40" assertions="13" />
     </testsuite>
     <testsuite name="SPEC-RND-002 SVG 输出不得包含 foreignObject" file="spec/verify/render-svg.test.ts" line="65" tests="1" assertions="1" failures="0" skipped="0" time="0.003" hostname="AarondeMacBook-Pro.local">
-      <testcase name="svg-contains-no-foreignobject" classname="SPEC-RND-002 SVG 输出不得包含 foreignObject" time="0.003126" file="spec/verify/render-svg.test.ts" line="66" assertions="1" />
+      <testcase name="svg-contains-no-foreignobject" classname="SPEC-RND-002 SVG 输出不得包含 foreignObject" time="0.003078" file="spec/verify/render-svg.test.ts" line="66" assertions="1" />
     </testsuite>
     <testsuite name="SPEC-RND-003 SVG 输出不得引用外部字体" file="spec/verify/render-svg.test.ts" line="80" tests="1" assertions="1" failures="0" skipped="0" time="0.002" hostname="AarondeMacBook-Pro.local">
-      <testcase name="svg-contains-no-external-font-import" classname="SPEC-RND-003 SVG 输出不得引用外部字体" time="0.002524" file="spec/verify/render-svg.test.ts" line="81" assertions="1" />
+      <testcase name="svg-contains-no-external-font-import" classname="SPEC-RND-003 SVG 输出不得引用外部字体" time="0.002836" file="spec/verify/render-svg.test.ts" line="81" assertions="1" />
     </testsuite>
-    <testsuite name="SPEC-RND-004 SVG 保留元素 ID" file="spec/verify/render-svg.test.ts" line="119" tests="1" assertions="2" failures="0" skipped="0" time="0.002" hostname="AarondeMacBook-Pro.local">
-      <testcase name="svg-preserves-element-ids" classname="SPEC-RND-004 SVG 保留元素 ID" time="0.002651" file="spec/verify/render-svg.test.ts" line="120" assertions="2" />
+    <testsuite name="SPEC-RND-004 SVG 保留元素 ID" file="spec/verify/render-svg.test.ts" line="119" tests="1" assertions="2" failures="0" skipped="0" time="0.003" hostname="AarondeMacBook-Pro.local">
+      <testcase name="svg-preserves-element-ids" classname="SPEC-RND-004 SVG 保留元素 ID" time="0.003541" file="spec/verify/render-svg.test.ts" line="120" assertions="2" />
     </testsuite>
-    <testsuite name="SPEC-RND-005 SVG 按四层渲染" file="spec/verify/render-svg.test.ts" line="146" tests="1" assertions="320" failures="0" skipped="0" time="0.002" hostname="AarondeMacBook-Pro.local">
-      <testcase name="svg-has-four-layers" classname="SPEC-RND-005 SVG 按四层渲染" time="0.002319" file="spec/verify/render-svg.test.ts" line="147" assertions="320" />
+    <testsuite name="SPEC-RND-005 SVG 按四层渲染" file="spec/verify/render-svg.test.ts" line="146" tests="1" assertions="320" failures="0" skipped="0" time="0.003" hostname="AarondeMacBook-Pro.local">
+      <testcase name="svg-has-four-layers" classname="SPEC-RND-005 SVG 按四层渲染" time="0.003109" file="spec/verify/render-svg.test.ts" line="147" assertions="320" />
     </testsuite>
     <testsuite name="SPEC-RND-006 装不下的文字必须截断并补省略号" file="spec/verify/render-svg.test.ts" line="167" tests="1" assertions="7" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="long-text-is-truncated-with-ellipsis" classname="SPEC-RND-006 装不下的文字必须截断并补省略号" time="0" file="spec/verify/render-svg.test.ts" line="168" assertions="7" />
+      <testcase name="long-text-is-truncated-with-ellipsis" classname="SPEC-RND-006 装不下的文字必须截断并补省略号" time="0.000116" file="spec/verify/render-svg.test.ts" line="168" assertions="7" />
     </testsuite>
   </testsuite>
   <testsuite name="spec/verify/export-pptx.test.ts" file="spec/verify/export-pptx.test.ts" tests="4" assertions="14" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-    <testsuite name="SPEC-EXP-001 PPTX 导出必须保留 IR 中的文本内容" file="spec/verify/export-pptx.test.ts" line="67" tests="1" assertions="2" failures="0" skipped="0" time="0.014" hostname="AarondeMacBook-Pro.local">
-      <testcase name="pptx-preserves-ir-text-content" classname="SPEC-EXP-001 PPTX 导出必须保留 IR 中的文本内容" time="0.014645" file="spec/verify/export-pptx.test.ts" line="68" assertions="2" />
+    <testsuite name="SPEC-EXP-001 PPTX 导出必须保留 IR 中的文本内容" file="spec/verify/export-pptx.test.ts" line="67" tests="1" assertions="2" failures="0" skipped="0" time="0.006" hostname="AarondeMacBook-Pro.local">
+      <testcase name="pptx-preserves-ir-text-content" classname="SPEC-EXP-001 PPTX 导出必须保留 IR 中的文本内容" time="0.006153" file="spec/verify/export-pptx.test.ts" line="68" assertions="2" />
     </testsuite>
     <testsuite name="SPEC-EXP-002 PPTX 写入演讲者备注" file="spec/verify/export-pptx.test.ts" line="129" tests="1" assertions="3" failures="0" skipped="0" time="0.001" hostname="AarondeMacBook-Pro.local">
-      <testcase name="pptx-includes-speaker-notes" classname="SPEC-EXP-002 PPTX 写入演讲者备注" time="0.001359" file="spec/verify/export-pptx.test.ts" line="130" assertions="3" />
+      <testcase name="pptx-includes-speaker-notes" classname="SPEC-EXP-002 PPTX 写入演讲者备注" time="0.001412" file="spec/verify/export-pptx.test.ts" line="130" assertions="3" />
     </testsuite>
     <testsuite name="SPEC-EXP-003 PNG 导出为 2 倍分辨率" file="spec/verify/export-pptx.test.ts" line="146" tests="1" assertions="4" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="png-export-is-2x" classname="SPEC-EXP-003 PNG 导出为 2 倍分辨率" time="0" file="spec/verify/export-pptx.test.ts" line="147" assertions="4" />
+      <testcase name="png-export-is-2x" classname="SPEC-EXP-003 PNG 导出为 2 倍分辨率" time="0.000062" file="spec/verify/export-pptx.test.ts" line="147" assertions="4" />
     </testsuite>
     <testsuite name="SPEC-EXP-004 导出文件名清洗且扩展名正确" file="spec/verify/export-pptx.test.ts" line="168" tests="1" assertions="5" failures="0" skipped="0" time="0.001" hostname="AarondeMacBook-Pro.local">
-      <testcase name="export-filename-sanitized" classname="SPEC-EXP-004 导出文件名清洗且扩展名正确" time="0.001961" file="spec/verify/export-pptx.test.ts" line="169" assertions="5" />
+      <testcase name="export-filename-sanitized" classname="SPEC-EXP-004 导出文件名清洗且扩展名正确" time="0.001499" file="spec/verify/export-pptx.test.ts" line="169" assertions="5" />
     </testsuite>
   </testsuite>
   <testsuite name="spec/verify/spec-structure.test.ts" file="spec/verify/spec-structure.test.ts" tests="17" assertions="20" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
@@ -205,171 +413,219 @@
       <testcase name="spec-yaml-parses" classname="Spec 文件可解析" time="0" file="spec/verify/spec-structure.test.ts" line="57" assertions="2" />
     </testsuite>
     <testsuite name="ID 唯一性" file="spec/verify/spec-structure.test.ts" line="63" tests="3" assertions="5" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="clause-ids-are-unique" classname="ID 唯一性" time="0.000032" file="spec/verify/spec-structure.test.ts" line="64" assertions="1" />
-      <testcase name="acceptance-ids-are-unique" classname="ID 唯一性" time="0.00004" file="spec/verify/spec-structure.test.ts" line="69" assertions="1" />
+      <testcase name="clause-ids-are-unique" classname="ID 唯一性" time="0.0001" file="spec/verify/spec-structure.test.ts" line="64" assertions="1" />
+      <testcase name="acceptance-ids-are-unique" classname="ID 唯一性" time="0.000038" file="spec/verify/spec-structure.test.ts" line="69" assertions="1" />
       <testcase name="ambiguity-conflict-decision-ids-are-unique" classname="ID 唯一性" time="0" file="spec/verify/spec-structure.test.ts" line="74" assertions="3" />
     </testsuite>
     <testsuite name="引用完整性 —— 不允许悬空引用" file="spec/verify/spec-structure.test.ts" line="84" tests="1" assertions="1" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
       <testcase name="clause-cross-references-resolve" classname="引用完整性 —— 不允许悬空引用" time="0" file="spec/verify/spec-structure.test.ts" line="85" assertions="1" />
     </testsuite>
     <testsuite name="每条条款都有可追溯的出处" file="spec/verify/spec-structure.test.ts" line="119" tests="2" assertions="2" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="every-clause-has-source-doc-that-exists" classname="每条条款都有可追溯的出处" time="0.000164" file="spec/verify/spec-structure.test.ts" line="120" assertions="1" />
+      <testcase name="every-clause-has-source-doc-that-exists" classname="每条条款都有可追溯的出处" time="0.000151" file="spec/verify/spec-structure.test.ts" line="120" assertions="1" />
       <testcase name="meta-sources-exist" classname="每条条款都有可追溯的出处" time="0" file="spec/verify/spec-structure.test.ts" line="134" assertions="1" />
     </testsuite>
     <testsuite name="验收判据与验证器一一对应" file="spec/verify/spec-structure.test.ts" line="142" tests="5" assertions="5" failures="0" skipped="0" time="0.001" hostname="AarondeMacBook-Pro.local">
-      <testcase name="automated-criteria-point-at-existing-test-files" classname="验收判据与验证器一一对应" time="0.000186" file="spec/verify/spec-structure.test.ts" line="143" assertions="1" />
-      <testcase name="every-verification-target-is-located-in-its-file" classname="验收判据与验证器一一对应" time="0.001625" file="spec/verify/spec-structure.test.ts" line="157" assertions="1" />
+      <testcase name="automated-criteria-point-at-existing-test-files" classname="验收判据与验证器一一对应" time="0.000176" file="spec/verify/spec-structure.test.ts" line="143" assertions="1" />
+      <testcase name="every-verification-target-is-located-in-its-file" classname="验收判据与验证器一一对应" time="0.001384" file="spec/verify/spec-structure.test.ts" line="157" assertions="1" />
       <testcase name="planned-criteria-name-a-future-verifier" classname="验收判据与验证器一一对应" time="0" file="spec/verify/spec-structure.test.ts" line="181" assertions="1" />
       <testcase name="acceptance-command-matches-the-target-file" classname="验收判据与验证器一一对应" time="0" file="spec/verify/spec-structure.test.ts" line="194" assertions="1" />
-      <testcase name="commands-pointing-at-non-test-files-use-the-path-form" classname="验收判据与验证器一一对应" time="0.000407" file="spec/verify/spec-structure.test.ts" line="207" assertions="1" />
+      <testcase name="commands-pointing-at-non-test-files-use-the-path-form" classname="验收判据与验证器一一对应" time="0.000825" file="spec/verify/spec-structure.test.ts" line="207" assertions="1" />
     </testsuite>
     <testsuite name="Oracle 分级约束" file="spec/verify/spec-structure.test.ts" line="240" tests="2" assertions="2" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="high-risk-active-clauses-have-a-non-self-derived-oracle" classname="Oracle 分级约束" time="0.000017" file="spec/verify/spec-structure.test.ts" line="241" assertions="1" />
-      <testcase name="every-acceptance-declares-an-oracle-tier" classname="Oracle 分级约束" time="0.000016" file="spec/verify/spec-structure.test.ts" line="251" assertions="1" />
+      <testcase name="high-risk-active-clauses-have-a-non-self-derived-oracle" classname="Oracle 分级约束" time="0.00005" file="spec/verify/spec-structure.test.ts" line="241" assertions="1" />
+      <testcase name="every-acceptance-declares-an-oracle-tier" classname="Oracle 分级约束" time="0.000023" file="spec/verify/spec-structure.test.ts" line="251" assertions="1" />
     </testsuite>
     <testsuite name="成熟度与判据的一致性" file="spec/verify/spec-structure.test.ts" line="270" tests="3" assertions="3" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="automated-clauses-have-automated-criteria" classname="成熟度与判据的一致性" time="0.000033" file="spec/verify/spec-structure.test.ts" line="271" assertions="1" />
-      <testcase name="planned-clauses-have-no-automated-criteria" classname="成熟度与判据的一致性" time="0.000008" file="spec/verify/spec-structure.test.ts" line="282" assertions="1" />
-      <testcase name="every-automation-maturity-clause-is-covered-by-known-gaps-or-verified" classname="成熟度与判据的一致性" time="0" file="spec/verify/spec-structure.test.ts" line="293" assertions="1" />
+      <testcase name="automated-clauses-have-automated-criteria" classname="成熟度与判据的一致性" time="0.000029" file="spec/verify/spec-structure.test.ts" line="271" assertions="1" />
+      <testcase name="planned-clauses-have-no-automated-criteria" classname="成熟度与判据的一致性" time="0.000011" file="spec/verify/spec-structure.test.ts" line="282" assertions="1" />
+      <testcase name="every-automation-maturity-clause-is-covered-by-known-gaps-or-verified" classname="成熟度与判据的一致性" time="0.000018" file="spec/verify/spec-structure.test.ts" line="293" assertions="1" />
+    </testsuite>
+  </testsuite>
+  <testsuite name="spec/verify/evidenceFreshness.test.ts" file="spec/verify/evidenceFreshness.test.ts" tests="16" assertions="42" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+    <testsuite name="注入结论的新鲜度" file="spec/verify/evidenceFreshness.test.ts" line="57" tests="6" assertions="13" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="指纹一致 → 结论对当前代码仍然成立" classname="注入结论的新鲜度" time="0" file="spec/verify/evidenceFreshness.test.ts" line="58" assertions="2" />
+      <testcase name="验证器被改过 → 过期，并说清是哪一边变了" classname="注入结论的新鲜度" time="0.0002" file="spec/verify/evidenceFreshness.test.ts" line="68" assertions="3" />
+      <testcase name="被改的源文件被改过 → 过期" classname="注入结论的新鲜度" time="0" file="spec/verify/evidenceFreshness.test.ts" line="79" assertions="2" />
+      <testcase name="两边都被改过 → 过期，两边都记下来" classname="注入结论的新鲜度" time="0" file="spec/verify/evidenceFreshness.test.ts" line="89" assertions="2" />
+      <testcase name="文件不在树里了 → 说清是哪一份不见了" classname="注入结论的新鲜度" time="0" file="spec/verify/evidenceFreshness.test.ts" line="99" assertions="2" />
+      <testcase name="报告没记指纹 → unknown，**不能当成 fresh**" classname="注入结论的新鲜度" time="0" file="spec/verify/evidenceFreshness.test.ts" line="106" assertions="2" />
+    </testsuite>
+    <testsuite name="新鲜度汇总" file="spec/verify/evidenceFreshness.test.ts" line="120" tests="2" assertions="9" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="计数与判据去重" classname="新鲜度汇总" time="0.000148" file="spec/verify/evidenceFreshness.test.ts" line="121" assertions="7" />
+      <testcase name="全过期时，汇总额定一条都不成立" classname="新鲜度汇总" time="0" file="spec/verify/evidenceFreshness.test.ts" line="144" assertions="2" />
+    </testsuite>
+    <testsuite name="当前文件指纹" file="spec/verify/evidenceFreshness.test.ts" line="155" tests="1" assertions="2" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="读得到文件 → 算出指纹；文件不在 → null" classname="当前文件指纹" time="0.000247" file="spec/verify/evidenceFreshness.test.ts" line="156" assertions="2" />
+    </testsuite>
+    <testsuite name="新鲜度的措辞" file="spec/verify/evidenceFreshness.test.ts" line="190" tests="7" assertions="18" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="说清不了的时候，措辞里不能出现「仍然成立」" classname="新鲜度的措辞" time="0" file="spec/verify/evidenceFreshness.test.ts" line="191" assertions="2" />
+      <testcase name="有过期的，限定语必须报出 fresh / stale 的条数" classname="新鲜度的措辞" time="0" file="spec/verify/evidenceFreshness.test.ts" line="197" assertions="3" />
+      <testcase name="没有用例 → 不加限定语" classname="新鲜度的措辞" time="0" file="spec/verify/evidenceFreshness.test.ts" line="204" assertions="1" />
+      <testcase name="§2.4.1：全是 unknown → 明确说「说清不了，就不能说它成立」" classname="新鲜度的措辞" time="0" file="spec/verify/evidenceFreshness.test.ts" line="208" assertions="3" />
+      <testcase name="§2.4.1：有过期 → 列出过期明细，说清变了哪边" classname="新鲜度的措辞" time="0" file="spec/verify/evidenceFreshness.test.ts" line="216" assertions="5" />
+      <testcase name="§2.4.1：全都新鲜 → 直接说全部仍然成立" classname="新鲜度的措辞" time="0" file="spec/verify/evidenceFreshness.test.ts" line="243" assertions="1" />
+      <testcase name="§2.4.1：一半说清不了 → 不能把它算进「仍然成立」" classname="新鲜度的措辞" time="0" file="spec/verify/evidenceFreshness.test.ts" line="248" assertions="3" />
+    </testsuite>
+  </testsuite>
+  <testsuite name="spec/verify/evidenceLedger.test.ts" file="spec/verify/evidenceLedger.test.ts" tests="14" assertions="38" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+    <testsuite name="证据集对账" file="spec/verify/evidenceLedger.test.ts" line="39" tests="7" assertions="15" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="用例的唯一标识是「文件::用例名」" classname="证据集对账" time="0" file="spec/verify/evidenceLedger.test.ts" line="40" assertions="1" />
+      <testcase name="挂了判据 / 没挂判据，分别数清楚" classname="证据集对账" time="0" file="spec/verify/evidenceLedger.test.ts" line="44" assertions="4" />
+      <testcase name="两层证据分开计数 —— 说得清「N 个用例」是哪几层" classname="证据集对账" time="0" file="spec/verify/evidenceLedger.test.ts" line="59" assertions="1" />
+      <testcase name="**缺陷回放**：没挂判据的失败必须被点名" classname="证据集对账" time="0" file="spec/verify/evidenceLedger.test.ts" line="73" assertions="3" />
+      <testcase name="挂了判据的失败不会在「未挂判据」里重复出现" classname="证据集对账" time="0" file="spec/verify/evidenceLedger.test.ts" line="86" assertions="2" />
+      <testcase name="用例名相同、文件不同 —— 不串账" classname="证据集对账" time="0" file="spec/verify/evidenceLedger.test.ts" line="95" assertions="2" />
+      <testcase name="判据点名的目标在证据集里找不到 —— 要单独点名" classname="证据集对账" time="0" file="spec/verify/evidenceLedger.test.ts" line="107" assertions="2" />
+    </testsuite>
+    <testsuite name="§2.1 的对账那几行" file="spec/verify/evidenceLedger.test.ts" line="114" tests="4" assertions="14" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="没有未挂判据的失败 —— 要说清「FAIL 0 不是漏报」" classname="§2.1 的对账那几行" time="0" file="spec/verify/evidenceLedger.test.ts" line="115" assertions="4" />
+      <testcase name="**缺陷回放**：有未挂判据的失败 —— 摘要必须说出来" classname="§2.1 的对账那几行" time="0" file="spec/verify/evidenceLedger.test.ts" line="124" assertions="4" />
+      <testcase name="验证目标找不到时，摘要要点名" classname="§2.1 的对账那几行" time="0" file="spec/verify/evidenceLedger.test.ts" line="137" assertions="3" />
+      <testcase name="引用的「FAIL N」要跟表里那个数一致 —— 表数的是判据，账本数的是失败用例" classname="§2.1 的对账那几行" time="0" file="spec/verify/evidenceLedger.test.ts" line="145" assertions="3" />
+    </testsuite>
+    <testsuite name="§2.2「未挂判据的失败」" file="spec/verify/evidenceLedger.test.ts" line="155" tests="3" assertions="9" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+      <testcase name="**缺陷回放**：有失败时，这一节不许写「（无）」" classname="§2.2「未挂判据的失败」" time="0" file="spec/verify/evidenceLedger.test.ts" line="156" assertions="4" />
+      <testcase name="一个失败都没有 —— 要说得出凭什么" classname="§2.2「未挂判据的失败」" time="0" file="spec/verify/evidenceLedger.test.ts" line="165" assertions="3" />
+      <testcase name="失败要写清楚来自哪一份证据" classname="§2.2「未挂判据的失败」" time="0" file="spec/verify/evidenceLedger.test.ts" line="174" assertions="2" />
     </testsuite>
   </testsuite>
   <testsuite name="packages/core/tests/patchApplier.test.ts" file="packages/core/tests/patchApplier.test.ts" tests="10" assertions="14" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
     <testsuite name="SPEC-IRP-002 同一条补丁施加两次结果相同" file="packages/core/tests/patchApplier.test.ts" line="163" tests="8" assertions="9" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="apply-is-idempotent" classname="SPEC-IRP-002 同一条补丁施加两次结果相同" time="0.000659" file="packages/core/tests/patchApplier.test.ts" line="164" assertions="2" />
+      <testcase name="apply-is-idempotent" classname="SPEC-IRP-002 同一条补丁施加两次结果相同" time="0.000876" file="packages/core/tests/patchApplier.test.ts" line="164" assertions="2" />
       <testcase name="apply-is-idempotent:update_element" classname="SPEC-IRP-002 同一条补丁施加两次结果相同" time="0" file="packages/core/tests/patchApplier.test.ts" line="185" assertions="1" />
       <testcase name="apply-is-idempotent:remove_element" classname="SPEC-IRP-002 同一条补丁施加两次结果相同" time="0" file="packages/core/tests/patchApplier.test.ts" line="185" assertions="1" />
       <testcase name="apply-is-idempotent:add_element" classname="SPEC-IRP-002 同一条补丁施加两次结果相同" time="0" file="packages/core/tests/patchApplier.test.ts" line="185" assertions="1" />
-      <testcase name="apply-is-idempotent:replace_group" classname="SPEC-IRP-002 同一条补丁施加两次结果相同" time="0" file="packages/core/tests/patchApplier.test.ts" line="185" assertions="1" />
-      <testcase name="apply-is-idempotent:restyle_slide" classname="SPEC-IRP-002 同一条补丁施加两次结果相同" time="0" file="packages/core/tests/patchApplier.test.ts" line="185" assertions="1" />
-      <testcase name="apply-is-idempotent:reorder_elements" classname="SPEC-IRP-002 同一条补丁施加两次结果相同" time="0.000398" file="packages/core/tests/patchApplier.test.ts" line="185" assertions="1" />
-      <testcase name="applyPatches 不修改入参（原子性）" classname="SPEC-IRP-002 同一条补丁施加两次结果相同" time="0" file="packages/core/tests/patchApplier.test.ts" line="192" assertions="1" />
+      <testcase name="apply-is-idempotent:replace_group" classname="SPEC-IRP-002 同一条补丁施加两次结果相同" time="0.000229" file="packages/core/tests/patchApplier.test.ts" line="185" assertions="1" />
+      <testcase name="apply-is-idempotent:restyle_slide" classname="SPEC-IRP-002 同一条补丁施加两次结果相同" time="0.000011" file="packages/core/tests/patchApplier.test.ts" line="185" assertions="1" />
+      <testcase name="apply-is-idempotent:reorder_elements" classname="SPEC-IRP-002 同一条补丁施加两次结果相同" time="0.000042" file="packages/core/tests/patchApplier.test.ts" line="185" assertions="1" />
+      <testcase name="applyPatches 不修改入参（原子性）" classname="SPEC-IRP-002 同一条补丁施加两次结果相同" time="0.000036" file="packages/core/tests/patchApplier.test.ts" line="192" assertions="1" />
     </testsuite>
     <testsuite name="SPEC-IRP-003 删除不存在的元素必须报错" file="packages/core/tests/patchApplier.test.ts" line="204" tests="2" assertions="5" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-      <testcase name="remove-missing-element-throws" classname="SPEC-IRP-003 删除不存在的元素必须报错" time="0.000102" file="packages/core/tests/patchApplier.test.ts" line="205" assertions="3" />
-      <testcase name="删除已删除的元素是幂等 no-op（墓碑机制）" classname="SPEC-IRP-003 删除不存在的元素必须报错" time="0.000054" file="packages/core/tests/patchApplier.test.ts" line="224" assertions="2" />
+      <testcase name="remove-missing-element-throws" classname="SPEC-IRP-003 删除不存在的元素必须报错" time="0.000007" file="packages/core/tests/patchApplier.test.ts" line="205" assertions="3" />
+      <testcase name="删除已删除的元素是幂等 no-op（墓碑机制）" classname="SPEC-IRP-003 删除不存在的元素必须报错" time="0" file="packages/core/tests/patchApplier.test.ts" line="224" assertions="2" />
     </testsuite>
   </testsuite>
   <testsuite name="packages/core/tests/layoutEngine.snapshot.test.ts" file="packages/core/tests/layoutEngine.snapshot.test.ts" tests="3" assertions="204" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-    <testsuite name="SPEC-GOV-002 黄金快照门禁" file="packages/core/tests/layoutEngine.snapshot.test.ts" line="27" tests="3" assertions="204" failures="0" skipped="0" time="0.007" hostname="AarondeMacBook-Pro.local">
-      <testcase name="golden-snapshots-all-match" classname="SPEC-GOV-002 黄金快照门禁" time="0.005893" file="packages/core/tests/layoutEngine.snapshot.test.ts" line="29" assertions="67" />
-      <testcase name="快照不含 versionId / lastModified" classname="SPEC-GOV-002 黄金快照门禁" time="0.002062" file="packages/core/tests/layoutEngine.snapshot.test.ts" line="64" assertions="129" />
-      <testcase name="版式引擎是纯函数 —— 同输入必得同输出" classname="SPEC-GOV-002 黄金快照门禁" time="0.0003" file="packages/core/tests/layoutEngine.snapshot.test.ts" line="76" assertions="8" />
+    <testsuite name="SPEC-GOV-002 黄金快照门禁" file="packages/core/tests/layoutEngine.snapshot.test.ts" line="34" tests="3" assertions="204" failures="0" skipped="0" time="0.012" hostname="AarondeMacBook-Pro.local">
+      <testcase name="golden-snapshots-all-match" classname="SPEC-GOV-002 黄金快照门禁" time="0.011245" file="packages/core/tests/layoutEngine.snapshot.test.ts" line="36" assertions="67" />
+      <testcase name="快照不含 versionId / lastModified" classname="SPEC-GOV-002 黄金快照门禁" time="0.001991" file="packages/core/tests/layoutEngine.snapshot.test.ts" line="71" assertions="129" />
+      <testcase name="版式引擎是纯函数 —— 同输入必得同输出" classname="SPEC-GOV-002 黄金快照门禁" time="0.000314" file="packages/core/tests/layoutEngine.snapshot.test.ts" line="83" assertions="8" />
     </testsuite>
   </testsuite>
   <testsuite name="apps/api/tests/contract/response-envelope.test.ts" file="apps/api/tests/contract/response-envelope.test.ts" tests="4" assertions="566" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-    <testsuite name="AC-API-001 统一响应与错误包封" file="apps/api/tests/contract/response-envelope.test.ts" line="547" tests="4" assertions="566" failures="0" skipped="0" time="2.887" hostname="AarondeMacBook-Pro.local">
-      <testcase name="success-response-envelope" classname="AC-API-001 统一响应与错误包封" time="1.009819" file="apps/api/tests/contract/response-envelope.test.ts" line="549" assertions="233" />
-      <testcase name="failure-response-envelope" classname="AC-API-001 统一响应与错误包封" time="0.722458" file="apps/api/tests/contract/response-envelope.test.ts" line="572" assertions="311" />
-      <testcase name="error-codes-closed-enum" classname="AC-API-001 统一响应与错误包封" time="0.733331" file="apps/api/tests/contract/response-envelope.test.ts" line="592" assertions="4" />
-      <testcase name="/readyz 在数据库不可用时返回 503 且带错误包封" classname="AC-API-001 统一响应与错误包封" time="0.423828" file="apps/api/tests/contract/response-envelope.test.ts" line="626" assertions="18" />
+    <testsuite name="AC-API-001 统一响应与错误包封" file="apps/api/tests/contract/response-envelope.test.ts" line="547" tests="4" assertions="566" failures="0" skipped="0" time="2.885" hostname="AarondeMacBook-Pro.local">
+      <testcase name="success-response-envelope" classname="AC-API-001 统一响应与错误包封" time="1.064435" file="apps/api/tests/contract/response-envelope.test.ts" line="549" assertions="233" />
+      <testcase name="failure-response-envelope" classname="AC-API-001 统一响应与错误包封" time="0.710791" file="apps/api/tests/contract/response-envelope.test.ts" line="572" assertions="311" />
+      <testcase name="error-codes-closed-enum" classname="AC-API-001 统一响应与错误包封" time="0.696782" file="apps/api/tests/contract/response-envelope.test.ts" line="592" assertions="4" />
+      <testcase name="/readyz 在数据库不可用时返回 503 且带错误包封" classname="AC-API-001 统一响应与错误包封" time="0.415374" file="apps/api/tests/contract/response-envelope.test.ts" line="626" assertions="18" />
     </testsuite>
   </testsuite>
   <testsuite name="apps/api/tests/security/resource-lifecycle.test.ts" file="apps/api/tests/security/resource-lifecycle.test.ts" tests="3" assertions="31" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-    <testsuite name="资源生命周期边界" file="apps/api/tests/security/resource-lifecycle.test.ts" line="30" tests="3" assertions="31" failures="0" skipped="0" time="1.285" hostname="AarondeMacBook-Pro.local">
-      <testcase name="软删除的项目：详情与子资源一律 404（不能&quot;列表没了、直链还在&quot;）" classname="资源生命周期边界" time="0.452399" file="apps/api/tests/security/resource-lifecycle.test.ts" line="31" assertions="9" />
-      <testcase name="非法 UUID 的路径参数 → 404 而不是 500（不把数据库异常抛给客户端）" classname="资源生命周期边界" time="0.444827" file="apps/api/tests/security/resource-lifecycle.test.ts" line="84" assertions="20" />
-      <testcase name="未登录访问非法 id → 401（鉴权先于资源存在性判定）" classname="资源生命周期边界" time="0.389304" file="apps/api/tests/security/resource-lifecycle.test.ts" line="116" assertions="2" />
+    <testsuite name="资源生命周期边界" file="apps/api/tests/security/resource-lifecycle.test.ts" line="30" tests="3" assertions="31" failures="0" skipped="0" time="1.34" hostname="AarondeMacBook-Pro.local">
+      <testcase name="软删除的项目：详情与子资源一律 404（不能&quot;列表没了、直链还在&quot;）" classname="资源生命周期边界" time="0.444254" file="apps/api/tests/security/resource-lifecycle.test.ts" line="31" assertions="9" />
+      <testcase name="非法 UUID 的路径参数 → 404 而不是 500（不把数据库异常抛给客户端）" classname="资源生命周期边界" time="0.463607" file="apps/api/tests/security/resource-lifecycle.test.ts" line="84" assertions="20" />
+      <testcase name="未登录访问非法 id → 401（鉴权先于资源存在性判定）" classname="资源生命周期边界" time="0.433248" file="apps/api/tests/security/resource-lifecycle.test.ts" line="116" assertions="2" />
     </testsuite>
   </testsuite>
   <testsuite name="apps/api/tests/security/secret-handling.test.ts" file="apps/api/tests/security/secret-handling.test.ts" tests="3" assertions="11" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-    <testsuite name="SPEC-API-005 密钥管理" file="apps/api/tests/security/secret-handling.test.ts" line="37" tests="3" assertions="11" failures="0" skipped="0" time="1.378" hostname="AarondeMacBook-Pro.local">
-      <testcase name="missing-api-key-fails-startup" classname="SPEC-API-005 密钥管理" time="0.136452" file="apps/api/tests/security/secret-handling.test.ts" line="39" assertions="4" />
-      <testcase name="secret-never-leaks-into-responses-or-logs" classname="SPEC-API-005 密钥管理" time="0.475194" file="apps/api/tests/security/secret-handling.test.ts" line="77" assertions="3" />
-      <testcase name="/api/meta/models 只暴露&quot;有没有密钥&quot;，不暴露密钥本身" classname="SPEC-API-005 密钥管理" time="0.767918" file="apps/api/tests/security/secret-handling.test.ts" line="154" assertions="4" />
+    <testsuite name="SPEC-API-005 密钥管理" file="apps/api/tests/security/secret-handling.test.ts" line="37" tests="3" assertions="11" failures="0" skipped="0" time="1.325" hostname="AarondeMacBook-Pro.local">
+      <testcase name="missing-api-key-fails-startup" classname="SPEC-API-005 密钥管理" time="0.143817" file="apps/api/tests/security/secret-handling.test.ts" line="39" assertions="4" />
+      <testcase name="secret-never-leaks-into-responses-or-logs" classname="SPEC-API-005 密钥管理" time="0.48898" file="apps/api/tests/security/secret-handling.test.ts" line="77" assertions="3" />
+      <testcase name="/api/meta/models 只暴露&quot;有没有密钥&quot;，不暴露密钥本身" classname="SPEC-API-005 密钥管理" time="0.69458" file="apps/api/tests/security/secret-handling.test.ts" line="154" assertions="4" />
     </testsuite>
   </testsuite>
   <testsuite name="apps/api/tests/security/cross-tenant-access.test.ts" file="apps/api/tests/security/cross-tenant-access.test.ts" tests="11" assertions="100" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-    <testsuite name="SPEC-API-003 跨租户访问" file="apps/api/tests/security/cross-tenant-access.test.ts" line="44" tests="11" assertions="100" failures="0" skipped="0" time="0.086" hostname="AarondeMacBook-Pro.local">
-      <testcase name="cross-tenant-resource-read-is-404" classname="SPEC-API-003 跨租户访问" time="0.010263" file="apps/api/tests/security/cross-tenant-access.test.ts" line="109" assertions="18" />
-      <testcase name="Bob 访问 Alice 的项目 → 404" classname="SPEC-API-003 跨租户访问" time="0.001064" file="apps/api/tests/security/cross-tenant-access.test.ts" line="155" assertions="4" />
-      <testcase name="Bob 对 Alice 的项目做写操作 → 404（不是 403）" classname="SPEC-API-003 跨租户访问" time="0.002998" file="apps/api/tests/security/cross-tenant-access.test.ts" line="161" assertions="12" />
-      <testcase name="Bob 访问 Alice 项目的子资源 → 404" classname="SPEC-API-003 跨租户访问" time="0.003704" file="apps/api/tests/security/cross-tenant-access.test.ts" line="182" assertions="20" />
-      <testcase name="Bob 的项目列表里不含 Alice 的项目" classname="SPEC-API-003 跨租户访问" time="0.002819" file="apps/api/tests/security/cross-tenant-access.test.ts" line="195" assertions="3" />
-      <testcase name="Bob 拿自己的项目 + Alice 的 slideId → 404（不能靠猜 slideId 读）" classname="SPEC-API-003 跨租户访问" time="0.001433" file="apps/api/tests/security/cross-tenant-access.test.ts" line="211" assertions="4" />
-      <testcase name="Bob 直接访问 Alice 项目的幻灯片 → 404" classname="SPEC-API-003 跨租户访问" time="0.002353" file="apps/api/tests/security/cross-tenant-access.test.ts" line="220" assertions="8" />
-      <testcase name="Bob 对 Alice 的幻灯片写入 → 404" classname="SPEC-API-003 跨租户访问" time="0.001223" file="apps/api/tests/security/cross-tenant-access.test.ts" line="230" assertions="4" />
-      <testcase name="Bob 访问 Alice 的文档 → 404" classname="SPEC-API-003 跨租户访问" time="0.006346" file="apps/api/tests/security/cross-tenant-access.test.ts" line="250" assertions="11" />
-      <testcase name="Bob 访问 Alice 的导出任务与产物 → 404" classname="SPEC-API-003 跨租户访问" time="0.058475" file="apps/api/tests/security/cross-tenant-access.test.ts" line="288" assertions="14" />
-      <testcase name="未登录访问项目 → 401 UNAUTHORIZED" classname="SPEC-API-003 跨租户访问" time="0.000073" file="apps/api/tests/security/cross-tenant-access.test.ts" line="330" assertions="2" />
+    <testsuite name="SPEC-API-003 跨租户访问" file="apps/api/tests/security/cross-tenant-access.test.ts" line="44" tests="11" assertions="100" failures="0" skipped="0" time="0.07" hostname="AarondeMacBook-Pro.local">
+      <testcase name="cross-tenant-resource-read-is-404" classname="SPEC-API-003 跨租户访问" time="0.006731" file="apps/api/tests/security/cross-tenant-access.test.ts" line="109" assertions="18" />
+      <testcase name="Bob 访问 Alice 的项目 → 404" classname="SPEC-API-003 跨租户访问" time="0" file="apps/api/tests/security/cross-tenant-access.test.ts" line="155" assertions="4" />
+      <testcase name="Bob 对 Alice 的项目做写操作 → 404（不是 403）" classname="SPEC-API-003 跨租户访问" time="0.001099" file="apps/api/tests/security/cross-tenant-access.test.ts" line="161" assertions="12" />
+      <testcase name="Bob 访问 Alice 项目的子资源 → 404" classname="SPEC-API-003 跨租户访问" time="0.00161" file="apps/api/tests/security/cross-tenant-access.test.ts" line="182" assertions="20" />
+      <testcase name="Bob 的项目列表里不含 Alice 的项目" classname="SPEC-API-003 跨租户访问" time="0.001372" file="apps/api/tests/security/cross-tenant-access.test.ts" line="195" assertions="3" />
+      <testcase name="Bob 拿自己的项目 + Alice 的 slideId → 404（不能靠猜 slideId 读）" classname="SPEC-API-003 跨租户访问" time="0.00094" file="apps/api/tests/security/cross-tenant-access.test.ts" line="211" assertions="4" />
+      <testcase name="Bob 直接访问 Alice 项目的幻灯片 → 404" classname="SPEC-API-003 跨租户访问" time="0.000866" file="apps/api/tests/security/cross-tenant-access.test.ts" line="220" assertions="8" />
+      <testcase name="Bob 对 Alice 的幻灯片写入 → 404" classname="SPEC-API-003 跨租户访问" time="0.00044" file="apps/api/tests/security/cross-tenant-access.test.ts" line="230" assertions="4" />
+      <testcase name="Bob 访问 Alice 的文档 → 404" classname="SPEC-API-003 跨租户访问" time="0.002532" file="apps/api/tests/security/cross-tenant-access.test.ts" line="250" assertions="11" />
+      <testcase name="Bob 访问 Alice 的导出任务与产物 → 404" classname="SPEC-API-003 跨租户访问" time="0.059982" file="apps/api/tests/security/cross-tenant-access.test.ts" line="288" assertions="14" />
+      <testcase name="未登录访问项目 → 401 UNAUTHORIZED" classname="SPEC-API-003 跨租户访问" time="0.00004" file="apps/api/tests/security/cross-tenant-access.test.ts" line="330" assertions="2" />
     </testsuite>
   </testsuite>
   <testsuite name="apps/api/tests/security/password-hashing.test.ts" file="apps/api/tests/security/password-hashing.test.ts" tests="5" assertions="23" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-    <testsuite name="SPEC-SEC-001 密码哈希" file="apps/api/tests/security/password-hashing.test.ts" line="24" tests="5" assertions="23" failures="0" skipped="0" time="3.404" hostname="AarondeMacBook-Pro.local">
-      <testcase name="password-stored-as-argon2id-hash" classname="SPEC-SEC-001 密码哈希" time="0.612781" file="apps/api/tests/security/password-hashing.test.ts" line="26" assertions="5" />
-      <testcase name="password-verify-accepts-correct-and-rejects-wrong" classname="SPEC-SEC-001 密码哈希" time="0.86131" file="apps/api/tests/security/password-hashing.test.ts" line="43" assertions="9" />
-      <testcase name="登录走的是哈希校验 —— 错误密码进不去" classname="SPEC-SEC-001 密码哈希" time="0.679048" file="apps/api/tests/security/password-hashing.test.ts" line="71" assertions="5" />
-      <testcase name="邮箱不存在与密码错误返回同样的错误（不泄露账号是否存在）" classname="SPEC-SEC-001 密码哈希" time="0.625019" file="apps/api/tests/security/password-hashing.test.ts" line="96" assertions="3" />
-      <testcase name="每个用户的哈希都不同（盐生效）" classname="SPEC-SEC-001 密码哈希" time="0.6278" file="apps/api/tests/security/password-hashing.test.ts" line="120" assertions="1" />
+    <testsuite name="SPEC-SEC-001 密码哈希" file="apps/api/tests/security/password-hashing.test.ts" line="24" tests="5" assertions="23" failures="0" skipped="0" time="3.517" hostname="AarondeMacBook-Pro.local">
+      <testcase name="password-stored-as-argon2id-hash" classname="SPEC-SEC-001 密码哈希" time="0.608994" file="apps/api/tests/security/password-hashing.test.ts" line="26" assertions="5" />
+      <testcase name="password-verify-accepts-correct-and-rejects-wrong" classname="SPEC-SEC-001 密码哈希" time="0.871618" file="apps/api/tests/security/password-hashing.test.ts" line="43" assertions="9" />
+      <testcase name="登录走的是哈希校验 —— 错误密码进不去" classname="SPEC-SEC-001 密码哈希" time="0.699102" file="apps/api/tests/security/password-hashing.test.ts" line="71" assertions="5" />
+      <testcase name="邮箱不存在与密码错误返回同样的错误（不泄露账号是否存在）" classname="SPEC-SEC-001 密码哈希" time="0.683847" file="apps/api/tests/security/password-hashing.test.ts" line="96" assertions="3" />
+      <testcase name="每个用户的哈希都不同（盐生效）" classname="SPEC-SEC-001 密码哈希" time="0.656523" file="apps/api/tests/security/password-hashing.test.ts" line="120" assertions="1" />
     </testsuite>
   </testsuite>
   <testsuite name="apps/api/tests/security/ai-output-validation.test.ts" file="apps/api/tests/security/ai-output-validation.test.ts" tests="5" assertions="27" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-    <testsuite name="SPEC-API-004 AI 输出必须过 Schema" file="apps/api/tests/security/ai-output-validation.test.ts" line="67" tests="5" assertions="27" failures="0" skipped="0" time="3.473" hostname="AarondeMacBook-Pro.local">
-      <testcase name="invalid-model-output-rejected-and-not-persisted" classname="SPEC-API-004 AI 输出必须过 Schema" time="0.561117" file="apps/api/tests/security/ai-output-validation.test.ts" line="69" assertions="13" />
-      <testcase name="非 JSON 输出 → 4xx MODEL_OUTPUT_INVALID，不降级" classname="SPEC-API-004 AI 输出必须过 Schema" time="0.589118" file="apps/api/tests/security/ai-output-validation.test.ts" line="98" assertions="2" />
-      <testcase name="非法输出不会触发本地降级（与「模型不可用」严格区分）" classname="SPEC-API-004 AI 输出必须过 Schema" time="1.120067" file="apps/api/tests/security/ai-output-validation.test.ts" line="128" assertions="5" />
-      <testcase name="合法输出可以进系统（校验不是把门焊死）" classname="SPEC-API-004 AI 输出必须过 Schema" time="0.628668" file="apps/api/tests/security/ai-output-validation.test.ts" line="185" assertions="4" />
-      <testcase name="多余字段被剥离而不是整条拒绝" classname="SPEC-API-004 AI 输出必须过 Schema" time="0.575858" file="apps/api/tests/security/ai-output-validation.test.ts" line="221" assertions="3" />
+    <testsuite name="SPEC-API-004 AI 输出必须过 Schema" file="apps/api/tests/security/ai-output-validation.test.ts" line="67" tests="5" assertions="27" failures="0" skipped="0" time="3.95" hostname="AarondeMacBook-Pro.local">
+      <testcase name="invalid-model-output-rejected-and-not-persisted" classname="SPEC-API-004 AI 输出必须过 Schema" time="0.595846" file="apps/api/tests/security/ai-output-validation.test.ts" line="69" assertions="13" />
+      <testcase name="非 JSON 输出 → 4xx MODEL_OUTPUT_INVALID，不降级" classname="SPEC-API-004 AI 输出必须过 Schema" time="0.72302" file="apps/api/tests/security/ai-output-validation.test.ts" line="98" assertions="2" />
+      <testcase name="非法输出不会触发本地降级（与「模型不可用」严格区分）" classname="SPEC-API-004 AI 输出必须过 Schema" time="1.373699" file="apps/api/tests/security/ai-output-validation.test.ts" line="128" assertions="5" />
+      <testcase name="合法输出可以进系统（校验不是把门焊死）" classname="SPEC-API-004 AI 输出必须过 Schema" time="0.576077" file="apps/api/tests/security/ai-output-validation.test.ts" line="185" assertions="4" />
+      <testcase name="多余字段被剥离而不是整条拒绝" classname="SPEC-API-004 AI 输出必须过 Schema" time="0.683283" file="apps/api/tests/security/ai-output-validation.test.ts" line="221" assertions="3" />
     </testsuite>
   </testsuite>
   <testsuite name="apps/api/tests/security/session-cookie.test.ts" file="apps/api/tests/security/session-cookie.test.ts" tests="5" assertions="21" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-    <testsuite name="SPEC-SEC-002 Session Cookie 属性" file="apps/api/tests/security/session-cookie.test.ts" line="33" tests="5" assertions="21" failures="0" skipped="0" time="3.154" hostname="AarondeMacBook-Pro.local">
-      <testcase name="session-cookie-has-security-attributes" classname="SPEC-SEC-002 Session Cookie 属性" time="0.637411" file="apps/api/tests/security/session-cookie.test.ts" line="35" assertions="6" />
-      <testcase name="session-cookie-secure-in-production" classname="SPEC-SEC-002 Session Cookie 属性" time="0.608061" file="apps/api/tests/security/session-cookie.test.ts" line="60" assertions="5" />
-      <testcase name="session-id-is-32-byte-base64url" classname="SPEC-SEC-002 Session Cookie 属性" time="0.62932" file="apps/api/tests/security/session-cookie.test.ts" line="83" assertions="6" />
-      <testcase name="每次登录的 Session ID 都不同" classname="SPEC-SEC-002 Session Cookie 属性" time="0.709511" file="apps/api/tests/security/session-cookie.test.ts" line="106" assertions="1" />
-      <testcase name="登出会销毁服务端会话（Cookie 失效）" classname="SPEC-SEC-002 Session Cookie 属性" time="0.571794" file="apps/api/tests/security/session-cookie.test.ts" line="125" assertions="3" />
+    <testsuite name="SPEC-SEC-002 Session Cookie 属性" file="apps/api/tests/security/session-cookie.test.ts" line="33" tests="5" assertions="21" failures="0" skipped="0" time="3.292" hostname="AarondeMacBook-Pro.local">
+      <testcase name="session-cookie-has-security-attributes" classname="SPEC-SEC-002 Session Cookie 属性" time="0.624561" file="apps/api/tests/security/session-cookie.test.ts" line="35" assertions="6" />
+      <testcase name="session-cookie-secure-in-production" classname="SPEC-SEC-002 Session Cookie 属性" time="0.689797" file="apps/api/tests/security/session-cookie.test.ts" line="60" assertions="5" />
+      <testcase name="session-id-is-32-byte-base64url" classname="SPEC-SEC-002 Session Cookie 属性" time="0.573136" file="apps/api/tests/security/session-cookie.test.ts" line="83" assertions="6" />
+      <testcase name="每次登录的 Session ID 都不同" classname="SPEC-SEC-002 Session Cookie 属性" time="0.736946" file="apps/api/tests/security/session-cookie.test.ts" line="106" assertions="1" />
+      <testcase name="登出会销毁服务端会话（Cookie 失效）" classname="SPEC-SEC-002 Session Cookie 属性" time="0.670588" file="apps/api/tests/security/session-cookie.test.ts" line="125" assertions="3" />
     </testsuite>
   </testsuite>
   <testsuite name="apps/api/tests/integration/import-bundle.test.ts" file="apps/api/tests/integration/import-bundle.test.ts" tests="14" assertions="19" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-    <testsuite name="导入端认 bundle 的形状" file="apps/api/tests/integration/import-bundle.test.ts" line="102" tests="2" assertions="4" failures="0" skipped="0" time="1.209" hostname="AarondeMacBook-Pro.local">
-      <testcase name="exported-bundle-round-trips-with-page-order-intact" classname="导入端认 bundle 的形状" time="0.601205" file="apps/api/tests/integration/import-bundle.test.ts" line="103" assertions="3" />
-      <testcase name="page-order-baseline-is-one" classname="导入端认 bundle 的形状" time="0.608229" file="apps/api/tests/integration/import-bundle.test.ts" line="125" assertions="1" />
+    <testsuite name="导入端认 bundle 的形状" file="apps/api/tests/integration/import-bundle.test.ts" line="102" tests="2" assertions="4" failures="0" skipped="0" time="1.34" hostname="AarondeMacBook-Pro.local">
+      <testcase name="exported-bundle-round-trips-with-page-order-intact" classname="导入端认 bundle 的形状" time="0.749793" file="apps/api/tests/integration/import-bundle.test.ts" line="103" assertions="3" />
+      <testcase name="page-order-baseline-is-one" classname="导入端认 bundle 的形状" time="0.591115" file="apps/api/tests/integration/import-bundle.test.ts" line="125" assertions="1" />
     </testsuite>
-    <testsuite name="导入端挡下坏形状 —— 缺陷回放" file="apps/api/tests/integration/import-bundle.test.ts" line="132" tests="12" assertions="15" failures="0" skipped="0" time="7.194" hostname="AarondeMacBook-Pro.local">
-      <testcase name="duplicate-order-index-is-rejected" classname="导入端挡下坏形状 —— 缺陷回放" time="0.601961" file="apps/api/tests/integration/import-bundle.test.ts" line="133" assertions="2" />
-      <testcase name="zero-order-index-is-rejected" classname="导入端挡下坏形状 —— 缺陷回放" time="0.584358" file="apps/api/tests/integration/import-bundle.test.ts" line="148" assertions="1" />
-      <testcase name="negative-order-index-is-rejected" classname="导入端挡下坏形状 —— 缺陷回放" time="0.599842" file="apps/api/tests/integration/import-bundle.test.ts" line="159" assertions="1" />
-      <testcase name="non-integer-order-index-is-rejected" classname="导入端挡下坏形状 —— 缺陷回放" time="0.622068" file="apps/api/tests/integration/import-bundle.test.ts" line="170" assertions="1" />
-      <testcase name="missing-order-index-is-rejected" classname="导入端挡下坏形状 —— 缺陷回放" time="0.58334" file="apps/api/tests/integration/import-bundle.test.ts" line="181" assertions="2" />
-      <testcase name="missing-slide-id-is-rejected" classname="导入端挡下坏形状 —— 缺陷回放" time="0.627854" file="apps/api/tests/integration/import-bundle.test.ts" line="198" assertions="1" />
-      <testcase name="duplicate-slide-id-is-rejected" classname="导入端挡下坏形状 —— 缺陷回放" time="0.611889" file="apps/api/tests/integration/import-bundle.test.ts" line="213" assertions="1" />
-      <testcase name="missing-ir-is-rejected" classname="导入端挡下坏形状 —— 缺陷回放" time="0.60045" file="apps/api/tests/integration/import-bundle.test.ts" line="227" assertions="1" />
-      <testcase name="non-array-slides-is-rejected" classname="导入端挡下坏形状 —— 缺陷回放" time="0.569287" file="apps/api/tests/integration/import-bundle.test.ts" line="242" assertions="1" />
-      <testcase name="missing-slides-field-is-rejected" classname="导入端挡下坏形状 —— 缺陷回放" time="0.603203" file="apps/api/tests/integration/import-bundle.test.ts" line="248" assertions="2" />
-      <testcase name="missing-name-field-is-rejected" classname="导入端挡下坏形状 —— 缺陷回放" time="0.604591" file="apps/api/tests/integration/import-bundle.test.ts" line="259" assertions="1" />
-      <testcase name="invalid-json-body-is-rejected" classname="导入端挡下坏形状 —— 缺陷回放" time="0.591621" file="apps/api/tests/integration/import-bundle.test.ts" line="268" assertions="1" />
+    <testsuite name="导入端挡下坏形状 —— 缺陷回放" file="apps/api/tests/integration/import-bundle.test.ts" line="132" tests="12" assertions="15" failures="0" skipped="0" time="8.309" hostname="AarondeMacBook-Pro.local">
+      <testcase name="duplicate-order-index-is-rejected" classname="导入端挡下坏形状 —— 缺陷回放" time="0.699946" file="apps/api/tests/integration/import-bundle.test.ts" line="133" assertions="2" />
+      <testcase name="zero-order-index-is-rejected" classname="导入端挡下坏形状 —— 缺陷回放" time="0.711715" file="apps/api/tests/integration/import-bundle.test.ts" line="148" assertions="1" />
+      <testcase name="negative-order-index-is-rejected" classname="导入端挡下坏形状 —— 缺陷回放" time="0.90383" file="apps/api/tests/integration/import-bundle.test.ts" line="159" assertions="1" />
+      <testcase name="non-integer-order-index-is-rejected" classname="导入端挡下坏形状 —— 缺陷回放" time="0.622548" file="apps/api/tests/integration/import-bundle.test.ts" line="170" assertions="1" />
+      <testcase name="missing-order-index-is-rejected" classname="导入端挡下坏形状 —— 缺陷回放" time="0.748869" file="apps/api/tests/integration/import-bundle.test.ts" line="181" assertions="2" />
+      <testcase name="missing-slide-id-is-rejected" classname="导入端挡下坏形状 —— 缺陷回放" time="0.673741" file="apps/api/tests/integration/import-bundle.test.ts" line="198" assertions="1" />
+      <testcase name="duplicate-slide-id-is-rejected" classname="导入端挡下坏形状 —— 缺陷回放" time="0.634212" file="apps/api/tests/integration/import-bundle.test.ts" line="213" assertions="1" />
+      <testcase name="missing-ir-is-rejected" classname="导入端挡下坏形状 —— 缺陷回放" time="0.618681" file="apps/api/tests/integration/import-bundle.test.ts" line="227" assertions="1" />
+      <testcase name="non-array-slides-is-rejected" classname="导入端挡下坏形状 —— 缺陷回放" time="0.743038" file="apps/api/tests/integration/import-bundle.test.ts" line="242" assertions="1" />
+      <testcase name="missing-slides-field-is-rejected" classname="导入端挡下坏形状 —— 缺陷回放" time="0.688956" file="apps/api/tests/integration/import-bundle.test.ts" line="248" assertions="2" />
+      <testcase name="missing-name-field-is-rejected" classname="导入端挡下坏形状 —— 缺陷回放" time="0.6077" file="apps/api/tests/integration/import-bundle.test.ts" line="259" assertions="1" />
+      <testcase name="invalid-json-body-is-rejected" classname="导入端挡下坏形状 —— 缺陷回放" time="0.663318" file="apps/api/tests/integration/import-bundle.test.ts" line="268" assertions="1" />
     </testsuite>
   </testsuite>
   <testsuite name="apps/api/tests/integration/rate-limit.test.ts" file="apps/api/tests/integration/rate-limit.test.ts" tests="3" assertions="9" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-    <testsuite name="限流额度隔离" file="apps/api/tests/integration/rate-limit.test.ts" line="44" tests="3" assertions="9" failures="0" skipped="0" time="1.978" hostname="AarondeMacBook-Pro.local">
-      <testcase name="AI 端点连续 30 次都通过 —— 额度不被全局限流预扣" classname="限流额度隔离" time="0.674363" file="apps/api/tests/integration/rate-limit.test.ts" line="45" assertions="2" />
-      <testcase name="第 31 次才被限流，且错误码是 RATE_LIMITED" classname="限流额度隔离" time="0.655958" file="apps/api/tests/integration/rate-limit.test.ts" line="67" assertions="4" />
-      <testcase name="AI 额度打满不影响普通业务端点 —— 各限流器额度互相独立" classname="限流额度隔离" time="0.649373" file="apps/api/tests/integration/rate-limit.test.ts" line="92" assertions="3" />
+    <testsuite name="限流额度隔离" file="apps/api/tests/integration/rate-limit.test.ts" line="44" tests="3" assertions="9" failures="0" skipped="0" time="2.308" hostname="AarondeMacBook-Pro.local">
+      <testcase name="AI 端点连续 30 次都通过 —— 额度不被全局限流预扣" classname="限流额度隔离" time="0.804551" file="apps/api/tests/integration/rate-limit.test.ts" line="45" assertions="2" />
+      <testcase name="第 31 次才被限流，且错误码是 RATE_LIMITED" classname="限流额度隔离" time="0.703623" file="apps/api/tests/integration/rate-limit.test.ts" line="67" assertions="4" />
+      <testcase name="AI 额度打满不影响普通业务端点 —— 各限流器额度互相独立" classname="限流额度隔离" time="0.801201" file="apps/api/tests/integration/rate-limit.test.ts" line="92" assertions="3" />
     </testsuite>
   </testsuite>
   <testsuite name="apps/api/tests/integration/optimistic-lock.test.ts" file="apps/api/tests/integration/optimistic-lock.test.ts" tests="5" assertions="25" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-    <testsuite name="SPEC-API-002 乐观并发" file="apps/api/tests/integration/optimistic-lock.test.ts" line="34" tests="5" assertions="25" failures="0" skipped="0" time="2.958" hostname="AarondeMacBook-Pro.local">
-      <testcase name="same-base-version-second-write-conflicts" classname="SPEC-API-002 乐观并发" time="0.594431" file="apps/api/tests/integration/optimistic-lock.test.ts" line="70" assertions="8" />
-      <testcase name="两个客户端基于同一 baseVersionId —— 恰好一个成功" classname="SPEC-API-002 乐观并发" time="0.582446" file="apps/api/tests/integration/optimistic-lock.test.ts" line="115" assertions="5" />
-      <testcase name="缺失 baseVersionId → 400 VALIDATION_FAILED" classname="SPEC-API-002 乐观并发" time="0.588536" file="apps/api/tests/integration/optimistic-lock.test.ts" line="149" assertions="3" />
-      <testcase name="错误的 baseVersionId → 409，且当前版本来自数据库真实状态" classname="SPEC-API-002 乐观并发" time="0.600337" file="apps/api/tests/integration/optimistic-lock.test.ts" line="164" assertions="4" />
-      <testcase name="回滚同样受乐观锁保护" classname="SPEC-API-002 乐观并发" time="0.594933" file="apps/api/tests/integration/optimistic-lock.test.ts" line="181" assertions="5" />
+    <testsuite name="SPEC-API-002 乐观并发" file="apps/api/tests/integration/optimistic-lock.test.ts" line="34" tests="5" assertions="25" failures="0" skipped="0" time="3.537" hostname="AarondeMacBook-Pro.local">
+      <testcase name="same-base-version-second-write-conflicts" classname="SPEC-API-002 乐观并发" time="0.765152" file="apps/api/tests/integration/optimistic-lock.test.ts" line="70" assertions="8" />
+      <testcase name="两个客户端基于同一 baseVersionId —— 恰好一个成功" classname="SPEC-API-002 乐观并发" time="0.660906" file="apps/api/tests/integration/optimistic-lock.test.ts" line="115" assertions="5" />
+      <testcase name="缺失 baseVersionId → 400 VALIDATION_FAILED" classname="SPEC-API-002 乐观并发" time="0.673723" file="apps/api/tests/integration/optimistic-lock.test.ts" line="149" assertions="3" />
+      <testcase name="错误的 baseVersionId → 409，且当前版本来自数据库真实状态" classname="SPEC-API-002 乐观并发" time="0.708948" file="apps/api/tests/integration/optimistic-lock.test.ts" line="164" assertions="4" />
+      <testcase name="回滚同样受乐观锁保护" classname="SPEC-API-002 乐观并发" time="0.731182" file="apps/api/tests/integration/optimistic-lock.test.ts" line="181" assertions="5" />
     </testsuite>
   </testsuite>
   <testsuite name="apps/api/tests/ai/edit-slide.test.ts" file="apps/api/tests/ai/edit-slide.test.ts" tests="3" assertions="18" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-    <testsuite name="SPEC-IRP-001 AI 编辑返回增量补丁" file="apps/api/tests/ai/edit-slide.test.ts" line="59" tests="3" assertions="18" failures="0" skipped="0" time="1.753" hostname="AarondeMacBook-Pro.local">
-      <testcase name="returns-patches-not-full-elements" classname="SPEC-IRP-001 AI 编辑返回增量补丁" time="0.581269" file="apps/api/tests/ai/edit-slide.test.ts" line="60" assertions="8" />
-      <testcase name="项目级 AI 编辑端点同样返回补丁而不是全量元素" classname="SPEC-IRP-001 AI 编辑返回增量补丁" time="0.593813" file="apps/api/tests/ai/edit-slide.test.ts" line="107" assertions="5" />
-      <testcase name="本地降级路径也返回补丁（不是全量元素）" classname="SPEC-IRP-001 AI 编辑返回增量补丁" time="0.57953" file="apps/api/tests/ai/edit-slide.test.ts" line="136" assertions="5" />
+    <testsuite name="SPEC-IRP-001 AI 编辑返回增量补丁" file="apps/api/tests/ai/edit-slide.test.ts" line="59" tests="3" assertions="18" failures="0" skipped="0" time="1.839" hostname="AarondeMacBook-Pro.local">
+      <testcase name="returns-patches-not-full-elements" classname="SPEC-IRP-001 AI 编辑返回增量补丁" time="0.623936" file="apps/api/tests/ai/edit-slide.test.ts" line="60" assertions="8" />
+      <testcase name="项目级 AI 编辑端点同样返回补丁而不是全量元素" classname="SPEC-IRP-001 AI 编辑返回增量补丁" time="0.623738" file="apps/api/tests/ai/edit-slide.test.ts" line="107" assertions="5" />
+      <testcase name="本地降级路径也返回补丁（不是全量元素）" classname="SPEC-IRP-001 AI 编辑返回增量补丁" time="0.593837" file="apps/api/tests/ai/edit-slide.test.ts" line="136" assertions="5" />
     </testsuite>
   </testsuite>
   <testsuite name="apps/api/tests/chaos/model-fallback.test.ts" file="apps/api/tests/chaos/model-fallback.test.ts" tests="5" assertions="41" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-    <testsuite name="SPEC-NFR-003 降级链" file="apps/api/tests/chaos/model-fallback.test.ts" line="35" tests="5" assertions="41" failures="0" skipped="0" time="2.943" hostname="AarondeMacBook-Pro.local">
-      <testcase name="model-unavailable-falls-back-with-valid-outline" classname="SPEC-NFR-003 降级链" time="0.585946" file="apps/api/tests/chaos/model-fallback.test.ts" line="37" assertions="11" />
-      <testcase name="fallback-outline-varies-by-topic" classname="SPEC-NFR-003 降级链" time="0.584548" file="apps/api/tests/chaos/model-fallback.test.ts" line="64" assertions="6" />
-      <testcase name="降级输出满足大纲硬约束：页数精确、首页封面、至少一页总结" classname="SPEC-NFR-003 降级链" time="0.57718" file="apps/api/tests/chaos/model-fallback.test.ts" line="100" assertions="19" />
-      <testcase name="网络错误（非 5xx）同样走降级，不把内部错误抛给用户" classname="SPEC-NFR-003 降级链" time="0.581131" file="apps/api/tests/chaos/model-fallback.test.ts" line="123" assertions="2" />
-      <testcase name="项目级大纲重新生成在模型不可用时也可用" classname="SPEC-NFR-003 降级链" time="0.616559" file="apps/api/tests/chaos/model-fallback.test.ts" line="139" assertions="3" />
+    <testsuite name="SPEC-NFR-003 降级链" file="apps/api/tests/chaos/model-fallback.test.ts" line="35" tests="5" assertions="41" failures="0" skipped="0" time="3.035" hostname="AarondeMacBook-Pro.local">
+      <testcase name="model-unavailable-falls-back-with-valid-outline" classname="SPEC-NFR-003 降级链" time="0.580738" file="apps/api/tests/chaos/model-fallback.test.ts" line="37" assertions="11" />
+      <testcase name="fallback-outline-varies-by-topic" classname="SPEC-NFR-003 降级链" time="0.627463" file="apps/api/tests/chaos/model-fallback.test.ts" line="64" assertions="6" />
+      <testcase name="降级输出满足大纲硬约束：页数精确、首页封面、至少一页总结" classname="SPEC-NFR-003 降级链" time="0.589099" file="apps/api/tests/chaos/model-fallback.test.ts" line="100" assertions="19" />
+      <testcase name="网络错误（非 5xx）同样走降级，不把内部错误抛给用户" classname="SPEC-NFR-003 降级链" time="0.641288" file="apps/api/tests/chaos/model-fallback.test.ts" line="123" assertions="2" />
+      <testcase name="项目级大纲重新生成在模型不可用时也可用" classname="SPEC-NFR-003 降级链" time="0.598065" file="apps/api/tests/chaos/model-fallback.test.ts" line="139" assertions="3" />
     </testsuite>
   </testsuite>
   <testsuite name="src/services/projectMerge.test.ts" file="src/services/projectMerge.test.ts" tests="6" assertions="12" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
@@ -383,14 +639,14 @@
     </testsuite>
   </testsuite>
   <testsuite name="scripts/check-coverage.check.ts" file="scripts/check-coverage.check.ts" tests="1" assertions="2" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-    <testsuite name="SPEC-GOV-001 领域内核行覆盖率门槛" file="scripts/check-coverage.check.ts" line="45" tests="1" assertions="2" failures="0" skipped="0" time="36.537" hostname="AarondeMacBook-Pro.local">
-      <testcase name="domain-coverage-threshold" classname="SPEC-GOV-001 领域内核行覆盖率门槛" time="36.537721" file="scripts/check-coverage.check.ts" line="47" assertions="2" />
+    <testsuite name="SPEC-GOV-001 领域内核行覆盖率门槛" file="scripts/check-coverage.check.ts" line="45" tests="1" assertions="2" failures="0" skipped="0" time="39.329" hostname="AarondeMacBook-Pro.local">
+      <testcase name="domain-coverage-threshold" classname="SPEC-GOV-001 领域内核行覆盖率门槛" time="39.329858" file="scripts/check-coverage.check.ts" line="47" assertions="2" />
     </testsuite>
   </testsuite>
   <testsuite name="apps/api/tests/perf/export-latency.bench.ts" file="apps/api/tests/perf/export-latency.bench.ts" tests="2" assertions="9" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-    <testsuite name="SPEC-NFR-002 整本 PPTX 导出延迟" file="apps/api/tests/perf/export-latency.bench.ts" line="69" tests="2" assertions="9" failures="0" skipped="0" time="2.722" hostname="AarondeMacBook-Pro.local">
-      <testcase name="测量仪器自检 —— 最近秩分位数算得对" classname="SPEC-NFR-002 整本 PPTX 导出延迟" time="0.000673" file="apps/api/tests/perf/export-latency.bench.ts" line="70" assertions="4" />
-      <testcase name="pptx-export-p95-under-threshold" classname="SPEC-NFR-002 整本 PPTX 导出延迟" time="2.722532" file="apps/api/tests/perf/export-latency.bench.ts" line="80" assertions="5" />
+    <testsuite name="SPEC-NFR-002 整本 PPTX 导出延迟" file="apps/api/tests/perf/export-latency.bench.ts" line="69" tests="2" assertions="9" failures="0" skipped="0" time="2.7" hostname="AarondeMacBook-Pro.local">
+      <testcase name="测量仪器自检 —— 最近秩分位数算得对" classname="SPEC-NFR-002 整本 PPTX 导出延迟" time="0.000518" file="apps/api/tests/perf/export-latency.bench.ts" line="70" assertions="4" />
+      <testcase name="pptx-export-p95-under-threshold" classname="SPEC-NFR-002 整本 PPTX 导出延迟" time="2.700201" file="apps/api/tests/perf/export-latency.bench.ts" line="80" assertions="5" />
     </testsuite>
   </testsuite>
 </testsuites>

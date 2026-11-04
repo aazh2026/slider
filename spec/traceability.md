@@ -4,7 +4,7 @@
 > 重新生成：`bun run spec/verify/traceability.ts`（前置：先跑测试与注入检查，见 `spec/README.md`）。
 
 - Spec 版本：`1.0`
-- 条款总数：**60**　判据总数：**85**
+- 条款总数：**68**　判据总数：**101**
 - 生成时 junit 证据：`spec/evidence/junit.xml`；注入证据：`spec/evidence/mutation-report.json`
 - 失败原因：`spec/evidence/junit-output.txt`（单元 / 集成）与 `spec/evidence/junit-e2e-output.txt`（E2E）—— **Bun 的 junit 报告只写失败类型、不写错误信息**（实测产出的是 `<failure type="AssertionError" />`），失败详情在 stderr 里，所以单独落盘
 
@@ -25,29 +25,37 @@
 | docs/backend-features.md §E 版式与内容绑定（LAY）· LAY-07 | SPEC-CORE-007 | technical | low | AC-CORE-007 | spec/verify/core-layout.test.ts::page-number-format | authoritative | EVD-CORE-007 | **PASS** |
 | docs/backend-features.md §E 版式与内容绑定（LAY）· LAY-02 | SPEC-CORE-008 | business | high | AC-CORE-008, AC-CORE-009, AC-CORE-010 | spec/verify/core-content.test.ts::bullet-consuming-layouts-use-outline-bullets<br>spec/verify/core-content.test.ts::cover-content-traceable-to-outline<br>spec/verify/core-content.test.ts::render-output-follows-outline-bullets | authoritative | EVD-CORE-008, EVD-CORE-009, EVD-CORE-010 | **PASS** |
 | docs/backend-features.md §F 幻灯片编辑与版本（SLD）· SLD-02 / SLD-04 | SPEC-CORE-009 | business | high | AC-CORE-012, AC-CORE-013 | e2e/workbench.e2e.ts::AC-CORE-012 画布放大超出可视区后，左右上下都滚得到，不被裁掉<br>e2e/workbench.e2e.ts::AC-CORE-013 容器尺寸变化后缩放档位自动重新适配，画布不被裁掉 | authoritative, formal | EVD-CORE-012, EVD-CORE-013 | **PASS** |
+| docs/architecture.md §12 ADR-018 · 语义住在字段里，不住在 ID 里 | SPEC-CORE-010 | technical | high | AC-CORE-014, AC-CORE-015, AC-CORE-016, AC-CORE-017 | spec/verify/element-variant.test.ts::layout-engine-sets-variant-on-every-element<br>spec/verify/element-variant.test.ts::id-repair-derives-prefix-from-variant<br>spec/verify/element-variant.test.ts::render-and-theme-follow-variant-not-id<br>spec/verify/element-variant.test.ts::no-consumer-parses-element-ids | authoritative | EVD-CORE-014, EVD-CORE-015, EVD-CORE-016, EVD-CORE-017 | **PASS** |
 | docs/backend-features.md §I 质量评估（QLT）· QLT-01 | SPEC-QLT-001 | technical | high | AC-QLT-001 | spec/verify/quality-engine.test.ts::quality-formula-weights | authoritative | EVD-QLT-001 | **PASS** |
-| docs/backend-features.md §I 质量评估（QLT）· QLT-02 | SPEC-QLT-002 | technical | medium | AC-QLT-002 | spec/verify/quality-engine.test.ts::canvas-mismatch-penalty | self-derived | EVD-QLT-002 | **PASS** |
-| docs/backend-features.md §I 质量评估（QLT）· QLT-02 | SPEC-QLT-003 | technical | medium | AC-QLT-003 | spec/verify/quality-engine.test.ts::duplicate-id-penalty | self-derived | EVD-QLT-003 | **PASS** |
-| docs/backend-features.md §I 质量评估（QLT）· QLT-02 | SPEC-QLT-004 | technical | medium | AC-QLT-004 | spec/verify/quality-engine.test.ts::out-of-bounds-penalty | self-derived | EVD-QLT-004 | **PASS** |
+| docs/backend-features.md §I 质量评估（QLT）· QLT-02 | SPEC-QLT-002 | technical | medium | AC-QLT-002 | spec/verify/quality-engine.test.ts::canvas-mismatch-penalty | authoritative | EVD-QLT-002 | **PASS** |
+| docs/backend-features.md §I 质量评估（QLT）· QLT-02 | SPEC-QLT-003 | technical | medium | AC-QLT-003 | spec/verify/quality-engine.test.ts::duplicate-id-penalty | authoritative | EVD-QLT-003 | **PASS** |
+| docs/backend-features.md §I 质量评估（QLT）· QLT-02 | SPEC-QLT-004 | technical | medium | AC-QLT-004 | spec/verify/quality-engine.test.ts::out-of-bounds-penalty | authoritative | EVD-QLT-004 | **PASS** |
 | docs/backend-features.md §I 质量评估（QLT）· QLT-03 | SPEC-QLT-005 | technical | medium | AC-QLT-005 | spec/verify/quality-engine.test.ts::aabb-collision-penalty | authoritative | EVD-QLT-005 | **PASS** |
-| docs/backend-features.md §I 质量评估（QLT）· QLT-04 | SPEC-QLT-006 | technical | medium | AC-QLT-006 | spec/verify/quality-engine.test.ts::missing-title-penalty | self-derived | EVD-QLT-006 | **PASS** |
-| docs/backend-features.md §I 质量评估（QLT）· QLT-04 | SPEC-QLT-007 | technical | medium | AC-QLT-007 | spec/verify/quality-engine.test.ts::missing-keymessage-penalty | self-derived | EVD-QLT-007 | **PASS** |
-| docs/backend-features.md §I 质量评估（QLT）· QLT-05 | SPEC-QLT-008 | technical | medium | AC-QLT-008 | spec/verify/quality-engine.test.ts::consistency-penalties | self-derived | EVD-QLT-008 | **PASS** |
+| docs/backend-features.md §I 质量评估（QLT）· QLT-04 | SPEC-QLT-006 | technical | medium | AC-QLT-006 | spec/verify/quality-engine.test.ts::missing-title-penalty | authoritative | EVD-QLT-006 | **PASS** |
+| docs/backend-features.md §I 质量评估（QLT）· QLT-04 | SPEC-QLT-007 | technical | medium | AC-QLT-007 | spec/verify/quality-engine.test.ts::missing-keymessage-penalty | authoritative | EVD-QLT-007 | **PASS** |
+| docs/backend-features.md §I 质量评估（QLT）· QLT-05 | SPEC-QLT-008 | technical | medium | AC-QLT-008 | spec/verify/quality-engine.test.ts::consistency-penalties | authoritative | EVD-QLT-008 | **PASS** |
 | docs/backend-features.md §I 质量评估（QLT）· QLT-06 | SPEC-QLT-009 | technical | high | AC-QLT-009, AC-QLT-011 | spec/verify/quality-engine.test.ts::autofix-restores-bounds<br>spec/verify/quality-engine.test.ts::autofix-leaves-master-elements-alone | authoritative | EVD-QLT-009, EVD-QLT-011 | **PASS** |
 | docs/architecture.md §12 ADR-012 | SPEC-QLT-010 | technical | high | AC-QLT-010 | spec/verify/quality-engine.test.ts::autofix-restores-id-uniqueness | authoritative | EVD-QLT-010 | **PASS** |
 | docs/backend-features.md §G 智能编辑 Agent（EDT）· EDT-06 | SPEC-QLT-011 | quality | high | AC-QLT-012 | spec/verify/quality-engine.test.ts::autofix-never-lowers-score | authoritative | EVD-QLT-012 | **PASS** |
 | docs/architecture.md §12 ADR-014 | SPEC-QLT-012 | quality | medium | AC-QLT-013 | spec/verify/quality-engine.test.ts::issues-declare-fixability | authoritative | EVD-QLT-013 | **PASS** |
+| docs/quality-rules.md §2 规则总表 | SPEC-QLT-013 | technical | high | AC-QLT-014, AC-QLT-015 | spec/verify/quality-rules.test.ts::rule-table-matches-doc<br>spec/verify/quality-rules.test.ts::every-rule-has-doc-anchor | authoritative | EVD-QLT-014, EVD-QLT-015 | **PASS** |
+| docs/quality-rules.md §1 为什么需要这张表 | SPEC-QLT-014 | technical | high | AC-QLT-016, AC-QLT-017 | spec/verify/quality-rules.test.ts::diagnostic-ids-map-to-rules<br>spec/verify/quality-rules.test.ts::penalties-come-from-rule-table | authoritative | EVD-QLT-016, EVD-QLT-017 | **PASS** |
+| docs/quality-rules.md §3 content_thin | SPEC-QLT-015 | technical | medium | AC-QLT-018 | spec/verify/quality-engine.test.ts::thin-page-penalty | authoritative | EVD-QLT-018 | **PASS** |
+| docs/quality-rules.md §3 content_dup | SPEC-QLT-016 | technical | medium | AC-QLT-019 | spec/verify/quality-engine.test.ts::duplicate-keymessage-penalty | authoritative | EVD-QLT-019 | **PASS** |
+| docs/quality-rules.md §3 vis_sparse | SPEC-QLT-017 | technical | medium | AC-QLT-020, AC-QLT-021 | spec/verify/quality-engine.test.ts::sparse-page-penalty<br>spec/verify/quality-engine.test.ts::thin-page-not-double-charged | authoritative | EVD-QLT-020, EVD-QLT-021 | **PASS** |
 | docs/backend-features.md §N 安全（SEC）· SEC-07 | SPEC-RND-001 | technical | high | AC-RND-001 | spec/verify/render-svg.test.ts::user-content-is-xml-escaped | authoritative | EVD-RND-001 | **PASS** |
 | docs/architecture.md §12 ADR-011 · 服务端渲染去 foreignObject 化 | SPEC-RND-002 | technical | high | AC-RND-002 | spec/verify/render-svg.test.ts::svg-contains-no-foreignobject | authoritative | EVD-RND-002 | **PASS** |
 | docs/backend-features.md §J 渲染与导出（EXP）· EXP-01 | SPEC-RND-003 | technical | high | AC-RND-003 | spec/verify/render-svg.test.ts::svg-contains-no-external-font-import | authoritative | EVD-RND-003 | **PASS** |
 | docs/architecture.md §8.1 渲染层次 | SPEC-RND-004 | technical | medium | AC-RND-004 | spec/verify/render-svg.test.ts::svg-preserves-element-ids | authoritative | EVD-RND-004 | **PASS** |
-| docs/architecture.md §9.3 关键设计 | SPEC-RND-005 | technical | low | AC-RND-005 | spec/verify/render-svg.test.ts::svg-has-four-layers | self-derived | EVD-RND-005 | **PASS** |
+| docs/architecture.md §9.3 关键设计 | SPEC-RND-005 | technical | low | AC-RND-005 | spec/verify/render-svg.test.ts::svg-has-four-layers | authoritative | EVD-RND-005 | **PASS** |
 | docs/architecture.md §12 ADR-011 | SPEC-RND-006 | technical | high | AC-RND-006 | spec/verify/render-svg.test.ts::long-text-is-truncated-with-ellipsis | authoritative | EVD-RND-006 | **PASS** |
 | docs/backend-features.md §J 渲染与导出（EXP）· EXP-15 / EXP-17 | SPEC-EXP-001 | business | high | AC-EXP-001 | spec/verify/export-pptx.test.ts::pptx-preserves-ir-text-content | authoritative | EVD-EXP-001 | **PASS** |
 | docs/backend-features.md §J 渲染与导出（EXP）· EXP-14 | SPEC-EXP-002 | technical | medium | AC-EXP-002 | spec/verify/export-pptx.test.ts::pptx-includes-speaker-notes | authoritative | EVD-EXP-002 | **PASS** |
 | docs/backend-features.md §J 渲染与导出（EXP）· EXP-02 | SPEC-EXP-003 | technical | medium | AC-EXP-003 | spec/verify/export-pptx.test.ts::png-export-is-2x | authoritative | EVD-EXP-003 | **PASS** |
 | docs/backend-features.md §J 渲染与导出（EXP）· EXP-13 | SPEC-EXP-004 | technical | low | AC-EXP-004 | spec/verify/export-pptx.test.ts::export-filename-sanitized | authoritative | EVD-EXP-004 | **PASS** |
 | docs/backend-features.md §C 项目管理（PRJ）· PRJ-07 | SPEC-EXP-005 | technical | high | AC-EXP-005, AC-EXP-006 | apps/api/tests/integration/import-bundle.test.ts::exported-bundle-round-trips-with-page-order-intact<br>apps/api/tests/integration/import-bundle.test.ts::duplicate-order-index-is-rejected | authoritative | EVD-EXP-005, EVD-EXP-006 | **PASS** |
+| docs/backend-features.md §J 渲染与导出（EXP）· EXP-06 | SPEC-EXP-006 | technical | medium | AC-EXP-007, AC-EXP-008 | spec/verify/font-fallback.test.ts::svg-font-stack-has-cjk-fallback<br>spec/verify/font-fallback.test.ts::pptx-uses-cjk-capable-font | authoritative | EVD-EXP-007, EVD-EXP-008 | **PASS** |
+| docs/architecture.md §12 ADR-019 | SPEC-RND-007 | technical | medium | AC-RND-007, AC-RND-008 | spec/verify/text-metrics.test.ts::text-width-model-is-calibrated<br>spec/verify/text-metrics.test.ts::wrapped-lines-never-exceed-the-available-width | expert | EVD-RND-007, EVD-RND-008 | **PASS** |
 | docs/backend-design.md §4.3 IRPatch 协议 | SPEC-IRP-001 | technical | high | AC-IRP-001 | apps/api/tests/ai/edit-slide.test.ts::returns-patches-not-full-elements | authoritative | EVD-IRP-001 | **PASS** |
 | docs/backend-design.md §4.3 IRPatch 协议 | SPEC-IRP-002 | technical | high | AC-IRP-002 | packages/core/tests/patchApplier.test.ts::apply-is-idempotent | authoritative | EVD-IRP-002 | **PASS** |
 | docs/backend-design.md §4.3 IRPatch 协议 | SPEC-IRP-003 | technical | medium | AC-IRP-003 | packages/core/tests/patchApplier.test.ts::remove-missing-element-throws | authoritative | EVD-IRP-003 | **PASS** |
@@ -86,7 +94,7 @@
 | 有没有判据挂错条款？ | 0 个 | ✅ |
 | 有没有验证器没有对应条款？ | 0 个 | ✅ |
 | 有没有文档段落没有对应条款？ | 4 段 | ✅ 全部登记在 §1.4 |
-| 有没有 `maturity: none` 的条款？ | 1/60（1.7%） | ✅ 低于 30% 阈值 |
+| 有没有 `maturity: none` 的条款？ | 1/68（1.5%） | ✅ 低于 30% 阈值 |
 
 ### 1.3 未覆盖清单
 
@@ -126,6 +134,8 @@
 | 决定 | DEC-010 | 不直连 —— E2E 的模型端点指向**本地替身**（spec/verify/model-stub-server.ts），替身返回官方端点在占位 key 下的**原样** 400 响应体；E2E 因此恒定走「模型不可用 → 本地降级」这条路径 | SPEC-E2E-001, SPEC-E2E-002, SPEC-E2E-003, SPEC-E2E-004, SPEC-E2E-005, SPEC-E2E-006, SPEC-E2E-007, SPEC-E2E-008, SPEC-E2E-009, SPEC-E2E-010, SPEC-E2E-011 |
 | 决定 | DEC-011 | 不开 —— E2E 的 vite 一律带 `DISABLE_HMR=true`（关掉 hmr 与文件监听） | SPEC-E2E-001, SPEC-E2E-002, SPEC-E2E-003, SPEC-E2E-004, SPEC-E2E-005, SPEC-E2E-006, SPEC-E2E-007, SPEC-E2E-008, SPEC-E2E-009, SPEC-E2E-010, SPEC-E2E-011 |
 | 决定 | DEC-012 | 1-based —— orderIndex ≥ 1，与领域内核的 outline.order 同基线；导入端据此校验（缺该项校验会让重复的 orderIndex 静默落库，页序从此由数据库决定） | SPEC-EXP-005 |
+| 决定 | DEC-013 | 字体 fallback 链定为：**SVG 侧是 CSS 字体栈** —— 主题拉丁字体 → 显式命名的 CJK 族（'Microsoft YaHei', 'PingFang SC', 'Noto Sans CJK SC', 'Source Han Sans SC'）→ generic 兜底，**CJK 族必须排在第一个 generic 族之前**；**PPTX 侧是单一字体名** `'Microsoft YaHei'`（DrawingML 的 <a:latin>/<a:ea>/<a:cs> 各写各的，没有 fallback 链可依赖）。链的单一真相源是 packages/core/src/engine/typography.ts 的 `withCjkFallback` / `CJK_FALLBACK_FAMILIES` / `PPTX_FONT_NAME`，SVG 渲染与 PPTX 导出共用 | SPEC-EXP-006 |
+| 决定 | DEC-014 | 10px 是**安全距**而非容差：两块之间必须留出 10px 才算『分开的』，否则判碰撞。间距取两轴间隙的较大者 separation = max(dx, dy)（负值表示重叠），**恰好 10px 判不碰撞** | SPEC-QLT-005 |
 
 ---
 
@@ -135,18 +145,35 @@
 
 | 结论 | 条款数 | 判据数 | 占比（按判据） |
 |---|---|---|---|
-| PASS | 58 | 84 | 98.8% |
+| PASS | 66 | 100 | 99.0% |
 | FAIL | 0 | 0 | 0.0% |
-| INCONCLUSIVE | 1 | 1 | 1.2% |
+| INCONCLUSIVE | 1 | 1 | 1.0% |
 | 未覆盖（无判据） | 1 | 0 | 0.0% |
-| **合计** | **60** | **85** | **100%** |
+| **合计** | **68** | **101** | **100%** |
 
-> 结论为 PASS 的判据共 84 条，每一条都在 §2.3 有对应证据记录（EVD-*）。
+> 结论为 PASS 的判据共 100 条，每一条都在 §2.3 有对应证据记录（EVD-*）。
 > 「未覆盖（无判据）」的 1 条（SPEC-GOV-003）连判据都不存在，既不是 PASS 也不是 FAIL —— 见 §2.5。
+> **证据集对账**：这轮证据集共 437 个用例（spec/evidence/junit.xml 339 + spec/evidence/junit-e2e.xml 98），其中 100 个被某条判据点名、337 个没有。
+> 没有判据的 337 个用例里 **0 个失败** —— 上表的「FAIL 0」不是漏报：它们也都过了。
+> 判据点名的 101 个验证目标里，**1 个在这轮证据集里没找到**（`apps/api/tests/perf/outline-latency.bench.ts::outline-generation-p95-under-threshold`）—— 挂不上验证目标的判据一律 INCONCLUSIVE，绝不按「通过」算（§2.5）。
+
+#### 2.1.1 这批结论对应的是哪一版代码
+
+这些证据生成于：spec/evidence/junit.xml 2026-11-05 07:03:10、spec/evidence/junit-e2e.xml 2026-11-05 07:04:40。每一条 PASS/FAIL 都是**跑批那一刻**的结论 —— 跑完之后动过它依赖的文件，这条结论就不再自动适用于当前代码。下面按「这条结论依赖的文件有没有在证据之后被改过」逐条判定。
+
+> **100 条结论全部仍然成立** —— 它们依赖的文件在证据生成之后都没有被改过。
+
+> **E2E 的依赖只能按整条链算**：Playwright 规格通过浏览器操作页面、通过 HTTP 打到服务端，它的 import 闭包里**没有**前端与服务端的代码。本次 E2E 证据之后没有源文件被改过，28 条 E2E 结论仍然成立。
 
 ### 2.2 失败明细
 
+#### 挂了判据的失败
+
 （无）
+
+#### 未挂判据的失败
+
+（无）—— 没有判据的 337 个用例也全都过了。这一节存在的意义是：**「没有失败」得说得出依据**，不能靠「没列」来暗示。
 
 ### 2.3 证据清单
 
@@ -348,6 +375,66 @@ EVD-CORE-013
   evidence:      spec/evidence/junit-e2e.xml
 ```
 ```
+EVD-CORE-014
+  clause:        SPEC-CORE-010
+  acceptance:    AC-CORE-014
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/architecture.md §12 ADR-018 · 语义住在字段里，不住在 ID 里 —— 字符串即语义意味着任何一次重命名都是事故…
+  environment:   bun 1.3.11 / darwin / 无外部服务调用（数据库为进程内 PGlite，AI 端点为本地确定性降级）
+  command:       bun test ./spec/verify/element-variant.test.ts
+  case:          spec/verify/element-variant.test.ts::layout-engine-sets-variant-on-every-element
+  result:        该用例通过（layout-engine-sets-variant-on-every-element）
+  oracle_tier:   authoritative
+  oracle_source: docs/architecture.md §12 ADR-018 —— 变体的全部语义收进一张表（ELEMENT_VARIANTS），渲染层、主题重映射、ID 修复一律读表
+  evidence:      spec/evidence/junit.xml
+```
+```
+EVD-CORE-015
+  clause:        SPEC-CORE-010
+  acceptance:    AC-CORE-015
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/architecture.md §12 ADR-018 · 语义住在字段里，不住在 ID 里 —— 字符串即语义意味着任何一次重命名都是事故…
+  environment:   bun 1.3.11 / darwin / 无外部服务调用（数据库为进程内 PGlite，AI 端点为本地确定性降级）
+  command:       bun test ./spec/verify/element-variant.test.ts
+  case:          spec/verify/element-variant.test.ts::id-repair-derives-prefix-from-variant
+  result:        该用例通过（id-repair-derives-prefix-from-variant）
+  oracle_tier:   authoritative
+  oracle_source: docs/architecture.md §12 ADR-018 —— ID 重排的语义前缀取自 variant 字段，绝不从旧 ID 里抠
+  evidence:      spec/evidence/junit.xml
+```
+```
+EVD-CORE-016
+  clause:        SPEC-CORE-010
+  acceptance:    AC-CORE-016
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/architecture.md §12 ADR-018 · 语义住在字段里，不住在 ID 里 —— 字符串即语义意味着任何一次重命名都是事故…
+  environment:   bun 1.3.11 / darwin / 无外部服务调用（数据库为进程内 PGlite，AI 端点为本地确定性降级）
+  command:       bun test ./spec/verify/element-variant.test.ts
+  case:          spec/verify/element-variant.test.ts::render-and-theme-follow-variant-not-id
+  result:        该用例通过（render-and-theme-follow-variant-not-id）
+  oracle_tier:   authoritative
+  oracle_source: docs/architecture.md §12 ADR-018 —— 语义判断一律读 variant 字段，不猜 ID 字符串
+  evidence:      spec/evidence/junit.xml
+```
+```
+EVD-CORE-017
+  clause:        SPEC-CORE-010
+  acceptance:    AC-CORE-017
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/architecture.md §12 ADR-018 · 语义住在字段里，不住在 ID 里 —— 字符串即语义意味着任何一次重命名都是事故…
+  environment:   bun 1.3.11 / darwin / 无外部服务调用（数据库为进程内 PGlite，AI 端点为本地确定性降级）
+  command:       bun test ./spec/verify/element-variant.test.ts
+  case:          spec/verify/element-variant.test.ts::no-consumer-parses-element-ids
+  result:        该用例通过（no-consumer-parses-element-ids）
+  oracle_tier:   authoritative
+  oracle_source: docs/architecture.md §12 ADR-018 —— legacyVariantOf 是全仓唯一一处解析 ID 语义的地方，且只在字段缺失时触发
+  evidence:      spec/evidence/junit.xml
+```
+```
 EVD-QLT-001
   clause:        SPEC-QLT-001
   acceptance:    AC-QLT-001
@@ -373,8 +460,8 @@ EVD-QLT-002
   command:       bun test ./spec/verify/quality-engine.test.ts
   case:          spec/verify/quality-engine.test.ts::canvas-mismatch-penalty
   result:        该用例通过（canvas-mismatch-penalty）
-  oracle_tier:   self-derived
-  oracle_source: src/engine/qualityEngine.ts 的扣分幅度（经 docs/backend-design.md §1.2 F7『原样搬到后端』追认）
+  oracle_tier:   authoritative
+  oracle_source: docs/quality-rules.md §struct_dim —— 画布尺寸不符扣结构分 15（幅度以规则表为准；原幅度由现状实现追认，见 ADR-015）
   evidence:      spec/evidence/junit.xml
 ```
 ```
@@ -388,8 +475,8 @@ EVD-QLT-003
   command:       bun test ./spec/verify/quality-engine.test.ts
   case:          spec/verify/quality-engine.test.ts::duplicate-id-penalty
   result:        该用例通过（duplicate-id-penalty）
-  oracle_tier:   self-derived
-  oracle_source: src/engine/qualityEngine.ts 的扣分幅度（经 docs/backend-design.md §1.2 F7 追认）
+  oracle_tier:   authoritative
+  oracle_source: docs/quality-rules.md §struct_id —— 元素 ID 重复扣结构分 5（幅度以规则表为准；原幅度由现状实现追认，见 ADR-015）
   evidence:      spec/evidence/junit.xml
 ```
 ```
@@ -403,8 +490,8 @@ EVD-QLT-004
   command:       bun test ./spec/verify/quality-engine.test.ts
   case:          spec/verify/quality-engine.test.ts::out-of-bounds-penalty
   result:        该用例通过（out-of-bounds-penalty）
-  oracle_tier:   self-derived
-  oracle_source: src/engine/qualityEngine.ts 的扣分幅度（经 docs/backend-design.md §1.2 F7 追认）
+  oracle_tier:   authoritative
+  oracle_source: docs/quality-rules.md §vis_bounds —— 元素越界扣视觉分 10（幅度以规则表为准；原幅度由现状实现追认，见 ADR-015）
   evidence:      spec/evidence/junit.xml
 ```
 ```
@@ -413,13 +500,13 @@ EVD-QLT-005
   acceptance:    AC-QLT-005
   verdict:       PASS
   spec_version:  1.0
-  input_data:    docs/backend-features.md §I 质量评估（QLT）· QLT-03 —— 卡片/层 AABB 碰撞检测（10px 缓冲）…
+  input_data:    docs/backend-features.md §I 质量评估（QLT）· QLT-03 —— 卡片/层 AABB 碰撞检测（10px 安全距 —— 间距不足 10px 即判碰撞，恰好 10p…
   environment:   bun 1.3.11 / darwin / 无外部服务调用（数据库为进程内 PGlite，AI 端点为本地确定性降级）
   command:       bun test ./spec/verify/quality-engine.test.ts
   case:          spec/verify/quality-engine.test.ts::aabb-collision-penalty
   result:        该用例通过（aabb-collision-penalty）
   oracle_tier:   authoritative
-  oracle_source: docs/backend-features.md §I QLT-03 —— 卡片/层 AABB 碰撞检测（10px 缓冲）；取文档与实现结论一致的重叠>10px 与间隙>10px 两个区间
+  oracle_source: docs/quality-rules.md §vis_collide —— 10px 是安全距：两块之间必须留出 10px 才算分开（AMB-004 裁决，见 DEC-014）
   evidence:      spec/evidence/junit.xml
 ```
 ```
@@ -433,8 +520,8 @@ EVD-QLT-006
   command:       bun test ./spec/verify/quality-engine.test.ts
   case:          spec/verify/quality-engine.test.ts::missing-title-penalty
   result:        该用例通过（missing-title-penalty）
-  oracle_tier:   self-derived
-  oracle_source: src/engine/qualityEngine.ts 的扣分幅度（经 docs/backend-design.md §1.2 F7 追认）
+  oracle_tier:   authoritative
+  oracle_source: docs/quality-rules.md §content_title —— 标题缺失或过短扣内容分 15（幅度以规则表为准；原幅度由现状实现追认，见 ADR-015）
   evidence:      spec/evidence/junit.xml
 ```
 ```
@@ -448,8 +535,8 @@ EVD-QLT-007
   command:       bun test ./spec/verify/quality-engine.test.ts
   case:          spec/verify/quality-engine.test.ts::missing-keymessage-penalty
   result:        该用例通过（missing-keymessage-penalty）
-  oracle_tier:   self-derived
-  oracle_source: src/engine/qualityEngine.ts 的扣分幅度（经 docs/backend-design.md §1.2 F7 追认）
+  oracle_tier:   authoritative
+  oracle_source: docs/quality-rules.md §content_keymsg —— 非封面页缺核心结论扣内容分 8（幅度以规则表为准；原幅度由现状实现追认，见 ADR-015）
   evidence:      spec/evidence/junit.xml
 ```
 ```
@@ -463,8 +550,8 @@ EVD-QLT-008
   command:       bun test ./spec/verify/quality-engine.test.ts
   case:          spec/verify/quality-engine.test.ts::consistency-penalties
   result:        该用例通过（consistency-penalties）
-  oracle_tier:   self-derived
-  oracle_source: src/engine/qualityEngine.ts 的扣分幅度（经 docs/backend-design.md §1.2 F7 追认）
+  oracle_tier:   authoritative
+  oracle_source: docs/quality-rules.md §consist_count 与 §consist_cover —— 页数不足扣 15、缺封面扣 10（幅度以规则表为准；原幅度由现状实现追认，见 ADR-015）
   evidence:      spec/evidence/junit.xml
 ```
 ```
@@ -543,6 +630,126 @@ EVD-QLT-013
   evidence:      spec/evidence/junit.xml
 ```
 ```
+EVD-QLT-014
+  clause:        SPEC-QLT-013
+  acceptance:    AC-QLT-014
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/quality-rules.md §2 规则总表 —— `struct_dim` | `structure` | 15 | 是 | 画布尺寸必须是 19…
+  environment:   bun 1.3.11 / darwin / 无外部服务调用（数据库为进程内 PGlite，AI 端点为本地确定性降级）
+  command:       bun test ./spec/verify/quality-rules.test.ts
+  case:          spec/verify/quality-rules.test.ts::rule-table-matches-doc
+  result:        该用例通过（rule-table-matches-doc）
+  oracle_tier:   authoritative
+  oracle_source: docs/quality-rules.md §2 规则总表 —— 规则表是扣分幅度的权威依据；§1 记录了「幅度写在文档里、引擎从表里读」的决策
+  evidence:      spec/evidence/junit.xml
+```
+```
+EVD-QLT-015
+  clause:        SPEC-QLT-013
+  acceptance:    AC-QLT-015
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/quality-rules.md §2 规则总表 —— `struct_dim` | `structure` | 15 | 是 | 画布尺寸必须是 19…
+  environment:   bun 1.3.11 / darwin / 无外部服务调用（数据库为进程内 PGlite，AI 端点为本地确定性降级）
+  command:       bun test ./spec/verify/quality-rules.test.ts
+  case:          spec/verify/quality-rules.test.ts::every-rule-has-doc-anchor
+  result:        该用例通过（every-rule-has-doc-anchor）
+  oracle_tier:   authoritative
+  oracle_source: docs/quality-rules.md §1 —— 规则 id 同时是诊断 id 的前缀，保证「诊断」与「规则」一一对应
+  evidence:      spec/evidence/junit.xml
+```
+```
+EVD-QLT-016
+  clause:        SPEC-QLT-014
+  acceptance:    AC-QLT-016
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/quality-rules.md §1 为什么需要这张表 —— 规则 `id` 同时是**诊断 id 的前缀**…
+  environment:   bun 1.3.11 / darwin / 无外部服务调用（数据库为进程内 PGlite，AI 端点为本地确定性降级）
+  command:       bun test ./spec/verify/quality-rules.test.ts
+  case:          spec/verify/quality-rules.test.ts::diagnostic-ids-map-to-rules
+  result:        该用例通过（diagnostic-ids-map-to-rules）
+  oracle_tier:   authoritative
+  oracle_source: docs/quality-rules.md §2 规则总表 —— 11 条规则覆盖四个维度，每一条都必须有诊断能命中
+  evidence:      spec/evidence/junit.xml
+```
+```
+EVD-QLT-017
+  clause:        SPEC-QLT-014
+  acceptance:    AC-QLT-017
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/quality-rules.md §1 为什么需要这张表 —— 规则 `id` 同时是**诊断 id 的前缀**…
+  environment:   bun 1.3.11 / darwin / 无外部服务调用（数据库为进程内 PGlite，AI 端点为本地确定性降级）
+  command:       bun test ./spec/verify/quality-rules.test.ts
+  case:          spec/verify/quality-rules.test.ts::penalties-come-from-rule-table
+  result:        该用例通过（penalties-come-from-rule-table）
+  oracle_tier:   authoritative
+  oracle_source: docs/quality-rules.md §1 —— 规则表是数据，评分器退化成它的解释器
+  evidence:      spec/evidence/junit.xml
+```
+```
+EVD-QLT-018
+  clause:        SPEC-QLT-015
+  acceptance:    AC-QLT-018
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/quality-rules.md §3 content_thin —— 非封面页里 `role ∈ {card, layer, metric, badge, chart…
+  environment:   bun 1.3.11 / darwin / 无外部服务调用（数据库为进程内 PGlite，AI 端点为本地确定性降级）
+  command:       bun test ./spec/verify/quality-engine.test.ts
+  case:          spec/verify/quality-engine.test.ts::thin-page-penalty
+  result:        该用例通过（thin-page-penalty）
+  oracle_tier:   authoritative
+  oracle_source: docs/quality-rules.md §3 content_thin —— 扣 8 分；与 vis_sparse 互斥；封面豁免
+  evidence:      spec/evidence/junit.xml
+```
+```
+EVD-QLT-019
+  clause:        SPEC-QLT-016
+  acceptance:    AC-QLT-019
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/quality-rules.md §3 content_dup —— 把每页的 `keyMessage` 归一化（去空白、去标点、转小写）后分组…
+  environment:   bun 1.3.11 / darwin / 无外部服务调用（数据库为进程内 PGlite，AI 端点为本地确定性降级）
+  command:       bun test ./spec/verify/quality-engine.test.ts
+  case:          spec/verify/quality-engine.test.ts::duplicate-keymessage-penalty
+  result:        该用例通过（duplicate-keymessage-penalty）
+  oracle_tier:   authoritative
+  oracle_source: docs/quality-rules.md §3 content_dup —— 扣 10 分；归一化后算同一句；封面不参与
+  evidence:      spec/evidence/junit.xml
+```
+```
+EVD-QLT-020
+  clause:        SPEC-QLT-017
+  acceptance:    AC-QLT-020
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/quality-rules.md §3 vis_sparse —— 面积占比 < 20% 即违例…
+  environment:   bun 1.3.11 / darwin / 无外部服务调用（数据库为进程内 PGlite，AI 端点为本地确定性降级）
+  command:       bun test ./spec/verify/quality-engine.test.ts
+  case:          spec/verify/quality-engine.test.ts::sparse-page-penalty
+  result:        该用例通过（sparse-page-penalty）
+  oracle_tier:   authoritative
+  oracle_source: docs/quality-rules.md §3 vis_sparse —— 20% 阈值与矩形并集算法，附实测标定表
+  evidence:      spec/evidence/junit.xml
+```
+```
+EVD-QLT-021
+  clause:        SPEC-QLT-017
+  acceptance:    AC-QLT-021
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/quality-rules.md §3 vis_sparse —— 面积占比 < 20% 即违例…
+  environment:   bun 1.3.11 / darwin / 无外部服务调用（数据库为进程内 PGlite，AI 端点为本地确定性降级）
+  command:       bun test ./spec/verify/quality-engine.test.ts
+  case:          spec/verify/quality-engine.test.ts::thin-page-not-double-charged
+  result:        该用例通过（thin-page-not-double-charged）
+  oracle_tier:   authoritative
+  oracle_source: docs/quality-rules.md §3 vis_sparse —— 与 content_thin 互斥
+  evidence:      spec/evidence/junit.xml
+```
+```
 EVD-RND-001
   clause:        SPEC-RND-001
   acceptance:    AC-RND-001
@@ -613,8 +820,8 @@ EVD-RND-005
   command:       bun test ./spec/verify/render-svg.test.ts
   case:          spec/verify/render-svg.test.ts::svg-has-four-layers
   result:        该用例通过（svg-has-four-layers）
-  oracle_tier:   self-derived
-  oracle_source: src/engine/svgRenderer.ts 的四层实现（对应 docs/architecture.md §9.3 分层渲染）
+  oracle_tier:   authoritative
+  oracle_source: docs/test-cases.md §TC-CORE-146 —— 元素分层为 4 层：background-layer / template-layer / content-layer / decoration-layer，顺序固定
   evidence:      spec/evidence/junit.xml
 ```
 ```
@@ -720,6 +927,66 @@ EVD-EXP-006
   result:        该用例通过（duplicate-order-index-is-rejected）
   oracle_tier:   authoritative
   oracle_source: docs/backend-features.md §C PRJ-07 + docs/test-cases.md TC-CONTRACT-034~036 —— 非法文件返回明确错误（400）而非崩溃
+  evidence:      spec/evidence/junit.xml
+```
+```
+EVD-EXP-007
+  clause:        SPEC-EXP-006
+  acceptance:    AC-EXP-007
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/backend-features.md §J 渲染与导出（EXP）· EXP-06 —— `pptxgenjs` 将 IR 映射为 Office 原生形状与文本框；字体名 fallbac…
+  environment:   bun 1.3.11 / darwin / 无外部服务调用（数据库为进程内 PGlite，AI 端点为本地确定性降级）
+  command:       bun test ./spec/verify/font-fallback.test.ts
+  case:          spec/verify/font-fallback.test.ts::svg-font-stack-has-cjk-fallback
+  result:        该用例通过（svg-font-stack-has-cjk-fallback）
+  oracle_tier:   authoritative
+  oracle_source: docs/backend-features.md §J EXP-06 —— 字体名 fallback 链保证中英混排（链的内容见 DEC-013：CJK 族必须排在 generic 之前）
+  evidence:      spec/evidence/junit.xml
+```
+```
+EVD-EXP-008
+  clause:        SPEC-EXP-006
+  acceptance:    AC-EXP-008
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/backend-features.md §J 渲染与导出（EXP）· EXP-06 —— `pptxgenjs` 将 IR 映射为 Office 原生形状与文本框；字体名 fallbac…
+  environment:   bun 1.3.11 / darwin / 无外部服务调用（数据库为进程内 PGlite，AI 端点为本地确定性降级）
+  command:       bun test ./spec/verify/font-fallback.test.ts
+  case:          spec/verify/font-fallback.test.ts::pptx-uses-cjk-capable-font
+  result:        该用例通过（pptx-uses-cjk-capable-font）
+  oracle_tier:   authoritative
+  oracle_source: docs/backend-features.md §J EXP-06 —— 字体名 fallback 链保证中英混排（PPTX 侧只能单名，见 DEC-013）
+  evidence:      spec/evidence/junit.xml
+```
+```
+EVD-RND-007
+  clause:        SPEC-RND-007
+  acceptance:    AC-RND-007
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/architecture.md §12 ADR-019 —— **两路模型**：**全角字符**（CJK / 全角标点 / 韩文）按 1em —— 各家 CJ…
+  environment:   bun 1.3.11 / darwin / 无外部服务调用（数据库为进程内 PGlite，AI 端点为本地确定性降级）
+  command:       bun test ./spec/verify/text-metrics.test.ts
+  case:          spec/verify/text-metrics.test.ts::text-width-model-is-calibrated
+  result:        该用例通过（text-width-model-is-calibrated）
+  oracle_tier:   expert
+  oracle_source: docs/architecture.md §12 ADR-019 —— 半角按标准西文 advance width 表计宽并乘 1.08 安全系数；Helvetica/Arial 的字宽在实务上被当作「西文标准档」
+  evidence:      spec/evidence/junit.xml
+```
+```
+EVD-RND-008
+  clause:        SPEC-RND-007
+  acceptance:    AC-RND-008
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/architecture.md §12 ADR-019 —— **两路模型**：**全角字符**（CJK / 全角标点 / 韩文）按 1em —— 各家 CJ…
+  environment:   bun 1.3.11 / darwin / 无外部服务调用（数据库为进程内 PGlite，AI 端点为本地确定性降级）
+  command:       bun test ./spec/verify/text-metrics.test.ts
+  case:          spec/verify/text-metrics.test.ts::wrapped-lines-never-exceed-the-available-width
+  result:        该用例通过（wrapped-lines-never-exceed-the-available-width）
+  oracle_tier:   expert
+  oracle_source: docs/architecture.md §12 ADR-019 —— 空格断行时尾段超宽必须退化为硬断，保证每一行的估算宽度都不超过可用宽度
   evidence:      spec/evidence/junit.xml
 ```
 ```
@@ -1415,7 +1682,7 @@ EVD-GOV-002
 
 ### 2.4 注入错误检查（验证器的元验证）
 
-共 88 个注入用例，**不合格 0 个**。每个用例走「基线 PASS → 注入必须 FAIL → 还原后重新 PASS」三步。
+共 90 个注入用例，**不合格 0 个**。每个用例走「基线 PASS → 注入必须 FAIL → 还原后重新 PASS」三步。
 
 | 判据 | 注入的错误 | 改动的文件 | 检出者 | 基线 | 检出 | 还原 |
 |---|---|---|---|---|---|---|
@@ -1439,6 +1706,8 @@ EVD-GOV-002
 | AC-RND-004 | 不再输出元素的 id 属性（只留 data-element-id 顶替） | `packages/core/src/engine/svgRenderer.ts` | `spec/verify/render-svg.test.ts::svg-preserves-element-ids` | ✅ | ✅ | ✅ |
 | AC-RND-004 | data-element-id 的值与 IR id 不一致 | `packages/core/src/engine/svgRenderer.ts` | `spec/verify/render-svg.test.ts::svg-preserves-element-ids` | ✅ | ✅ | ✅ |
 | AC-RND-005 | 把装饰层改名，破坏四层约定 | `packages/core/src/engine/svgRenderer.ts` | `spec/verify/render-svg.test.ts::svg-has-four-layers` | ✅ | ✅ | ✅ |
+| AC-RND-006 | 不再截断 —— 装不下的行原样溢出（整段原文直接铺进 SVG） | `packages/core/src/engine/svgRenderer.ts` | `spec/verify/render-svg.test.ts::long-text-is-truncated-with-ellipsis` | ✅ | ✅ | ✅ |
+| AC-RND-006 | 截断了但不补省略号 —— 文字被切掉，读者却看不出来 | `packages/core/src/engine/svgRenderer.ts` | `spec/verify/render-svg.test.ts::long-text-is-truncated-with-ellipsis` | ✅ | ✅ | ✅ |
 | AC-QLT-001 | 把内容分权重从 0.2 改成 0.4 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::quality-formula-weights` | ✅ | ✅ | ✅ |
 | AC-QLT-002 | 画布尺寸不符不再扣 15 分 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::canvas-mismatch-penalty` | ✅ | ✅ | ✅ |
 | AC-QLT-003 | 重复元素 ID 不再扣 5 分 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::duplicate-id-penalty` | ✅ | ✅ | ✅ |
@@ -1508,7 +1777,19 @@ EVD-GOV-002
 | AC-E2E-019 | 导出提交失败被吞掉，界面改报成功（假成功） | `src/components/ExportModal.tsx` | `e2e/errors.e2e.ts::导出提交失败 → 界面显示"导出失败"，绝不显示"导出成功"` | ✅ | ✅ | ✅ |
 | AC-E2E-021 | 又加了一张渲染阻塞的外部样式表（CDN 不可达时整页白屏） | `index.html` | `e2e/offline.e2e.ts::应用 HTML → 没有会阻塞渲染的外部样式表` | ✅ | ✅ | ✅ |
 
-> 全部注入错误都被对应验证器抓到。**没有 MISSED 行** —— 上表的 PASS 因此不是自证。
+> 全部注入错误都被对应验证器抓到。**没有 MISSED 行** —— 上表的 PASS 因此不是自证。**但那是跑批那一刻的结论**：这些用例现在还跑不跑得起来，见 §2.4.2。
+
+#### 2.4.1 这批结论还对当前代码成立吗
+
+注入报告生成于 2026-11-04T23:18:34.865Z。「验证器抓得住这个错」是**某一版**验证器与**某一版**实现之间的结论 —— 跑完之后动过其中任何一边，这条结论就不再自动适用于当前代码。下面按报告里记下的文件指纹逐条比对。
+
+> 逐条比对了跑批时的文件指纹与当前的文件内容：**90 条全部仍然成立**（验证器与被改动的源文件都和跑批时一致）。
+
+#### 2.4.2 现在还跑得起来吗
+
+当前代码里定义了 **90** 条注入用例，全量报告里有 **90** 条。
+
+> 全部 90 条都在报告里，锚点**命中且唯一** —— 现在重跑还跑得起来，报告里的结论没有过期。
 
 > 首轮运行曾出现 1 个 MISSED（AC-RND-004）：判据原文写作「存在 `id=` **或** `data-element-id=`」，弱于条款陈述本身要求的「必须带有 id 属性」。已把判据收紧到与条款陈述及 `docs/test-cases.md` TC-EXP-003 一致，并补上第二条注入（data-element-id 值与 IR 不一致）。
 
@@ -1565,9 +1846,9 @@ EVD-GOV-002
 
 ### 生成了什么
 
-- `spec/spec.yaml` —— 60 条条款 / 85 条判据的机器可读契约
+- `spec/spec.yaml` —— 68 条条款 / 101 条判据的机器可读契约
 - `spec/spec.schema.json` —— Spec 自身的结构约束（JSON Schema 2020-12）
-- `spec/verify/*.test.ts` —— 11 个验证器文件（Spec 自检 + 领域内核 + 导出 + 质量引擎 + 渲染）
+- `spec/verify/*.test.ts` —— 21 个验证器文件（Spec 自检 + 领域内核 + 导出 + 质量引擎 + 渲染）
 - `packages/core/tests/` —— 领域内核（@ppt/core）的版式快照与补丁应用测试
 - `apps/api/tests/` —— 后端的契约 / 集成 / 安全 / AI / 混沌 / 性能测试
 - `e2e/` —— 13 条前后端集成链（Playwright 真实浏览器 + 真实服务端），断言落在服务端状态上：`e2e/auth.e2e.ts`、`e2e/errors.e2e.ts`、`e2e/exports.e2e.ts`、`e2e/library.e2e.ts`、`e2e/navigation.e2e.ts`、`e2e/offline.e2e.ts`、`e2e/presentation.e2e.ts`、`e2e/projects.e2e.ts`、`e2e/quality.e2e.ts`、`e2e/templates.e2e.ts`、`e2e/workbench-editing.e2e.ts`、`e2e/workbench-pages.e2e.ts`、`e2e/workbench.e2e.ts`
@@ -1584,22 +1865,23 @@ EVD-GOV-002
 
 ### 覆盖了什么
 
-- 源文档：`docs/backend-design.md`、`docs/backend-features.md`、`docs/architecture.md`、`docs/testing-strategy.md`、`docs/test-cases.md`
-- 条款 60 条（business/technical/quality/governance），判据 85 条 —— 其中 85 条判据指向可执行验证器
-- 成熟度分布：automated 59 / planned 0 / none 1
+- 源文档：`docs/backend-design.md`、`docs/backend-features.md`、`docs/architecture.md`、`docs/testing-strategy.md`、`docs/test-cases.md`、`docs/quality-rules.md`
+- 条款 68 条（business/technical/quality/governance），判据 101 条 —— 其中 101 条判据指向可执行验证器
+- 成熟度分布：automated 67 / planned 0 / none 1
 
 ### 实际验证了什么
 
-- 真的跑了证据集（`bun test spec/verify/ packages/core/tests/ apps/api/tests/ ./scripts/check-coverage.check.ts ./apps/api/tests/perf/export-latency.bench.ts`）：**191 个用例，0 失败，191 通过**，覆盖 28 个测试文件
+- 真的跑了证据集（`bun test spec/verify/ packages/core/tests/ apps/api/tests/ ./scripts/check-coverage.check.ts ./apps/api/tests/perf/export-latency.bench.ts`）：**339 个用例，0 失败，339 通过**，覆盖 38 个测试文件
 - 真的跑了前后端集成 E2E（`bun test ./e2e/auth.e2e.ts ./e2e/errors.e2e.ts ./e2e/exports.e2e.ts ./e2e/library.e2e.ts ./e2e/navigation.e2e.ts ./e2e/offline.e2e.ts ./e2e/presentation.e2e.ts ./e2e/projects.e2e.ts ./e2e/quality.e2e.ts ./e2e/templates.e2e.ts ./e2e/workbench-editing.e2e.ts ./e2e/workbench-pages.e2e.ts ./e2e/workbench.e2e.ts`，Playwright 驱动真实 Chromium + 真实服务端）：**98 个用例，0 失败**
-- 真的跑了 `python3 spec/verify/spec-schema.py`：Spec 结构校验通过（60 条条款 / 85 条判据引用完整）
+- 证据集对账：两层证据共 **437 个用例**，其中 **100 个挂了判据**、337 个没挂；没挂判据的用例里 **0 个失败** —— 「失败明细」里那个「（无）」不是漏报
+- 真的跑了 `python3 spec/verify/spec-schema.py`：Spec 结构校验通过（68 条条款 / 101 条判据引用完整）
 - 真的跑了 `npx tsc --noEmit`：类型检查通过
-- 真的跑了 `bun run spec/verify/mutation-check.ts`：**88 个注入用例，不合格 0 个** —— 每个用例走「基线 PASS → 注入必须 FAIL → 还原后重新 PASS」三步，源文件已全部还原
-- 领域内核行覆盖率：**92.27% ≥ 90%**（1814/1966 行，证据落盘在 `spec/evidence/coverage.json`）
+- 真的跑了 `bun run spec/verify/mutation-check.ts`：**90 个注入用例，不合格 0 个** —— 每个用例走「基线 PASS → 注入必须 FAIL → 还原后重新 PASS」三步，源文件已全部还原 —— 其中对**当前代码**仍然成立 **90** 条、已过期 **0** 条（见 §2.4.1）
+- 领域内核行覆盖率：**93.42% ≥ 90%**（2358/2524 行，证据落盘在 `spec/evidence/coverage.json`）
 
 ### 哪些结论仍不可信
 
-- **8 条判据没有做注入错误检查**（AC-QLT-011、AC-QLT-012、AC-QLT-013、AC-RND-006、AC-E2E-023、AC-E2E-024、AC-E2E-025、AC-NFR-001）—— 它们的 PASS 只来自「测试跑过了」，没有被元验证证明「抓得住错」
+- **23 条判据没有做注入错误检查**（AC-CORE-014、AC-CORE-015、AC-CORE-016、AC-CORE-017、AC-QLT-011、AC-QLT-012、AC-QLT-013、AC-QLT-014、AC-QLT-015、AC-QLT-016、AC-QLT-017、AC-QLT-018、AC-QLT-019、AC-QLT-020、AC-QLT-021、AC-EXP-007、AC-EXP-008、AC-RND-007、AC-RND-008、AC-E2E-023、AC-E2E-024、AC-E2E-025、AC-NFR-001）—— 它们的 PASS 只来自「测试跑过了」，没有被元验证证明「抓得住错」
 - **SPEC-NFR-001 —— 真实模型下的 P95 从未测过**。验证器已建成，但本轮只跑了降级模式（.env 里的 GEMINI_API_KEY 是占位符），模型往返延迟根本没被采样到
 - **SPEC-GOV-003 —— 质量门禁分数线从未在文档中给出**，判据无法存在（AMB-001 未裁决）
 - **AC-QLT-010 —— self-derived oracle**，只能防回归，不能证明正确
