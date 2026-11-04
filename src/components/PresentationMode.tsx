@@ -173,7 +173,10 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
 
       {/* Speaker Notes Overlay Drawer */}
       {showNotes && (
-        <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 w-full max-w-2xl bg-slate-900/95 backdrop-blur-lg border border-slate-700/80 rounded-2xl p-5 shadow-2xl text-white z-40 animate-in fade-in slide-in-from-bottom-4 duration-200">
+        <div
+          data-testid="presentation-notes"
+          className="absolute bottom-20 left-1/2 transform -translate-x-1/2 w-full max-w-2xl bg-slate-900/95 backdrop-blur-lg border border-slate-700/80 rounded-2xl p-5 shadow-2xl text-white z-40 animate-in fade-in slide-in-from-bottom-4 duration-200"
+        >
           <div className="flex items-center justify-between pb-2 mb-3 border-b border-slate-800">
             <div className="flex items-center gap-2 text-xs font-bold text-blue-400">
               <FileText className="w-4 h-4" />
@@ -181,6 +184,7 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
             </div>
             <button
               onClick={() => setShowNotes(false)}
+              data-testid="presentation-notes-close"
               className="text-slate-400 hover:text-white text-xs"
             >
               关闭 [N]
@@ -204,7 +208,10 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
 
       {/* Slide Thumbnails Jump Drawer */}
       {showSlideDrawer && (
-        <div className="absolute inset-x-0 bottom-0 max-h-72 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800 p-4 z-40 animate-in slide-in-from-bottom duration-200 flex flex-col">
+        <div
+          data-testid="presentation-drawer"
+          className="absolute inset-x-0 bottom-0 max-h-72 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800 p-4 z-40 animate-in slide-in-from-bottom duration-200 flex flex-col"
+        >
           <div className="flex items-center justify-between pb-2 mb-3 border-b border-slate-800 text-xs text-slate-400">
             <span className="font-bold text-white flex items-center gap-2">
               <Grid className="w-4 h-4 text-blue-400" />
@@ -212,6 +219,7 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
             </span>
             <button
               onClick={() => setShowSlideDrawer(false)}
+              data-testid="presentation-drawer-close"
               className="hover:text-white"
             >
               关闭 [G]
@@ -224,6 +232,8 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
               return (
                 <div
                   key={s.slideId}
+                  data-testid="presentation-drawer-thumb"
+                  data-slide-index={idx}
                   onClick={() => {
                     setCurrentIndex(idx);
                     setShowSlideDrawer(false);
@@ -254,6 +264,7 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
       {/* Floating Bottom Nav Control Bar */}
       <div className="absolute bottom-6 flex items-center gap-3 px-4 py-2 bg-slate-900/85 hover:bg-slate-900 backdrop-blur-md rounded-full border border-slate-700/80 shadow-2xl text-white transition-opacity duration-200 opacity-70 hover:opacity-100 z-30">
         <button
+          data-testid="presentation-prev"
           onClick={handlePrev}
           disabled={currentIndex === 0}
           className="p-1.5 rounded-full hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
@@ -270,6 +281,7 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
         </span>
 
         <button
+          data-testid="presentation-next"
           onClick={handleNext}
           disabled={currentIndex === total - 1}
           className="p-1.5 rounded-full hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
@@ -282,6 +294,7 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
 
         {/* Toggle Speaker Notes */}
         <button
+          data-testid="presentation-toggle-notes"
           onClick={() => setShowNotes(!showNotes)}
           className={`p-1.5 rounded-full transition-colors ${
             showNotes ? 'bg-blue-600 text-white' : 'hover:bg-slate-800 text-slate-300'
@@ -293,6 +306,7 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
 
         {/* Toggle Laser Pointer */}
         <button
+          data-testid="presentation-toggle-laser"
           onClick={() => setIsLaserPointerActive(!isLaserPointerActive)}
           className={`p-1.5 rounded-full transition-colors ${
             isLaserPointerActive ? 'bg-rose-600 text-white shadow-[0_0_10px_rgba(244,63,94,0.6)]' : 'hover:bg-slate-800 text-slate-300'
@@ -304,6 +318,7 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
 
         {/* Toggle Slide Drawer */}
         <button
+          data-testid="presentation-toggle-drawer"
           onClick={() => setShowSlideDrawer(!showSlideDrawer)}
           className={`p-1.5 rounded-full transition-colors ${
             showSlideDrawer ? 'bg-blue-600 text-white' : 'hover:bg-slate-800 text-slate-300'

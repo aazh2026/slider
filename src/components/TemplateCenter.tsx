@@ -150,6 +150,7 @@ export const TemplateCenter: React.FC<TemplateCenterProps> = ({
           {/* PPT Upload Extractor Trigger */}
           <div className="relative">
             <input
+              data-testid="template-upload"
               type="file"
               accept=".pptx,.pdf,.png,.jpg"
               onChange={handleSimulateExtract}
@@ -157,6 +158,7 @@ export const TemplateCenter: React.FC<TemplateCenterProps> = ({
             />
             <button
               disabled={isExtracting}
+              data-testid="tmpl-upload-trigger"
               className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 active:scale-98 text-white rounded-lg font-bold text-xs shadow-md shadow-indigo-900/30 transition-all cursor-pointer disabled:opacity-50"
             >
               <Upload className="w-3.5 h-3.5" />
@@ -177,6 +179,7 @@ export const TemplateCenter: React.FC<TemplateCenterProps> = ({
               </div>
               <button
                 onClick={() => void applyTemplateToProject(extractedTemplate)}
+                data-testid="tmpl-apply-extracted"
                 className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer"
               >
                 应用到当前项目
@@ -191,6 +194,7 @@ export const TemplateCenter: React.FC<TemplateCenterProps> = ({
         {/* Segmented Filter Control */}
         <div className="flex items-center gap-1.5 p-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg max-w-xl shadow-xs">
           <button
+            data-testid="template-filter-all"
             onClick={() => setSelectedFilter('all')}
             className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors whitespace-nowrap shrink-0 ${
               selectedFilter === 'all' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
@@ -199,6 +203,7 @@ export const TemplateCenter: React.FC<TemplateCenterProps> = ({
             全部 ({BUILT_IN_TEMPLATES.length})
           </button>
           <button
+            data-testid="template-filter-light"
             onClick={() => setSelectedFilter('light')}
             className={`flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md transition-colors whitespace-nowrap shrink-0 ${
               selectedFilter === 'light' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
@@ -208,6 +213,7 @@ export const TemplateCenter: React.FC<TemplateCenterProps> = ({
             <span>浅色背景主题</span>
           </button>
           <button
+            data-testid="template-filter-dark"
             onClick={() => setSelectedFilter('dark')}
             className={`flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md transition-colors whitespace-nowrap shrink-0 ${
               selectedFilter === 'dark' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
@@ -217,6 +223,7 @@ export const TemplateCenter: React.FC<TemplateCenterProps> = ({
             <span>深色背景主题</span>
           </button>
           <button
+            data-testid="template-filter-tech"
             onClick={() => setSelectedFilter('tech')}
             className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors whitespace-nowrap shrink-0 ${
               selectedFilter === 'tech' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
@@ -225,6 +232,7 @@ export const TemplateCenter: React.FC<TemplateCenterProps> = ({
             技术架构
           </button>
           <button
+            data-testid="template-filter-executive"
             onClick={() => setSelectedFilter('executive')}
             className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors whitespace-nowrap shrink-0 ${
               selectedFilter === 'executive' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
@@ -242,6 +250,9 @@ export const TemplateCenter: React.FC<TemplateCenterProps> = ({
             return (
               <div
                 key={template.templateId}
+                data-testid="template-card"
+                data-template-id={template.templateId}
+                data-selected={isSelected ? 'true' : 'false'}
                 className={`bg-white dark:bg-slate-900 rounded-xl border p-5 flex flex-col justify-between transition-all shadow-sm group ${
                   isSelected
                     ? 'border-blue-500 ring-2 ring-blue-500/30'
@@ -305,7 +316,10 @@ export const TemplateCenter: React.FC<TemplateCenterProps> = ({
                       <span>{template.name}</span>
                     </h3>
                     {isSelected && (
-                      <span className="text-blue-600 dark:text-blue-400 flex items-center gap-1 text-xs font-bold">
+                      <span
+                        data-testid="template-current"
+                        className="text-blue-600 dark:text-blue-400 flex items-center gap-1 text-xs font-bold"
+                      >
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         <span>当前使用</span>
                       </span>
@@ -319,6 +333,8 @@ export const TemplateCenter: React.FC<TemplateCenterProps> = ({
 
                 {/* Apply Button */}
                 <button
+                  data-testid="template-apply"
+                  data-template-id={template.templateId}
                   onClick={() => void applyTemplateToProject(template)}
                   className={`w-full py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                     isSelected

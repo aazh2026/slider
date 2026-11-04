@@ -834,6 +834,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
             {!isLeftRailCollapsed && (
               <button
                 onClick={() => setIsLayoutModalOpen(true)}
+                data-testid="wb-rail-add-slide"
                 className="p-1 px-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold flex items-center gap-0.5 transition-colors shadow-xs"
                 title="选择版式添加新页面"
               >
@@ -844,6 +845,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
 
             <button
               onClick={() => setIsLeftRailCollapsed(!isLeftRailCollapsed)}
+              data-testid="wb-rail-collapse"
               className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               title={isLeftRailCollapsed ? '展开页面缩略图' : '收起页面缩略图'}
             >
@@ -866,6 +868,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                     setActiveSlideIndex(index);
                     setSelectedElementId(null);
                   }}
+                  data-testid={`wb-rail-page-${index}`}
                   className={`w-full py-2 flex flex-col items-center justify-center rounded-lg text-xs font-mono font-bold transition-all ${
                     isActive
                       ? 'bg-blue-600 text-white shadow-sm'
@@ -924,6 +927,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                       e.stopPropagation();
                       handleMoveSlideUp(index);
                     }}
+                    data-testid={`wb-slide-move-up-${index}`}
                     disabled={index === 0}
                     className="p-1 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white disabled:opacity-20"
                     title="上移页面"
@@ -935,6 +939,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                       e.stopPropagation();
                       handleMoveSlideDown(index);
                     }}
+                    data-testid={`wb-slide-move-down-${index}`}
                     disabled={index === project.slides.length - 1}
                     className="p-1 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white disabled:opacity-20"
                     title="下移页面"
@@ -946,6 +951,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                       e.stopPropagation();
                       handleDuplicateSlide(index);
                     }}
+                    data-testid={`wb-slide-duplicate-${index}`}
                     className="p-1 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
                     title="复制页面"
                   >
@@ -956,6 +962,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                       e.stopPropagation();
                       handleDeleteSlide(index);
                     }}
+                    data-testid={`wb-slide-delete-${index}`}
                     disabled={project.slides.length <= 1}
                     className="p-1 text-slate-500 hover:text-rose-500 dark:text-slate-400 dark:hover:text-rose-400 disabled:opacity-20"
                     title="删除页面"
@@ -973,6 +980,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
           <div className="p-2 border-t border-slate-200 dark:border-slate-800 flex justify-center">
             <button
               onClick={() => setIsLayoutModalOpen(true)}
+              data-testid="wb-rail-add-slide-collapsed"
               className="p-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white"
               title="添加新页面"
             >
@@ -1006,6 +1014,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
               </button>
               <button
                 onClick={handleRedo}
+                data-testid="wb-redo"
                 disabled={redoStack.length === 0}
                 className="p-1 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-25 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 title="重做 (Ctrl+Y)"
@@ -1019,6 +1028,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
           <div className="relative shrink-0" ref={insertMenuRef}>
             <button
               onClick={() => setIsInsertMenuOpen(!isInsertMenuOpen)}
+              data-testid="wb-insert-menu"
               className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors"
               title="在幻灯片中插入新元素"
             >
@@ -1032,6 +1042,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
               <div className="absolute left-1/2 transform -translate-x-1/2 top-full mt-1.5 w-48 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl p-1.5 z-50 space-y-0.5">
                 <button
                   onClick={handleAddTextElement}
+                  data-testid="wb-insert-text"
                   className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left"
                 >
                   <Type className="w-3.5 h-3.5 text-blue-500" />
@@ -1042,6 +1053,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                 </button>
                 <button
                   onClick={handleAddCardElement}
+                  data-testid="wb-insert-card"
                   className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left"
                 >
                   <LayoutGrid className="w-3.5 h-3.5 text-indigo-500" />
@@ -1052,6 +1064,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                 </button>
                 <button
                   onClick={handleAddMetricElement}
+                  data-testid="wb-insert-metric"
                   className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left"
                 >
                   <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
@@ -1062,6 +1075,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                 </button>
                 <button
                   onClick={handleAddBadgeElement}
+                  data-testid="wb-insert-badge"
                   className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left"
                 >
                   <Tag className="w-3.5 h-3.5 text-amber-500" />
@@ -1072,6 +1086,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                 </button>
                 <button
                   onClick={handleAddDividerElement}
+                  data-testid="wb-insert-divider"
                   className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left"
                 >
                   <Minus className="w-3.5 h-3.5 text-purple-500" />
@@ -1089,6 +1104,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
             {/* Quick PPT Theme Switcher */}
             <button
               onClick={handleQuickToggleSlideTheme}
+              data-testid="wb-toggle-slide-theme"
               className="p-1.5 text-xs rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
               title={project.template.theme.isDark ? '切换为浅色PPT底色' : '切换为深色PPT底色'}
             >
@@ -1102,6 +1118,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
             {/* Grid Toggle */}
             <button
               onClick={() => setShowGrid(!showGrid)}
+              data-testid="wb-toggle-grid"
               className={`p-1.5 text-xs rounded border transition-colors ${
                 showGrid
                   ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/40'
@@ -1115,6 +1132,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
             {/* Fit Zoom Button */}
             <button
               onClick={fitZoomToContainer}
+              data-testid="wb-zoom-fit"
               className="hidden sm:flex items-center gap-1 px-1.5 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded transition-colors"
               title="自适应铺满设计区域"
             >
@@ -1126,6 +1144,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
             <div className="flex items-center bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded p-0.5 text-xs text-slate-700 dark:text-slate-300">
               <button
                 onClick={() => setZoomLevel((z) => Math.max(0.2, z - 0.08))}
+                data-testid="wb-zoom-out"
                 className="p-1 hover:text-slate-900 dark:hover:text-white"
                 title="缩小"
               >
@@ -1136,6 +1155,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
               </span>
               <button
                 onClick={() => setZoomLevel((z) => Math.min(1.5, z + 0.08))}
+                data-testid="wb-zoom-in"
                 className="p-1 hover:text-slate-900 dark:hover:text-white"
                 title="放大"
               >
@@ -1146,6 +1166,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
             {/* Right Inspector Collapse Toggle */}
             <button
               onClick={() => setIsRightInspectorCollapsed(!isRightInspectorCollapsed)}
+              data-testid="wb-inspector-collapse"
               className={`p-1.5 rounded border transition-colors ${
                 isRightInspectorCollapsed
                   ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30'
@@ -1308,6 +1329,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
               </span>
               <button
                 onClick={() => setShowSpeakerNotesDrawer(false)}
+                data-testid="wb-notes-close"
                 className="text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white"
               >
                 收起
@@ -1324,6 +1346,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                   onChange={(e) => {
                     updateCurrentSlide({ ...currentSlide, keyMessage: e.target.value });
                   }}
+                  data-testid="wb-notes-key-message"
                   placeholder="一句话核心结论..."
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-2.5 py-1 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500"
                 />
@@ -1338,6 +1361,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                   onChange={(e) => {
                     updateCurrentSlide({ ...currentSlide, speakerNotes: e.target.value });
                   }}
+                  data-testid="wb-notes-speaker-notes"
                   placeholder="台词提醒、转场引导语与数据补充..."
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-2.5 py-1 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 resize-none"
                 />
@@ -1356,6 +1380,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
             <span>·</span>
             <button
               onClick={() => setShowSpeakerNotesDrawer(!showSpeakerNotesDrawer)}
+              data-testid="wb-notes-toggle"
               className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-0.5 font-sans"
             >
               <FileText className="w-2.5 h-2.5" />
@@ -1374,6 +1399,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
             <span>·</span>
             <button
               onClick={onStartPresent}
+              data-testid="wb-start-present"
               className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-0.5 font-sans"
               title="放映演示 (F5)"
             >
@@ -1397,6 +1423,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
           <div className="py-2 flex flex-col items-center gap-2 text-slate-500">
             <button
               onClick={() => setIsRightInspectorCollapsed(false)}
+              data-testid="wb-inspector-expand-collapsed"
               className="p-1.5 text-slate-400 hover:text-slate-800 dark:hover:text-white rounded hover:bg-slate-100 dark:hover:bg-slate-800"
               title="展开属性检查器"
             >
@@ -1424,6 +1451,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
               className={`p-2 rounded-lg transition-colors ${
                 activeTab === 'props' ? 'text-blue-600 bg-blue-50 dark:bg-blue-500/10' : 'hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
+              data-testid="wb-tab-props-collapsed"
               title="元素坐标与属性"
             >
               <Sliders className="w-4 h-4" />
@@ -1436,6 +1464,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
               className={`p-2 rounded-lg transition-colors ${
                 activeTab === 'theme' ? 'text-blue-600 bg-blue-50 dark:bg-blue-500/10' : 'hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
+              data-testid="wb-tab-theme-collapsed"
               title="模板主题"
             >
               <Palette className="w-4 h-4" />
@@ -1448,6 +1477,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
               className={`p-2 rounded-lg transition-colors ${
                 activeTab === 'quality' ? 'text-blue-600 bg-blue-50 dark:bg-blue-500/10' : 'hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
+              data-testid="wb-tab-quality-collapsed"
               title="质量评测"
             >
               <ShieldCheck className="w-4 h-4" />
@@ -1474,6 +1504,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                 className={`flex items-center justify-center gap-1 border-b-2 transition-colors ${
                   activeTab === 'props' ? 'text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-500 bg-slate-50 dark:bg-slate-800/40' : 'border-transparent hover:text-slate-900 dark:hover:text-white'
                 }`}
+                data-testid="wb-tab-props"
                 title="元素坐标与样式"
               >
                 <Sliders className="w-3.5 h-3.5" />
@@ -1485,6 +1516,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                 className={`flex items-center justify-center gap-1 border-b-2 transition-colors ${
                   activeTab === 'theme' ? 'text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-500 bg-slate-50 dark:bg-slate-800/40' : 'border-transparent hover:text-slate-900 dark:hover:text-white'
                 }`}
+                data-testid="wb-tab-theme"
                 title="模板风格与母版"
               >
                 <Palette className="w-3.5 h-3.5" />
@@ -1496,6 +1528,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                 className={`flex items-center justify-center gap-1 border-b-2 transition-colors ${
                   activeTab === 'quality' ? 'text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-500 bg-slate-50 dark:bg-slate-800/40' : 'border-transparent hover:text-slate-900 dark:hover:text-white'
                 }`}
+                data-testid="wb-tab-quality"
                 title="质量体检与合规评分"
               >
                 <ShieldCheck className="w-3.5 h-3.5" />
@@ -1521,6 +1554,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                       ) : (
                         <button
                           onClick={() => setSelectedElementId(null)}
+                          data-testid="wb-ai-whole-page"
                           className="text-[10px] text-slate-500 hover:text-blue-500"
                         >
                           修改整页
@@ -1603,12 +1637,14 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                     <div className="grid grid-cols-1 gap-1 text-xs">
                       <button
                         onClick={() => handleRunAiEdit('将页面核心要点精简 30%，保留核心关键词与数据')}
+                        data-testid="wb-ai-preset-shorten"
                         className="text-left px-2 py-1.5 rounded bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors text-[11px]"
                       >
                         ⚡ 精简文字 30% (增加留白)
                       </button>
                       <button
                         onClick={() => handleRunAiEdit('增加更适合管理层汇报的论据和商业成效表达')}
+                        data-testid="wb-ai-preset-executive"
                         className="text-left px-2 py-1.5 rounded bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors text-[11px]"
                       >
                         👔 强化管理层汇报语气
@@ -1632,6 +1668,8 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                         {currentVersions.map((v) => (
                           <div
                             key={v.versionId}
+                            data-testid="version-item"
+                            data-version-id={v.versionId}
                             className="flex items-center justify-between p-1.5 rounded bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs"
                           >
                             <div>
@@ -1644,6 +1682,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                             </div>
                             <button
                               onClick={() => handleRollbackVersion(v)}
+                              data-testid="version-rollback"
                               className="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-blue-600 dark:text-blue-400 text-[10px] flex items-center gap-0.5"
                             >
                               <RotateCcw className="w-2.5 h-2.5" />
@@ -2171,6 +2210,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
               </div>
               <button
                 onClick={() => setIsLayoutModalOpen(false)}
+                data-testid="wb-layout-modal-close"
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm font-bold"
               >
                 ✕
@@ -2191,6 +2231,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
                 <button
                   key={item.type}
                   onClick={() => handleAddSlideWithLayout(item.type)}
+                  data-testid={`wb-layout-option-${item.type}`}
                   className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-blue-500 dark:hover:border-blue-500 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-blue-50/50 dark:hover:bg-blue-500/10 text-left transition-all group flex flex-col justify-between"
                 >
                   <div>
