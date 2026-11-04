@@ -10,14 +10,21 @@ import { BUILT_IN_TEMPLATES } from '@ppt/core';
 
 interface TemplateCenterProps {
   currentTemplate: TemplateIR;
-  onSelectTemplate: (t: TemplateIR) => void;
+  /**
+   * 应用模板 —— **服务端权威**。
+   *
+   * 返回值是"服务端有没有接受"：失败时父组件**不会**改本地状态，
+   * 这里也就不能继续往下改幻灯片样式 ——
+   * 否则界面会显示"用上了"，而服务端还挂着旧模板。
+   */
+  onApplyTemplate: (t: TemplateIR) => Promise<boolean>;
   project: PresentationProject;
   onUpdateProject: (p: PresentationProject) => void;
 }
 
 export const TemplateCenter: React.FC<TemplateCenterProps> = ({
   currentTemplate,
-  onSelectTemplate,
+  onApplyTemplate,
   project,
   onUpdateProject,
 }) => {
@@ -54,8 +61,11 @@ export const TemplateCenter: React.FC<TemplateCenterProps> = ({
     }
   };
 
-  const applyTemplateToProject = (t: TemplateIR) => {
-    onSelectTemplate(t);
+  const applyTemplateToProject = async (t: TemplateIR) => {
+    // 先落到服务端 —— 服务端不认（模板不存在 / 不属于当前用户）就到此为止。
+    // 本地状态一个字都不改：界面不能显示一个服务端根本没存下来的模板。
+    const applied = await onApplyTemplate(t);
+    if (!applied) return;
 
     // Deep remap all slide elements for light/dark palette consistency
     const updatedSlides = project.slides.map((s) => {
@@ -166,7 +176,7 @@ export const TemplateCenter: React.FC<TemplateCenterProps> = ({
                 </span>
               </div>
               <button
-                onClick={() => applyTemplateToProject(extractedTemplate)}
+                onClick={() => void applyTemplateToProject(extractedTemplate)}
                 className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer"
               >
                 应用到当前项目
@@ -309,7 +319,7 @@ export const TemplateCenter: React.FC<TemplateCenterProps> = ({
 
                 {/* Apply Button */}
                 <button
-                  onClick={() => applyTemplateToProject(template)}
+                  onClick={() => void applyTemplateToProject(template)}
                   className={`w-full py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                     isSelected
                       ? 'bg-blue-50 dark:bg-blue-600/20 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-500/40 cursor-default'

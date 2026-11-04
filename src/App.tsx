@@ -135,6 +135,15 @@ export default function App() {
   const [syncState, setSyncState] = useState<SyncState>('idle');
   const [syncNotice, setSyncNotice] = useState<string | null>(null);
 
+  /**
+   * 模板相关的错误 —— **单独存一份**。
+   *
+   * 防抖同步成功时会 setSyncNotice(null)（"同步完了，没什么要说的"），
+   * 那会把任何提示都抹掉 —— 包括用户正需要的失败原因。
+   * 模板失败与幻灯片同步是两件事，提示不该互相清场。
+   */
+  const [templateNotice, setTemplateNotice] = useState<string | null>(null);
+
   /** 上一次已同步到服务端的项目快照 —— 用来算出"哪几页改了" */
   const syncedRef = useRef<Record<string, PresentationProject>>({});
   const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -436,13 +445,52 @@ export default function App() {
   /* 主题切换（深色 / 浅色）                                            */
   /* ---------------------------------------------------------------- */
 
-  const handleToggleSlideTheme = useCallback(() => {
+  /**
+   * 应用模板 —— **服务端权威**。
+   *
+   * 前端只发**意图**（项目 id + 模板 id），模板长什么样由服务端查库决定
+   * （POST /api/templates/:id/apply）。
+   *
+   * 关键：**失败时本地状态一个字都不改**。
+   * 以前这里是"先乐观换成本地模板，再发请求" —— 请求失败时界面已经显示
+   * "用上了"，服务端却还是旧模板，刷新一下就露馅。那是假成功。
+   *
+   * 只把**模板**合并回本地（不动 slides / requirement）——
+   * 服务端对"用哪份模板"是权威的，其余字段本地可能还有未保存的编辑。
+   */
+  const handleApplyTemplate = useCallback(
+    async (t: TemplateIR): Promise<boolean> => {
+      if (!currentProject) return false;
+      try {
+        const updated = await ProjectStorage.applyTemplate(currentProject.id, t.templateId);
+        applyProjects((prev) =>
+          prev.map((p) =>
+            p.id === updated.id
+              ? { ...p, template: updated.template, updatedAt: updated.updatedAt }
+              : p
+          )
+        );
+        setTemplateNotice(null);
+        return true;
+      } catch (err) {
+        setTemplateNotice(`模板更新失败：${describeError(err)}`);
+        return false;
+      }
+    },
+    [currentProject, applyProjects]
+  );
+
+  const handleToggleSlideTheme = useCallback(async () => {
     if (!currentProject) return;
 
     const isCurrentlyDark = currentProject.template.theme.isDark;
     const targetTemplate = isCurrentlyDark
       ? BUILT_IN_TEMPLATES.find((t) => !t.theme.isDark) ?? BUILT_IN_TEMPLATES[0]!
       : BUILT_IN_TEMPLATES.find((t) => t.theme.isDark) ?? BUILT_IN_TEMPLATES[4]!;
+
+    // 模板先落到服务端 —— 失败就到此为止，不改本地状态
+    const applied = await handleApplyTemplate(targetTemplate);
+    if (!applied) return;
 
     const updatedSlides = currentProject.slides.map((s) => {
       const newElements = s.elements.map((el) => {
@@ -506,12 +554,9 @@ export default function App() {
     };
     updatedProject.qualityReport = QualityEngine.evaluatePresentation(updatedProject);
 
-    // 模板本身要落到服务端；幻灯片的样式改动走防抖同步
-    void ProjectStorage.updateProject(currentProject.id, { template: targetTemplate }).catch(
-      (err) => setSyncNotice(`模板更新失败：${describeError(err)}`)
-    );
+    // 模板已经在服务端落库了（handleApplyTemplate）；幻灯片的样式改动走防抖同步
     handleUpdateCurrentProject(updatedProject);
-  }, [currentProject, handleUpdateCurrentProject]);
+  }, [currentProject, handleApplyTemplate, handleUpdateCurrentProject]);
 
   /* ---------------------------------------------------------------- */
   /* 大纲生成 / 编译（服务端权威）                                       */
@@ -720,12 +765,13 @@ export default function App() {
   return (
     <div className="flex flex-row h-screen w-screen overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans transition-colors duration-150">
       {/* 同步状态条 */}
-      {(syncNotice || syncState === 'syncing') && (
+      {(syncNotice || templateNotice || syncState === 'syncing') && (
         <div
           data-testid="sync-notice"
           className="absolute top-3 left-1/2 -translate-x-1/2 z-50 max-w-xl px-4 py-2 rounded-xl text-xs font-semibold shadow-lg backdrop-blur border bg-white/90 dark:bg-slate-900/90 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200"
         >
-          {syncState === 'syncing' ? '正在同步到服务端…' : syncNotice}
+          {/* 模板失败优先于同步提示 —— 它是用户此刻唯一能采取行动的信息 */}
+          {syncState === 'syncing' ? '正在同步到服务端…' : (templateNotice ?? syncNotice)}
         </div>
       )}
 
@@ -768,9 +814,11 @@ export default function App() {
           <CreationCenter
             requirement={currentProject.requirement}
             selectedTemplate={currentProject.template}
-            onSelectTemplate={(t: TemplateIR) =>
-              handleUpdateCurrentProject({ ...currentProject, template: t })
-            }
+            onSelectTemplate={(t: TemplateIR) => {
+              // 创作中心选模板也要**落库** —— 只改本地 state 的话，
+              // 这个选择活不过一次刷新。
+              void handleApplyTemplate(t);
+            }}
             onGenerateOutline={(req) => handleGenerateOutline(req)}
             isGenerating={isGenerating}
           />
@@ -798,7 +846,7 @@ export default function App() {
         {currentTab === 'templates' && (
           <TemplateCenter
             currentTemplate={currentProject.template}
-            onSelectTemplate={(t) => handleUpdateCurrentProject({ ...currentProject, template: t })}
+            onApplyTemplate={handleApplyTemplate}
             project={currentProject}
             onUpdateProject={handleUpdateCurrentProject}
           />

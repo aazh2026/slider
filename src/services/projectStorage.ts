@@ -297,6 +297,25 @@ export const ProjectStorage = {
     await api.del(`/api/projects/${projectId}`);
   },
 
+  /**
+   * 应用模板 —— **服务端权威**。
+   *
+   * 前端只发**意图**（项目 id + 模板 id），不发样式：
+   * 模板长什么样由服务端查库决定，而不是客户端塞一份 TemplateIR 上去。
+   * （docs/backend-design.md「POST /api/templates/:id/apply 应用模板并重映射元素样式
+   *   （服务端权威）」；docs/backend-features.md TPL-03「服务端权威执行」）
+   *
+   * 走 PATCH /api/projects/:id 也能存下模板，但那是"客户端说自己要哪份模板"——
+   * 服务端不校验这份模板是否真实存在、是否属于这个用户。
+   */
+  async applyTemplate(projectId: string, templateId: string): Promise<PresentationProject> {
+    const data = await api.post<{ project: ServerProjectRow }>(
+      `/api/templates/${templateId}/apply`,
+      { projectId }
+    );
+    return toPresentationProject(data.project);
+  },
+
   /** 复制项目 */
   async duplicateProject(projectId: string): Promise<PresentationProject> {
     const data = await api.post<{ project: ServerProjectRow }>(
