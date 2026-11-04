@@ -470,7 +470,9 @@ async function main(): Promise<void> {
   step(`启动后端 API（:${opts.apiPort}）…`);
   api.start();
 
-  const apiUp = await waitForHttp(`${apiUrl}/healthz`, 30_000, (res) => res.ok);
+  // 探 `/readyz`（就绪，会 ping DB）而不是 `/healthz`（存活，不碰 DB）——
+  // 数据库还没就绪时后端进程已经在了，探存活会给出"起来了"的假象。
+  const apiUp = await waitForHttp(`${apiUrl}/readyz`, 30_000, (res) => res.ok);
   if (!apiUp) {
     fail('后端 30 秒内没有就绪。');
     api.printTail();

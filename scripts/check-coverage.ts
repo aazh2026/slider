@@ -182,6 +182,15 @@ export async function main(opts: Options = {}): Promise<number> {
     if (exitCode !== 0) {
       console.error(stdout);
       console.error(stderr);
+      // 把"哪些用例没过"单独摘出来 —— 门禁自己的输出就是失败原因的第一手材料，
+      // 全量输出里翻一个 (fail) 行很费劲，而"哪个用例没过"恰恰是根因的方向。
+      const failed = [...stdout.split('\n'), ...stderr.split('\n')]
+        .map((l) => l.trim())
+        .filter((l) => l.startsWith('(fail)'));
+      if (failed.length > 0) {
+        console.error(`[coverage] 内层测试跑挂了（${failed.length} 个用例）：`);
+        for (const f of failed) console.error(`[coverage]   ${f}`);
+      }
       console.error('[coverage] ✗ 测试未全部通过，覆盖率门禁不予判定（退出码非 0）');
       await rm(coverageDir, { recursive: true, force: true });
       return 1;
