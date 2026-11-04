@@ -105,12 +105,93 @@ const ApplyPatchesSchema = z.object({
   description: z.string().max(500).optional(),
 });
 
+/**
+ * 导入端认的那份 bundle 形状
+ * ---------------------------------------------------------------------------
+ * `packages/core/src/engine/exportEngine.ts` 里写明了这份约定：
+ *
+ *   > bundle 的形状（`GET /api/projects/:id/export` 的载荷）
+ *   > **就是导入端认的形状**：导出去能再导回来，中间不丢东西。
+ *
+ * 原来这里写的是 `slides: z.array(z.unknown())` —— **一个字段都不校验**。
+ * 后果（实测，见 `apps/api/tests/integration/import-bundle.test.ts`）：
+ *
+ *   · `orderIndex` **重复** → 照样落库，但 `listSlides` 是按 orderIndex 排序的，
+ *     同键的行顺序由数据库决定 —— 导出的**页序丢了**，
+ *     「导出去能再导回来」当场失效，而且没有任何报错
+ *   · `orderIndex` 为 0 / 负数 → 违反领域内核的契约
+ *   · 字段缺失 → NOT NULL / 唯一约束在数据库里炸 → 客户端拿到 **500**，
+ *     而入参问题该给的是 **400**
+ *
+ * 页序基线取 **1-based**：五份设计文档从头到尾没规定页码从几开始，
+ * 能定住它的是领域内核的契约 —— `packages/core/src/contracts/outline.ts`：
+ * `order: z.number().int().min(1)`。
+ * 而 `slides.orderIndex` 与大纲的 `order` 是**同步**的
+ * （docs/backend-features.md PRJ-10 / SLD-08：「重排后同步更新 `order` 字段与 `slides.orderIndex`」），
+ * 所以两者同基线；服务端别处写的也是 `idx + 1`。
+ */
+const ImportSlideSchema = z.object({
+  slideId: z.string().min(1),
+  orderIndex: z.number().int().min(1),
+  /**
+   * IR 整体 —— 必须是个对象。
+   *
+   * 用 `z.record` 而不是某个具体形状的 object schema，两个原因：
+   *   · Zod 的 object 默认**剥掉**未声明的字段 —— 用它会把 IR 削成空壳（丢数据）；
+   *   · 仓库里**没有** IR 的运行时 schema（只有 outline / content / requirement），
+   *     凭空写一个就是**编造契约**，所以不写。
+   */
+  ir: z.record(z.string(), z.unknown()),
+});
+
+/**
+ * bundle 里的页序必须唯一。
+ *
+ * 重复的 orderIndex 不会报错，只会让排序的键相同 —— 页序从此由数据库决定，
+ * 是个**静默**的数据损坏，比直接拒绝难查得多。
+ */
+const ImportSlidesSchema = z
+  .array(ImportSlideSchema)
+  .superRefine((slides, ctx) => {
+    const byOrder = new Map<number, number>();
+    const bySlideId = new Map<string, number>();
+    slides.forEach((s, i) => {
+      const prevOrder = byOrder.get(s.orderIndex);
+      if (prevOrder !== undefined) {
+        ctx.addIssue({
+          code: 'custom',
+          path: [i, 'orderIndex'],
+          message: `orderIndex 重复：${s.orderIndex}（第 ${prevOrder + 1} 页与第 ${i + 1} 页）`,
+        });
+      } else {
+        byOrder.set(s.orderIndex, i);
+      }
+
+      const prevSlide = bySlideId.get(s.slideId);
+      if (prevSlide !== undefined) {
+        ctx.addIssue({
+          code: 'custom',
+          path: [i, 'slideId'],
+          message: `slideId 重复：${s.slideId}（第 ${prevSlide + 1} 页与第 ${i + 1} 页）`,
+        });
+      } else {
+        bySlideId.set(s.slideId, i);
+      }
+    });
+  });
+
 const ImportProjectSchema = z.object({
   name: z.string().min(1).max(200),
   requirement: PresentationRequirementSchema,
   template: z.unknown().optional(),
   outline: z.array(z.unknown()).optional(),
-  slides: z.array(z.unknown()).optional(),
+  /**
+   * `slides` **必填** —— docs/backend-features.md PRJ-07：
+   * 「校验 `slides`/`name` 字段合法性；非法文件返回明确错误而非崩溃」；
+   * docs/test-cases.md TC-CONTRACT-034~036 也把「400 缺 slides 字段」列为用例。
+   * 原来这里是 `.optional()`，于是缺 slides 的文件会被**静默当成空项目**导进去。
+   */
+  slides: ImportSlidesSchema,
 });
 
 /* -------------------------------------------------------------------------- */
