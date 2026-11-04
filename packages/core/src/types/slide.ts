@@ -204,6 +204,14 @@ export interface QualityIssue {
   elementId?: string;
   message: string;
   fixAction?: string;
+  /**
+   * 这一条能不能被「一键修复」自动处理
+   * ---------------------------------------------------------------------------
+   * `fixAction` 是**给人看的建议**，不是「点一下就能修」的承诺。
+   * 只有真正实现了自动修复的规则才置 true —— 前端据此禁用按钮，
+   * 免得用户点「修复」发现什么都没变。
+   */
+  fixable?: boolean;
 }
 
 export interface QualityReport {

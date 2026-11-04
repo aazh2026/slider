@@ -27,7 +27,7 @@
  * 用 ref 读最新值 + 同步失败后重新排期，才能把这条竞态关掉。
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   PresentationProject,
   TemplateIR,
@@ -240,6 +240,26 @@ export default function App() {
 
   const currentProject =
     projects.find((p) => p.id === activeProjectId) ?? projects[0] ?? null;
+
+  /**
+   * 侧边栏的质量分徽章 —— **要么是真算出来的，要么不显示**
+   * ---------------------------------------------------------------------------
+   * 之前没有报告时侧边栏显示一个写死的 92 分（`?? 92`）。那不是分数，是
+   * 安慰剂 —— 用户会以为这份文稿已经体检过了。而服务端的 `quality_report`
+   * 列在正常流程里恒为 NULL（前端从不调 `/api/quality/evaluate`），
+   * 所以「没有报告」是常态而非异常。
+   *
+   * 这里本地算一份：与服务端跑的是同一份 `@ppt/core`，算出来的分数与服务端
+   * 权威评分逐项相等（`e2e/quality.e2e.ts` 有对账断言）。
+   */
+  const currentQualityReport = useMemo(
+    () =>
+      currentProject
+        ? (currentProject.qualityReport ??
+          QualityEngine.evaluatePresentation(currentProject))
+        : undefined,
+    [currentProject]
+  );
 
   /**
    * 传给导出与放映的页码 —— **必须夹紧**。
@@ -782,7 +802,7 @@ export default function App() {
         onRenameProject={(name) => void handleRenameProject(name)}
         onOpenExport={() => setIsExportModalOpen(true)}
         onStartPresent={() => setIsPresenting(true)}
-        qualityReport={currentProject.qualityReport}
+        qualityReport={currentQualityReport}
         hasOutline={currentProject.outline.length > 0}
         hasSlides={currentProject.slides.length > 0}
         isUiDark={isUiDark}

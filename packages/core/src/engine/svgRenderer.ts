@@ -115,7 +115,12 @@ function renderBlock(block: TextBlock, box: TextBox, lines: string[]): string {
     `class="${classes}"`,
   ].join(' ');
 
-  const single = lines.length === 1 && !/[\r\n]/.test(block.text);
+  // `lines` 是**已经按盒高截断过**的：原文折成 N 行、盒高只够 1 行时，
+  // 这里拿到的是被截断后的那一行（末尾带省略号）。
+  // 若此时还按「只有一行」把 `block.text` 整段塞进单个 <text>，就等于绕过了
+  // 截断 —— 长标题会整段横向溢出页面，而且不带省略号。
+  // 所以判断「这是不是一整段原文」必须看**内容是否等于原文**，不能只看行数。
+  const single = lines.length === 1 && lines[0] === block.text;
   let inner = '';
   lines.forEach((line, i) => {
     if (i === 0) {

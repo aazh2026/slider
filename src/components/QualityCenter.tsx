@@ -64,7 +64,7 @@ export const QualityCenter: React.FC<QualityCenterProps> = ({
         </div>
 
         {/* 4 Dimension Score Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {/* Overall Q */}
           <div className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center space-y-1 shadow-xs">
             <div className={`text-4xl font-extrabold font-mono ${getScoreColor(report.overallScore)}`}>
@@ -101,6 +101,18 @@ export const QualityCenter: React.FC<QualityCenterProps> = ({
             </div>
             <div className="text-xs font-bold text-slate-900 dark:text-white">第三层：内容与论据 (Qc)</div>
             <div className="text-[11px] text-slate-500">论点去重 / 核心结论概括度</div>
+          </div>
+
+          {/* Qg Consistency —— 参与 0.2 权重，之前只有描述没有卡片 */}
+          <div className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center space-y-1 shadow-xs">
+            <div
+              data-testid="quality-consistency-score"
+              className={`text-4xl font-extrabold font-mono ${getScoreColor(report.consistencyScore)}`}
+            >
+              {report.consistencyScore}
+            </div>
+            <div className="text-xs font-bold text-slate-900 dark:text-white">第四层：全局一致性 (Qg)</div>
+            <div className="text-[11px] text-slate-500">页数是否充足 / 封面引导 / 叙事完整度</div>
           </div>
         </div>
 
@@ -146,7 +158,7 @@ export const QualityCenter: React.FC<QualityCenterProps> = ({
                       </div>
                       {issue.fixAction && (
                         <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                          系统修复建议：<span className="text-blue-600 dark:text-blue-400">{issue.fixAction}</span>
+                          修复建议：<span className="text-blue-600 dark:text-blue-400">{issue.fixAction}</span>
                         </p>
                       )}
                     </div>
@@ -154,7 +166,17 @@ export const QualityCenter: React.FC<QualityCenterProps> = ({
 
                   <button
                     onClick={handleAutoFix}
-                    className="px-3 py-1 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold rounded transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                    disabled={issue.fixable !== true}
+                    title={
+                      issue.fixable === true
+                        ? '自动应用合规修复'
+                        : '这一条暂无自动修复能力，请按建议手动调整'
+                    }
+                    className={
+                      issue.fixable === true
+                        ? 'px-3 py-1 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold rounded transition-colors whitespace-nowrap shrink-0 cursor-pointer'
+                        : 'px-3 py-1 bg-slate-100 dark:bg-slate-900 text-slate-400 dark:text-slate-600 text-xs font-semibold rounded whitespace-nowrap shrink-0 cursor-not-allowed'
+                    }
                   >
                     修复
                   </button>

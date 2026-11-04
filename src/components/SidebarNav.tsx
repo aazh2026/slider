@@ -94,7 +94,16 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
     }
   };
 
-  const score = qualityReport?.overallScore ?? 92;
+  /**
+   * 侧边栏徽章上的分数 —— **没有报告就没有分数**
+   * ---------------------------------------------------------------------------
+   * 之前这里是 `?? 92`：没有报告时显示一个写死的 92 分。那不是体检结果，
+   * 是安慰剂 —— 用户会以为这份文稿已经体检过了。而服务端的 `quality_report`
+   * 列在正常流程里恒为 NULL，所以「没有报告」本就是常态。
+   * 现在没有报告就不显示徽章（App.tsx 的 currentQualityReport 保证有当前
+   * 项目时那份报告总是真算出来的）。
+   */
+  const score = qualityReport?.overallScore;
 
   const navItems = [
     {
@@ -143,8 +152,8 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       enLabel: 'Quality',
       icon: ShieldCheck,
       disabled: !hasSlides,
-      badge: hasSlides ? `${score}分` : undefined,
-      badgeColor: score >= 85 ? 'emerald' : 'amber',
+      badge: hasSlides && score !== undefined ? `${score}分` : undefined,
+      badgeColor: (score ?? 0) >= 85 ? 'emerald' : 'amber',
     },
   ];
 
