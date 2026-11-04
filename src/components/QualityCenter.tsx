@@ -55,6 +55,7 @@ export const QualityCenter: React.FC<QualityCenterProps> = ({
           </div>
 
           <button
+            data-testid="quality-autofix"
             onClick={handleAutoFix}
             className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 active:scale-98 text-white rounded-lg font-bold text-xs shadow-md shadow-indigo-900/30 transition-all cursor-pointer"
           >
@@ -67,7 +68,10 @@ export const QualityCenter: React.FC<QualityCenterProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {/* Overall Q */}
           <div className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center space-y-1 shadow-xs">
-            <div className={`text-4xl font-extrabold font-mono ${getScoreColor(report.overallScore)}`}>
+            <div
+              data-testid="quality-overall-score"
+              className={`text-4xl font-extrabold font-mono ${getScoreColor(report.overallScore)}`}
+            >
               {report.overallScore}
             </div>
             <div className="text-xs font-bold text-slate-900 dark:text-white">综合质量指数 (Q)</div>
@@ -78,7 +82,10 @@ export const QualityCenter: React.FC<QualityCenterProps> = ({
 
           {/* Qs Structure */}
           <div className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center space-y-1 shadow-xs">
-            <div className={`text-4xl font-extrabold font-mono ${getScoreColor(report.structureScore)}`}>
+            <div
+              data-testid="quality-structure-score"
+              className={`text-4xl font-extrabold font-mono ${getScoreColor(report.structureScore)}`}
+            >
               {report.structureScore}
             </div>
             <div className="text-xs font-bold text-slate-900 dark:text-white">第一层：结构合法性 (Qs)</div>
@@ -87,7 +94,10 @@ export const QualityCenter: React.FC<QualityCenterProps> = ({
 
           {/* Qv Visual */}
           <div className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center space-y-1 shadow-xs">
-            <div className={`text-4xl font-extrabold font-mono ${getScoreColor(report.visualScore)}`}>
+            <div
+              data-testid="quality-visual-score"
+              className={`text-4xl font-extrabold font-mono ${getScoreColor(report.visualScore)}`}
+            >
               {report.visualScore}
             </div>
             <div className="text-xs font-bold text-slate-900 dark:text-white">第二层：视觉与几何 (Qv)</div>
@@ -96,7 +106,10 @@ export const QualityCenter: React.FC<QualityCenterProps> = ({
 
           {/* Qc Content */}
           <div className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center space-y-1 shadow-xs">
-            <div className={`text-4xl font-extrabold font-mono ${getScoreColor(report.contentScore)}`}>
+            <div
+              data-testid="quality-content-score"
+              className={`text-4xl font-extrabold font-mono ${getScoreColor(report.contentScore)}`}
+            >
               {report.contentScore}
             </div>
             <div className="text-xs font-bold text-slate-900 dark:text-white">第三层：内容与论据 (Qc)</div>
@@ -127,7 +140,10 @@ export const QualityCenter: React.FC<QualityCenterProps> = ({
           </div>
 
           {report.issues.length === 0 ? (
-            <div className="py-12 text-center text-slate-600 dark:text-slate-400 space-y-2">
+            <div
+              data-testid="quality-all-pass"
+              className="py-12 text-center text-slate-600 dark:text-slate-400 space-y-2"
+            >
               <CheckCircle2 className="w-10 h-10 text-emerald-500 dark:text-emerald-400 mx-auto" />
               <div className="text-sm font-bold text-slate-900 dark:text-white">太棒了！所有质量检查项全部通过</div>
               <p className="text-xs text-slate-500">整份文稿符合企业级演示设计规范与导出标准。</p>
@@ -137,6 +153,9 @@ export const QualityCenter: React.FC<QualityCenterProps> = ({
               {report.issues.map((issue) => (
                 <div
                   key={issue.id}
+                  data-testid="quality-issue"
+                  data-issue-id={issue.id}
+                  data-issue-level={issue.level}
                   className="p-4 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-start justify-between gap-4"
                 >
                   <div className="flex items-start gap-3">
@@ -165,6 +184,8 @@ export const QualityCenter: React.FC<QualityCenterProps> = ({
                   </div>
 
                   <button
+                    data-testid="quality-issue-fix"
+                    data-issue-fix-id={issue.id}
                     onClick={handleAutoFix}
                     disabled={issue.fixable !== true}
                     title={
@@ -189,6 +210,7 @@ export const QualityCenter: React.FC<QualityCenterProps> = ({
         {/* Bottom CTA to Return to Workbench */}
         <div className="flex justify-end pt-2">
           <button
+            data-testid="quality-goto-workbench"
             onClick={onOpenWorkbench}
             className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold text-xs transition-colors cursor-pointer"
           >
