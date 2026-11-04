@@ -1,7 +1,7 @@
 {
   "generated_by": "spec/verify/mutation-check.ts",
-  "generated_at": "2026-11-04T23:18:34.865Z",
-  "total": 90,
+  "generated_at": "2026-11-04T23:50:23.720Z",
+  "total": 91,
   "unqualified": 0,
   "cases": [
     {
@@ -448,13 +448,27 @@
       "caught": true,
       "restored_pass": true,
       "note": "已报错",
-      "verifier_sha256": "98332a204fb2bccd098f9f70c81635cd74ac1ca69cbe7bf069ebf5fe693632ab",
+      "verifier_sha256": "99297490037ccd9fbdbd4d7aed56e4abd22e619e1c0f778229aed5d7bb22efa3",
       "source_sha256": "749b73d751ea2ff4ac94f2937da52ae113e37e451187499d6d9b3e2695e4c7d9",
       "output_tail": ""
     },
     {
       "criterion": "AC-EXP-003",
-      "description": "PNG 光栅化改成 1 倍分辨率",
+      "description": "服务端 PNG 光栅化改成 1 倍分辨率",
+      "mutated_file": "apps/api/src/services/exportService.ts",
+      "verifier": "spec/verify/export-png-resolution.test.ts::server-png-export-is-2x",
+      "verifier_file": "spec/verify/export-png-resolution.test.ts",
+      "baseline_pass": true,
+      "caught": true,
+      "restored_pass": true,
+      "note": "已报错",
+      "verifier_sha256": "753cdac4263b5c62d88f2af31ed35b21ab8a6ebd99163470d1a60c60cf5a4889",
+      "source_sha256": "bb335e9e1a07dc100e3ad2dbbdc5b05210d61fbf61d0e0095af3a7d5191dc3d4",
+      "output_tail": ""
+    },
+    {
+      "criterion": "AC-EXP-003",
+      "description": "核心库浏览器 canvas 路径的光栅化改成 1 倍分辨率",
       "mutated_file": "packages/core/src/engine/exportEngine.ts",
       "verifier": "spec/verify/export-pptx.test.ts::png-export-is-2x",
       "verifier_file": "spec/verify/export-pptx.test.ts",
@@ -462,7 +476,7 @@
       "caught": true,
       "restored_pass": true,
       "note": "已报错",
-      "verifier_sha256": "98332a204fb2bccd098f9f70c81635cd74ac1ca69cbe7bf069ebf5fe693632ab",
+      "verifier_sha256": "99297490037ccd9fbdbd4d7aed56e4abd22e619e1c0f778229aed5d7bb22efa3",
       "source_sha256": "749b73d751ea2ff4ac94f2937da52ae113e37e451187499d6d9b3e2695e4c7d9",
       "output_tail": ""
     },
@@ -476,7 +490,7 @@
       "caught": true,
       "restored_pass": true,
       "note": "已报错",
-      "verifier_sha256": "98332a204fb2bccd098f9f70c81635cd74ac1ca69cbe7bf069ebf5fe693632ab",
+      "verifier_sha256": "99297490037ccd9fbdbd4d7aed56e4abd22e619e1c0f778229aed5d7bb22efa3",
       "source_sha256": "749b73d751ea2ff4ac94f2937da52ae113e37e451187499d6d9b3e2695e4c7d9",
       "output_tail": ""
     },
@@ -490,7 +504,7 @@
       "caught": true,
       "restored_pass": true,
       "note": "已报错",
-      "verifier_sha256": "98332a204fb2bccd098f9f70c81635cd74ac1ca69cbe7bf069ebf5fe693632ab",
+      "verifier_sha256": "99297490037ccd9fbdbd4d7aed56e4abd22e619e1c0f778229aed5d7bb22efa3",
       "source_sha256": "749b73d751ea2ff4ac94f2937da52ae113e37e451187499d6d9b3e2695e4c7d9",
       "output_tail": ""
     },
@@ -504,7 +518,7 @@
       "caught": true,
       "restored_pass": true,
       "note": "已报错",
-      "verifier_sha256": "98332a204fb2bccd098f9f70c81635cd74ac1ca69cbe7bf069ebf5fe693632ab",
+      "verifier_sha256": "99297490037ccd9fbdbd4d7aed56e4abd22e619e1c0f778229aed5d7bb22efa3",
       "source_sha256": "749b73d751ea2ff4ac94f2937da52ae113e37e451187499d6d9b3e2695e4c7d9",
       "output_tail": ""
     },
@@ -518,7 +532,7 @@
       "caught": true,
       "restored_pass": true,
       "note": "已报错",
-      "verifier_sha256": "98332a204fb2bccd098f9f70c81635cd74ac1ca69cbe7bf069ebf5fe693632ab",
+      "verifier_sha256": "99297490037ccd9fbdbd4d7aed56e4abd22e619e1c0f778229aed5d7bb22efa3",
       "source_sha256": "749b73d751ea2ff4ac94f2937da52ae113e37e451187499d6d9b3e2695e4c7d9",
       "output_tail": ""
     },
@@ -532,7 +546,7 @@
       "caught": true,
       "restored_pass": true,
       "note": "已报错",
-      "verifier_sha256": "98332a204fb2bccd098f9f70c81635cd74ac1ca69cbe7bf069ebf5fe693632ab",
+      "verifier_sha256": "99297490037ccd9fbdbd4d7aed56e4abd22e619e1c0f778229aed5d7bb22efa3",
       "source_sha256": "749b73d751ea2ff4ac94f2937da52ae113e37e451187499d6d9b3e2695e4c7d9",
       "output_tail": ""
     },
@@ -546,7 +560,7 @@
       "caught": true,
       "restored_pass": true,
       "note": "已报错",
-      "verifier_sha256": "98332a204fb2bccd098f9f70c81635cd74ac1ca69cbe7bf069ebf5fe693632ab",
+      "verifier_sha256": "99297490037ccd9fbdbd4d7aed56e4abd22e619e1c0f778229aed5d7bb22efa3",
       "source_sha256": "749b73d751ea2ff4ac94f2937da52ae113e37e451187499d6d9b3e2695e4c7d9",
       "output_tail": ""
     },
@@ -827,7 +841,7 @@
       "restored_pass": true,
       "note": "已报错",
       "verifier_sha256": "fdae6f6c289230090744f4c8ff37af0d749876e7ad23d606ad9f0fde79c684b7",
-      "source_sha256": "d34aea0c7cb1b3f76f151c71ea14d49d2bbf6ce35e1296ba5292eb3263372986",
+      "source_sha256": "bb335e9e1a07dc100e3ad2dbbdc5b05210d61fbf61d0e0095af3a7d5191dc3d4",
       "output_tail": ""
     },
     {
@@ -1092,8 +1106,8 @@
       "caught": true,
       "restored_pass": true,
       "note": "已报错",
-      "verifier_sha256": "6c7ee217a6d7a6cb5c77cec926b326c3f239b57610b18379f527e33bf9c7dd97",
-      "source_sha256": "d34aea0c7cb1b3f76f151c71ea14d49d2bbf6ce35e1296ba5292eb3263372986",
+      "verifier_sha256": "9b461bc2934c351db9447cdc5157dddcb095c28422b29dd81d6da85f2455523d",
+      "source_sha256": "bb335e9e1a07dc100e3ad2dbbdc5b05210d61fbf61d0e0095af3a7d5191dc3d4",
       "output_tail": ""
     },
     {
@@ -1106,8 +1120,8 @@
       "caught": true,
       "restored_pass": true,
       "note": "已报错",
-      "verifier_sha256": "6c7ee217a6d7a6cb5c77cec926b326c3f239b57610b18379f527e33bf9c7dd97",
-      "source_sha256": "d34aea0c7cb1b3f76f151c71ea14d49d2bbf6ce35e1296ba5292eb3263372986",
+      "verifier_sha256": "9b461bc2934c351db9447cdc5157dddcb095c28422b29dd81d6da85f2455523d",
+      "source_sha256": "bb335e9e1a07dc100e3ad2dbbdc5b05210d61fbf61d0e0095af3a7d5191dc3d4",
       "output_tail": ""
     },
     {

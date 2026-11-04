@@ -51,7 +51,7 @@
 | docs/architecture.md §12 ADR-011 | SPEC-RND-006 | technical | high | AC-RND-006 | spec/verify/render-svg.test.ts::long-text-is-truncated-with-ellipsis | authoritative | EVD-RND-006 | **PASS** |
 | docs/backend-features.md §J 渲染与导出（EXP）· EXP-15 / EXP-17 | SPEC-EXP-001 | business | high | AC-EXP-001 | spec/verify/export-pptx.test.ts::pptx-preserves-ir-text-content | authoritative | EVD-EXP-001 | **PASS** |
 | docs/backend-features.md §J 渲染与导出（EXP）· EXP-14 | SPEC-EXP-002 | technical | medium | AC-EXP-002 | spec/verify/export-pptx.test.ts::pptx-includes-speaker-notes | authoritative | EVD-EXP-002 | **PASS** |
-| docs/backend-features.md §J 渲染与导出（EXP）· EXP-02 | SPEC-EXP-003 | technical | medium | AC-EXP-003 | spec/verify/export-pptx.test.ts::png-export-is-2x | authoritative | EVD-EXP-003 | **PASS** |
+| docs/backend-features.md §J 渲染与导出（EXP）· EXP-02 | SPEC-EXP-003 | technical | medium | AC-EXP-003 | spec/verify/export-png-resolution.test.ts::server-png-export-is-2x | authoritative | EVD-EXP-003 | **PASS** |
 | docs/backend-features.md §J 渲染与导出（EXP）· EXP-13 | SPEC-EXP-004 | technical | low | AC-EXP-004 | spec/verify/export-pptx.test.ts::export-filename-sanitized | authoritative | EVD-EXP-004 | **PASS** |
 | docs/backend-features.md §C 项目管理（PRJ）· PRJ-07 | SPEC-EXP-005 | technical | high | AC-EXP-005, AC-EXP-006 | apps/api/tests/integration/import-bundle.test.ts::exported-bundle-round-trips-with-page-order-intact<br>apps/api/tests/integration/import-bundle.test.ts::duplicate-order-index-is-rejected | authoritative | EVD-EXP-005, EVD-EXP-006 | **PASS** |
 | docs/backend-features.md §J 渲染与导出（EXP）· EXP-06 | SPEC-EXP-006 | technical | medium | AC-EXP-007, AC-EXP-008 | spec/verify/font-fallback.test.ts::svg-font-stack-has-cjk-fallback<br>spec/verify/font-fallback.test.ts::pptx-uses-cjk-capable-font | authoritative | EVD-EXP-007, EVD-EXP-008 | **PASS** |
@@ -136,6 +136,7 @@
 | 决定 | DEC-012 | 1-based —— orderIndex ≥ 1，与领域内核的 outline.order 同基线；导入端据此校验（缺该项校验会让重复的 orderIndex 静默落库，页序从此由数据库决定） | SPEC-EXP-005 |
 | 决定 | DEC-013 | 字体 fallback 链定为：**SVG 侧是 CSS 字体栈** —— 主题拉丁字体 → 显式命名的 CJK 族（'Microsoft YaHei', 'PingFang SC', 'Noto Sans CJK SC', 'Source Han Sans SC'）→ generic 兜底，**CJK 族必须排在第一个 generic 族之前**；**PPTX 侧是单一字体名** `'Microsoft YaHei'`（DrawingML 的 <a:latin>/<a:ea>/<a:cs> 各写各的，没有 fallback 链可依赖）。链的单一真相源是 packages/core/src/engine/typography.ts 的 `withCjkFallback` / `CJK_FALLBACK_FAMILIES` / `PPTX_FONT_NAME`，SVG 渲染与 PPTX 导出共用 | SPEC-EXP-006 |
 | 决定 | DEC-014 | 10px 是**安全距**而非容差：两块之间必须留出 10px 才算『分开的』，否则判碰撞。间距取两轴间隙的较大者 separation = max(dx, dy)（负值表示重叠），**恰好 10px 判不碰撞** | SPEC-QLT-005 |
+| 决定 | DEC-015 | 改验产品路径：回读服务端产出的 PNG 文件头，断言实际像素为 3840×2160；同时把服务端实现从 1 倍补齐到 2 倍（PNG_RASTER_WIDTH = 3840）。核心库那条浏览器路径的用例与注入用例保留 | SPEC-EXP-003 |
 
 ---
 
@@ -153,13 +154,13 @@
 
 > 结论为 PASS 的判据共 100 条，每一条都在 §2.3 有对应证据记录（EVD-*）。
 > 「未覆盖（无判据）」的 1 条（SPEC-GOV-003）连判据都不存在，既不是 PASS 也不是 FAIL —— 见 §2.5。
-> **证据集对账**：这轮证据集共 437 个用例（spec/evidence/junit.xml 339 + spec/evidence/junit-e2e.xml 98），其中 100 个被某条判据点名、337 个没有。
-> 没有判据的 337 个用例里 **0 个失败** —— 上表的「FAIL 0」不是漏报：它们也都过了。
+> **证据集对账**：这轮证据集共 440 个用例（spec/evidence/junit.xml 342 + spec/evidence/junit-e2e.xml 98），其中 100 个被某条判据点名、340 个没有。
+> 没有判据的 340 个用例里 **0 个失败** —— 上表的「FAIL 0」不是漏报：它们也都过了。
 > 判据点名的 101 个验证目标里，**1 个在这轮证据集里没找到**（`apps/api/tests/perf/outline-latency.bench.ts::outline-generation-p95-under-threshold`）—— 挂不上验证目标的判据一律 INCONCLUSIVE，绝不按「通过」算（§2.5）。
 
 #### 2.1.1 这批结论对应的是哪一版代码
 
-这些证据生成于：spec/evidence/junit.xml 2026-11-05 07:03:10、spec/evidence/junit-e2e.xml 2026-11-05 07:04:40。每一条 PASS/FAIL 都是**跑批那一刻**的结论 —— 跑完之后动过它依赖的文件，这条结论就不再自动适用于当前代码。下面按「这条结论依赖的文件有没有在证据之后被改过」逐条判定。
+这些证据生成于：spec/evidence/junit.xml 2026-11-05 07:35:09、spec/evidence/junit-e2e.xml 2026-11-05 07:36:38。每一条 PASS/FAIL 都是**跑批那一刻**的结论 —— 跑完之后动过它依赖的文件，这条结论就不再自动适用于当前代码。下面按「这条结论依赖的文件有没有在证据之后被改过」逐条判定。
 
 > **100 条结论全部仍然成立** —— 它们依赖的文件在证据生成之后都没有被改过。
 
@@ -173,7 +174,7 @@
 
 #### 未挂判据的失败
 
-（无）—— 没有判据的 337 个用例也全都过了。这一节存在的意义是：**「没有失败」得说得出依据**，不能靠「没列」来暗示。
+（无）—— 没有判据的 340 个用例也全都过了。这一节存在的意义是：**「没有失败」得说得出依据**，不能靠「没列」来暗示。
 
 ### 2.3 证据清单
 
@@ -877,11 +878,11 @@ EVD-EXP-003
   spec_version:  1.0
   input_data:    docs/backend-features.md §J 渲染与导出（EXP）· EXP-02 —— `@resvg/resvg-js` 3840×2160，无需浏览器…
   environment:   bun 1.3.11 / darwin / 无外部服务调用（数据库为进程内 PGlite，AI 端点为本地确定性降级）
-  command:       bun test ./spec/verify/export-pptx.test.ts
-  case:          spec/verify/export-pptx.test.ts::png-export-is-2x
-  result:        该用例通过（png-export-is-2x）
+  command:       bun test ./spec/verify/export-png-resolution.test.ts
+  case:          spec/verify/export-png-resolution.test.ts::server-png-export-is-2x
+  result:        该用例通过（server-png-export-is-2x）
   oracle_tier:   authoritative
-  oracle_source: docs/backend-features.md §J EXP-02 —— 3840×2160
+  oracle_source: docs/backend-features.md §J EXP-02 —— 3840×2160（原文指的就是 resvg，无需浏览器）
   evidence:      spec/evidence/junit.xml
 ```
 ```
@@ -1682,7 +1683,7 @@ EVD-GOV-002
 
 ### 2.4 注入错误检查（验证器的元验证）
 
-共 90 个注入用例，**不合格 0 个**。每个用例走「基线 PASS → 注入必须 FAIL → 还原后重新 PASS」三步。
+共 91 个注入用例，**不合格 0 个**。每个用例走「基线 PASS → 注入必须 FAIL → 还原后重新 PASS」三步。
 
 | 判据 | 注入的错误 | 改动的文件 | 检出者 | 基线 | 检出 | 还原 |
 |---|---|---|---|---|---|---|
@@ -1718,7 +1719,8 @@ EVD-GOV-002
 | AC-QLT-008 | 页数不足不再扣一致性分 15 分 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::consistency-penalties` | ✅ | ✅ | ✅ |
 | AC-QLT-010 | 自动修复不再重排元素 ID（保留重复 ID） | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::autofix-restores-id-uniqueness` | ✅ | ✅ | ✅ |
 | AC-EXP-002 | 不再写入演讲者备注 | `packages/core/src/engine/exportEngine.ts` | `spec/verify/export-pptx.test.ts::pptx-includes-speaker-notes` | ✅ | ✅ | ✅ |
-| AC-EXP-003 | PNG 光栅化改成 1 倍分辨率 | `packages/core/src/engine/exportEngine.ts` | `spec/verify/export-pptx.test.ts::png-export-is-2x` | ✅ | ✅ | ✅ |
+| AC-EXP-003 | 服务端 PNG 光栅化改成 1 倍分辨率 | `apps/api/src/services/exportService.ts` | `spec/verify/export-png-resolution.test.ts::server-png-export-is-2x` | ✅ | ✅ | ✅ |
+| AC-EXP-003 | 核心库浏览器 canvas 路径的光栅化改成 1 倍分辨率 | `packages/core/src/engine/exportEngine.ts` | `spec/verify/export-pptx.test.ts::png-export-is-2x` | ✅ | ✅ | ✅ |
 | AC-EXP-001 | 指标卡的大数字不再导出（正文丢失） | `packages/core/src/engine/exportEngine.ts` | `spec/verify/export-pptx.test.ts::pptx-preserves-ir-text-content` | ✅ | ✅ | ✅ |
 | AC-EXP-001 | 两个 IR 字符串被拼进同一个文本运行（串行） | `packages/core/src/engine/exportEngine.ts` | `spec/verify/export-pptx.test.ts::pptx-preserves-ir-text-content` | ✅ | ✅ | ✅ |
 | AC-EXP-001 | 导出时凭空追加固定文案（多出非 IR 文本） | `packages/core/src/engine/exportEngine.ts` | `spec/verify/export-pptx.test.ts::pptx-preserves-ir-text-content` | ✅ | ✅ | ✅ |
@@ -1781,15 +1783,15 @@ EVD-GOV-002
 
 #### 2.4.1 这批结论还对当前代码成立吗
 
-注入报告生成于 2026-11-04T23:18:34.865Z。「验证器抓得住这个错」是**某一版**验证器与**某一版**实现之间的结论 —— 跑完之后动过其中任何一边，这条结论就不再自动适用于当前代码。下面按报告里记下的文件指纹逐条比对。
+注入报告生成于 2026-11-04T23:50:23.720Z。「验证器抓得住这个错」是**某一版**验证器与**某一版**实现之间的结论 —— 跑完之后动过其中任何一边，这条结论就不再自动适用于当前代码。下面按报告里记下的文件指纹逐条比对。
 
-> 逐条比对了跑批时的文件指纹与当前的文件内容：**90 条全部仍然成立**（验证器与被改动的源文件都和跑批时一致）。
+> 逐条比对了跑批时的文件指纹与当前的文件内容：**91 条全部仍然成立**（验证器与被改动的源文件都和跑批时一致）。
 
 #### 2.4.2 现在还跑得起来吗
 
-当前代码里定义了 **90** 条注入用例，全量报告里有 **90** 条。
+当前代码里定义了 **91** 条注入用例，全量报告里有 **91** 条。
 
-> 全部 90 条都在报告里，锚点**命中且唯一** —— 现在重跑还跑得起来，报告里的结论没有过期。
+> 全部 91 条都在报告里，锚点**命中且唯一** —— 现在重跑还跑得起来，报告里的结论没有过期。
 
 > 首轮运行曾出现 1 个 MISSED（AC-RND-004）：判据原文写作「存在 `id=` **或** `data-element-id=`」，弱于条款陈述本身要求的「必须带有 id 属性」。已把判据收紧到与条款陈述及 `docs/test-cases.md` TC-EXP-003 一致，并补上第二条注入（data-element-id 值与 IR 不一致）。
 
@@ -1848,7 +1850,7 @@ EVD-GOV-002
 
 - `spec/spec.yaml` —— 68 条条款 / 101 条判据的机器可读契约
 - `spec/spec.schema.json` —— Spec 自身的结构约束（JSON Schema 2020-12）
-- `spec/verify/*.test.ts` —— 21 个验证器文件（Spec 自检 + 领域内核 + 导出 + 质量引擎 + 渲染）
+- `spec/verify/*.test.ts` —— 22 个验证器文件（Spec 自检 + 领域内核 + 导出 + 质量引擎 + 渲染）
 - `packages/core/tests/` —— 领域内核（@ppt/core）的版式快照与补丁应用测试
 - `apps/api/tests/` —— 后端的契约 / 集成 / 安全 / AI / 混沌 / 性能测试
 - `e2e/` —— 13 条前后端集成链（Playwright 真实浏览器 + 真实服务端），断言落在服务端状态上：`e2e/auth.e2e.ts`、`e2e/errors.e2e.ts`、`e2e/exports.e2e.ts`、`e2e/library.e2e.ts`、`e2e/navigation.e2e.ts`、`e2e/offline.e2e.ts`、`e2e/presentation.e2e.ts`、`e2e/projects.e2e.ts`、`e2e/quality.e2e.ts`、`e2e/templates.e2e.ts`、`e2e/workbench-editing.e2e.ts`、`e2e/workbench-pages.e2e.ts`、`e2e/workbench.e2e.ts`
@@ -1871,12 +1873,12 @@ EVD-GOV-002
 
 ### 实际验证了什么
 
-- 真的跑了证据集（`bun test spec/verify/ packages/core/tests/ apps/api/tests/ ./scripts/check-coverage.check.ts ./apps/api/tests/perf/export-latency.bench.ts`）：**339 个用例，0 失败，339 通过**，覆盖 38 个测试文件
+- 真的跑了证据集（`bun test spec/verify/ packages/core/tests/ apps/api/tests/ ./scripts/check-coverage.check.ts ./apps/api/tests/perf/export-latency.bench.ts`）：**342 个用例，0 失败，342 通过**，覆盖 39 个测试文件
 - 真的跑了前后端集成 E2E（`bun test ./e2e/auth.e2e.ts ./e2e/errors.e2e.ts ./e2e/exports.e2e.ts ./e2e/library.e2e.ts ./e2e/navigation.e2e.ts ./e2e/offline.e2e.ts ./e2e/presentation.e2e.ts ./e2e/projects.e2e.ts ./e2e/quality.e2e.ts ./e2e/templates.e2e.ts ./e2e/workbench-editing.e2e.ts ./e2e/workbench-pages.e2e.ts ./e2e/workbench.e2e.ts`，Playwright 驱动真实 Chromium + 真实服务端）：**98 个用例，0 失败**
-- 证据集对账：两层证据共 **437 个用例**，其中 **100 个挂了判据**、337 个没挂；没挂判据的用例里 **0 个失败** —— 「失败明细」里那个「（无）」不是漏报
+- 证据集对账：两层证据共 **440 个用例**，其中 **100 个挂了判据**、340 个没挂；没挂判据的用例里 **0 个失败** —— 「失败明细」里那个「（无）」不是漏报
 - 真的跑了 `python3 spec/verify/spec-schema.py`：Spec 结构校验通过（68 条条款 / 101 条判据引用完整）
 - 真的跑了 `npx tsc --noEmit`：类型检查通过
-- 真的跑了 `bun run spec/verify/mutation-check.ts`：**90 个注入用例，不合格 0 个** —— 每个用例走「基线 PASS → 注入必须 FAIL → 还原后重新 PASS」三步，源文件已全部还原 —— 其中对**当前代码**仍然成立 **90** 条、已过期 **0** 条（见 §2.4.1）
+- 真的跑了 `bun run spec/verify/mutation-check.ts`：**91 个注入用例，不合格 0 个** —— 每个用例走「基线 PASS → 注入必须 FAIL → 还原后重新 PASS」三步，源文件已全部还原 —— 其中对**当前代码**仍然成立 **91** 条、已过期 **0** 条（见 §2.4.1）
 - 领域内核行覆盖率：**93.42% ≥ 90%**（2358/2524 行，证据落盘在 `spec/evidence/coverage.json`）
 
 ### 哪些结论仍不可信
