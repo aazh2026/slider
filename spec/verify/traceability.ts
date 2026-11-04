@@ -16,11 +16,22 @@
  *     spec/evidence/mutation-report.json —— spec/verify/mutation-check.ts 的输出
  */
 
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { parseJunitCases, type JunitCase } from './junit.ts';
+import {
+  currentFingerprints,
+  freshnessQualifier,
+  renderFreshnessSection,
+  summarize,
+  type FingerprintedCase,
+} from './evidenceFreshness.ts';
+import { reconcile, reconciliationQualifier, renderReconciliationSection } from './anchorHealth.ts';
+// 只取定义，不跑批 —— mutation-check.ts 里有 `import.meta.main` 守卫，
+// 被 import 时不会启动那十几分钟的跑批。
+import { MUTATIONS } from './mutation-check.ts';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '../..');
@@ -283,6 +294,7 @@ function readJunit(): JunitCase[] {
 }
 
 function readMutation(): {
+  generated_at?: string;
   total: number;
   unqualified: number;
   cases: Array<{
@@ -290,6 +302,9 @@ function readMutation(): {
     description: string;
     mutated_file: string;
     verifier: string;
+    verifier_file?: string;
+    verifier_sha256?: string | null;
+    source_sha256?: string | null;
     baseline_pass: boolean;
     caught: boolean;
     restored_pass: boolean;
@@ -300,6 +315,21 @@ function readMutation(): {
     throw new Error(`缺少 ${MUTATION_PATH}\n先运行：bun run spec/verify/mutation-check.ts`);
   }
   return JSON.parse(readFileSync(MUTATION_PATH, 'utf-8'));
+}
+
+/**
+ * 注入报告是什么时候生成的。
+ *
+ * 报告里没有 `generated_at`（老格式）时退回**报告文件自己的修改时间** ——
+ * 那不是同一个东西，但比「不知道什么时候」强。
+ */
+function mutationGeneratedAt(mutation: { generated_at?: string }): string {
+  if (mutation.generated_at) return mutation.generated_at;
+  try {
+    return `${statSync(MUTATION_PATH).mtime.toISOString()}（取自报告文件的修改时间）`;
+  } catch {
+    return '未知时间';
+  }
 }
 
 function readCoverage(): {
@@ -335,6 +365,18 @@ function worstOf(verdicts: Verdict[]): Verdict {
   return 'PASS';
 }
 
+/**
+ * 判据列表 —— 同一个判据有多条用例时写成 `AC-XXX ×2`，
+ * 免得读者看到「AC-RND-006、AC-RND-006」以为出了什么怪事。
+ */
+function criteriaList(items: Array<{ criterion: string }>): string {
+  const counts = new Map<string, number>();
+  for (const i of items) counts.set(i.criterion, (counts.get(i.criterion) ?? 0) + 1);
+  return [...counts.entries()]
+    .map(([criterion, n]) => (n > 1 ? `${criterion} ×${n}` : criterion))
+    .join('、');
+}
+
 // ---------------------------------------------------------------------------
 // 主流程
 // ---------------------------------------------------------------------------
@@ -343,6 +385,51 @@ function main(): void {
   const spec = Bun.YAML.parse(readFileSync(SPEC_PATH, 'utf-8')) as Spec;
   const junit = readJunit();
   const mutation = readMutation();
+
+  // --- 注入结论的新鲜度 ---
+  //
+  // 「验证器抓得住这个错」不是一句永远成立的话：它是**某一版**验证器与
+  // **某一版**实现之间的结论。跑完之后动过其中任何一边，这条结论就不再
+  // 自动适用于当前代码 —— 而报告若不留下指纹，读者根本看不出来。
+  //
+  // 实测（2026-11-05）：一份 88 条全绿的报告，生成 20 分钟后
+  // 就有 21 个源文件、1 个验证器被改过 —— 67 条结论已经对不上当前代码，
+  // 而报告里只写着「不合格 0 个」。
+  //
+  // 报告里留了文件指纹，这里逐条比对（见 spec/verify/evidenceFreshness.ts）。
+  const freshnessCases: FingerprintedCase[] = mutation.cases.map((c) => ({
+    criterion: c.criterion,
+    // 老报告没有 verifier_file → 从 `文件::用例名` 里拆出来
+    verifierFile:
+      c.verifier_file ?? c.verifier.split('::')[0]!.replace('（整文件）', '').trim(),
+    sourceFile: c.mutated_file,
+    verifierSha256: c.verifier_sha256 ?? null,
+    sourceSha256: c.source_sha256 ?? null,
+  }));
+  const freshness = summarize(
+    freshnessCases,
+    currentFingerprints(
+      ROOT,
+      new Set(freshnessCases.flatMap((c) => [c.verifierFile, c.sourceFile]))
+    )
+  );
+
+  // --- 注入结论的**可执行性** ---
+  //
+  // 指纹对不上，只能说「不知道还对不对」；锚点失配则是**确定的**：
+  // 那条用例现在根本跑不起来 —— 报告里「验证器抓得住这个错」从来就没人验证过。
+  //
+  // 实测（2026-11-05）：质量引擎的罚分逻辑搬进规则表之后，
+  // 8 条 AC-QLT-* 的锚点全部失配，而全量报告仍写着「88 个注入用例，不合格 0 个」。
+  // 这里做一次**静态**对账（不注入、不起服务、不开浏览器，毫秒级）。
+  const reconciliation = reconcile(MUTATIONS, mutation.cases, (relPath) => {
+    try {
+      return readFileSync(resolve(ROOT, relPath), 'utf-8');
+    } catch {
+      return null;
+    }
+  });
+
   const coverage = readCoverage();
 
   // --- 证据集规模（从 junit 现场统计，不手写数字） ---
@@ -688,9 +775,28 @@ function main(): void {
   if (mutation.unqualified > 0) {
     P('> ⚠️ 存在 MISSED 的行 —— 这些判据的「通过」不构成证据。');
   } else {
-    P('> 全部注入错误都被对应验证器抓到。**没有 MISSED 行** —— 上表的 PASS 因此不是自证。');
+    P(
+      '> 全部注入错误都被对应验证器抓到。**没有 MISSED 行** —— 上表的 PASS 因此不是自证。**但那是跑批那一刻的结论**：这些用例现在还跑不跑得起来，见 §2.4.2。'
+    );
   }
   P();
+
+  // ---- 2.4.1 这批结论还对当前代码成立吗 ----
+  P('#### 2.4.1 这批结论还对当前代码成立吗');
+  P();
+  for (const line of renderFreshnessSection(freshness, mutationGeneratedAt(mutation))) {
+    P(line);
+  }
+  P();
+
+  // ---- 2.4.2 现在还跑得起来吗 ----
+  P('#### 2.4.2 现在还跑得起来吗');
+  P();
+  for (const line of renderReconciliationSection(reconciliation)) {
+    P(line);
+  }
+  P();
+
   P(
     '> 首轮运行曾出现 1 个 MISSED（AC-RND-004）：判据原文写作「存在 `id=` **或** `data-element-id=`」，弱于条款陈述本身要求的「必须带有 id 属性」。已把判据收紧到与条款陈述及 `docs/test-cases.md` TC-EXP-003 一致，并补上第二条注入（data-element-id 值与 IR 不一致）。'
   );
@@ -843,7 +949,9 @@ function main(): void {
     `- 真的跑了 \`npx tsc --noEmit\`：类型检查通过`
   );
   P(
-    `- 真的跑了 \`bun run spec/verify/mutation-check.ts\`：**${mutation.total} 个注入用例，不合格 ${mutation.unqualified} 个** —— 每个用例走「基线 PASS → 注入必须 FAIL → 还原后重新 PASS」三步，源文件已全部还原`
+    `- 真的跑了 \`bun run spec/verify/mutation-check.ts\`：**${mutation.total} 个注入用例，不合格 ${mutation.unqualified} 个** —— 每个用例走「基线 PASS → 注入必须 FAIL → 还原后重新 PASS」三步，源文件已全部还原` +
+      freshnessQualifier(freshness) +
+      reconciliationQualifier(reconciliation)
   );
   P(
     `- 领域内核行覆盖率：**${coverage ? `${coverage.percent.toFixed(2)}% ≥ ${coverage.threshold}%` : '见 spec/evidence/coverage.json'}**（${coverage ? `${coverage.hit}/${coverage.found} 行` : '未采集'}，证据落盘在 \`spec/evidence/coverage.json\`）`
@@ -854,6 +962,16 @@ function main(): void {
   P(
     `- **${unmutatedCriteria.length} 条判据没有做注入错误检查**（${unmutatedCriteria.join('、')}）—— 它们的 PASS 只来自「测试跑过了」，没有被元验证证明「抓得住错」`
   );
+  if (reconciliation.brokenAndReported.length > 0) {
+    P(
+      `- **${reconciliation.brokenAndReported.length} 条注入用例现在跑不起来**（${criteriaList(reconciliation.brokenAndReported)}）—— 锚点失配，报告里关于它们的「验证器抓得住错」不成立`
+    );
+  }
+  if (reconciliation.notInReport.length > 0) {
+    P(
+      `- **${reconciliation.notInReport.length} 条已定义的注入用例还没进过全量证据**（${criteriaList(reconciliation.notInReport)}）—— 定义在、报告里没有，它们的「抓得住错」同样没人验证过`
+    );
+  }
   P(
     '- **SPEC-NFR-001 —— 真实模型下的 P95 从未测过**。验证器已建成，但本轮只跑了降级模式（.env 里的 GEMINI_API_KEY 是占位符），模型往返延迟根本没被采样到'
   );
@@ -885,6 +1003,9 @@ function main(): void {
     `条款 ${spec.clauses.length} / 判据 ${totalCriteria}　PASS ${passClauses}　FAIL ${failClauses}　INCONCLUSIVE ${incClauses}`
   );
   console.log(`注入检查：${mutation.total} 个用例，不合格 ${mutation.unqualified} 个`);
+  console.log(
+    `注入对账：定义 ${reconciliation.defined} / 报告 ${reconciliation.reported} / 跑不起来 ${reconciliation.broken.length} / 缺报告 ${reconciliation.notInReport.length} / 孤儿 ${reconciliation.orphanInReport.length}`
+  );
 }
 
 main();

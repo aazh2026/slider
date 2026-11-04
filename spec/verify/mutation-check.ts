@@ -9,18 +9,30 @@
  *   2. 注入   —— 故意改坏实现，该判据必须 FAIL
  *   3. 还原   —— 还原后必须重新 PASS
  *
+ * 第 3 步「还原」有一条硬规矩：**绝不覆盖别人的改动**。
+ * 同一个工作树里可能还有别人在改代码，而还原早先是「无条件覆盖回跑批前的快照」
+ * —— 对方的改动会被**静默抹掉**。现在按 `spec/verify/mutationRestore.ts` 的策略：
+ * 没人动过 → 写回原文；别人动过（改在别处）→ 反向打补丁，保住对方的改动；
+ * 别人动过（改在注入段里）→ 不写，备份 + 报错。
+ *
  * 运行：
  *     bun run spec/verify/mutation-check.ts
  *
- * 退出码：0 = 全部用例的验证器都抓到了注入错误；1 = 存在抓不到的验证器。
+ * 退出码：
+ *   0 = 全部用例的验证器都抓到了注入错误
+ *   1 = 存在抓不到的验证器
+ *   2 = 跑批环境不可信（锁被占 / 跑批期间源文件被别人动过）—— 报告不落盘
  */
 
+import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { startServers, type ServerHandle } from './servers';
 import { acquireMutationLock } from './mutationLock';
+import { restoreFiles } from './mutationRestore';
+import { sha256Of } from './evidenceFreshness';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '../..');
@@ -57,7 +69,15 @@ function reportPathFor(subset: boolean): string {
     : REPORT_PATH;
 }
 
-interface Mutation {
+/**
+ * 一条注入用例的定义。
+ *
+ * **导出来**是为了让追溯矩阵能问一个问题：
+ * 「现在这些用例还跑得起来吗？」（见 spec/verify/anchorHealth.ts）——
+ * 注入报告是**跑批那一刻**的产物；实现改了之后，锚点可能已经失配，
+ * 而报告里那条「验证器抓得住错」就成了**跑不出来**的结论。
+ */
+export interface Mutation {
   /** 判据 ID —— 出问题时要能追溯回 Spec */
   criterion: string;
   /** 一句话说清注入的是什么错 */
@@ -98,7 +118,10 @@ interface Mutation {
   wholeFile?: boolean;
 }
 
-const MUTATIONS: Mutation[] = [
+/**
+ * 全部注入用例的定义 —— **导出**给追溯矩阵做「现在还跑得起来吗」的对账。
+ */
+export const MUTATIONS: Mutation[] = [
   // ---- SPEC-CORE-001 画布尺寸 ----
   {
     criterion: 'AC-CORE-001',
@@ -318,6 +341,36 @@ const MUTATIONS: Mutation[] = [
     testFile: 'spec/verify/render-svg.test.ts',
     testName: 'svg-has-four-layers',
   },
+  // ---- SPEC-RND-006 装不下的文字必须截断并补省略号 ----
+  //
+  // 这条判据此前**没有注入错误检查** —— 它的 PASS 只来自「测试跑过了」，
+  // 没人证明过验证器抓得住「截断被绕过」这一类错。
+  //
+  // 判据要求的是两件独立的事：① 装不下的行必须被丢掉；② 丢掉时必须留省略号。
+  // 于是注入也分两半各打一半 —— 两条都是**代表性错误**，不是不完整的错误：
+  //   · 第一条去掉「丢掉」这一步 → 整段原文原样溢出版心（真实世界最常见的那种溢出）
+  //   · 第二条去掉「补省略号」这一步 → 文字确实被切了，读者却看不出来被切过
+  // （只注入一半的话，另一半的守卫还挡着，看起来像「验证器抓不住」，
+  //   实际是注入本身不完整 —— 那种假阴性比抓不到更误导人。）
+  {
+    criterion: 'AC-RND-006',
+    description: '不再截断 —— 装不下的行原样溢出（整段原文直接铺进 SVG）',
+    file: 'packages/core/src/engine/svgRenderer.ts',
+    find:
+      '  const visible = lines.slice(0, maxLines);\n  visible[visible.length - 1] = `${visible[visible.length - 1]!}…`;',
+    replace: '  const visible = lines.slice();',
+    testFile: 'spec/verify/render-svg.test.ts',
+    testName: 'long-text-is-truncated-with-ellipsis',
+  },
+  {
+    criterion: 'AC-RND-006',
+    description: '截断了但不补省略号 —— 文字被切掉，读者却看不出来',
+    file: 'packages/core/src/engine/svgRenderer.ts',
+    find: '  visible[visible.length - 1] = `${visible[visible.length - 1]!}…`;',
+    replace: '  visible[visible.length - 1] = `${visible[visible.length - 1]!}`;',
+    testFile: 'spec/verify/render-svg.test.ts',
+    testName: 'long-text-is-truncated-with-ellipsis',
+  },
   // ---- SPEC-QLT-001 质量分公式 ----
   {
     criterion: 'AC-QLT-001',
@@ -329,12 +382,17 @@ const MUTATIONS: Mutation[] = [
     testName: 'quality-formula-weights',
   },
   // ---- SPEC-QLT-002 画布惩罚 ----
+  //
+  // 锚点跟着实现走（2026-11-05）：扣分幅度搬进了规则表
+  // （`packages/core/src/engine/qualityRules.ts`），引擎里不再出现 `+= 15`，
+  // 改成 `+= penaltyOf('struct_dim')`。锚点跟着搬 ——
+  // 否则这条用例的注入根本没执行，报告里却是「不合格 0 个」。
   {
     criterion: 'AC-QLT-002',
     description: '画布尺寸不符不再扣 15 分',
     file: 'packages/core/src/engine/qualityEngine.ts',
-    find: 'totalStructurePenalties += 15;\n        issues.push({\n          id: `struct_dim_',
-    replace: 'totalStructurePenalties += 0;\n        issues.push({\n          id: `struct_dim_',
+    find: "totalStructurePenalties += penaltyOf('struct_dim');",
+    replace: 'totalStructurePenalties += 0;',
     testFile: 'spec/verify/quality-engine.test.ts',
     testName: 'canvas-mismatch-penalty',
   },
@@ -343,7 +401,7 @@ const MUTATIONS: Mutation[] = [
     criterion: 'AC-QLT-003',
     description: '重复元素 ID 不再扣 5 分',
     file: 'packages/core/src/engine/qualityEngine.ts',
-    find: 'totalStructurePenalties += 5;',
+    find: "totalStructurePenalties += penaltyOf('struct_id');",
     replace: 'totalStructurePenalties += 0;',
     testFile: 'spec/verify/quality-engine.test.ts',
     testName: 'duplicate-id-penalty',
@@ -353,7 +411,7 @@ const MUTATIONS: Mutation[] = [
     criterion: 'AC-QLT-004',
     description: '几何越界不再扣视觉分 10 分',
     file: 'packages/core/src/engine/qualityEngine.ts',
-    find: 'totalVisualPenalties += 10;',
+    find: "totalVisualPenalties += penaltyOf('vis_bounds');",
     replace: 'totalVisualPenalties += 0;',
     testFile: 'spec/verify/quality-engine.test.ts',
     testName: 'out-of-bounds-penalty',
@@ -363,7 +421,7 @@ const MUTATIONS: Mutation[] = [
     criterion: 'AC-QLT-005',
     description: '卡片碰撞不再扣视觉分 8 分',
     file: 'packages/core/src/engine/qualityEngine.ts',
-    find: 'totalVisualPenalties += 8;',
+    find: "totalVisualPenalties += penaltyOf('vis_collide');",
     replace: 'totalVisualPenalties += 0;',
     testFile: 'spec/verify/quality-engine.test.ts',
     testName: 'aabb-collision-penalty',
@@ -373,7 +431,7 @@ const MUTATIONS: Mutation[] = [
     criterion: 'AC-QLT-006',
     description: '标题过短不再扣内容分 15 分',
     file: 'packages/core/src/engine/qualityEngine.ts',
-    find: 'totalContentPenalties += 15;',
+    find: "totalContentPenalties += penaltyOf('content_title');",
     replace: 'totalContentPenalties += 0;',
     testFile: 'spec/verify/quality-engine.test.ts',
     testName: 'missing-title-penalty',
@@ -383,7 +441,7 @@ const MUTATIONS: Mutation[] = [
     criterion: 'AC-QLT-007',
     description: '核心结论缺失不再扣内容分 8 分',
     file: 'packages/core/src/engine/qualityEngine.ts',
-    find: 'totalContentPenalties += 8;',
+    find: "totalContentPenalties += penaltyOf('content_keymsg');",
     replace: 'totalContentPenalties += 0;',
     testFile: 'spec/verify/quality-engine.test.ts',
     testName: 'missing-keymessage-penalty',
@@ -393,7 +451,7 @@ const MUTATIONS: Mutation[] = [
     criterion: 'AC-QLT-008',
     description: '页数不足不再扣一致性分 15 分',
     file: 'packages/core/src/engine/qualityEngine.ts',
-    find: 'totalConsistencyPenalties += 15;',
+    find: "totalConsistencyPenalties += penaltyOf('consist_count');",
     replace: 'totalConsistencyPenalties += 0;',
     testFile: 'spec/verify/quality-engine.test.ts',
     testName: 'consistency-penalties',
@@ -404,11 +462,14 @@ const MUTATIONS: Mutation[] = [
   // （`header_s1` → `header_s1_1`，不是 `text_s1_1`）——
   // 注入点必须落在那一行上，否则「锚点未命中」，
   // 报告里就是一条「注入未执行」，判据等于没被元验证过。
+  //
+  // 2026-11-05：语义从 ID 字符串搬进了 `variant` 字段（ADR-018），
+  // 前缀不再从 ID 里解析，改由 `idPrefixOf(el)` 取 —— 锚点跟着搬。
   {
     criterion: 'AC-QLT-010',
     description: '自动修复不再重排元素 ID（保留重复 ID）',
     file: 'packages/core/src/engine/qualityEngine.ts',
-    find: '        el.id = `${semantic}_${slide.slideId}_${idx}`;',
+    find: '        el.id = `${idPrefixOf(el)}_${slide.slideId}_${idx}`;',
     replace: '        // mutation: 不再重排 ID',
     testFile: 'spec/verify/quality-engine.test.ts',
     testName: 'autofix-restores-id-uniqueness',
@@ -1339,6 +1400,20 @@ interface Edit {
   replace: string;
 }
 
+/**
+ * 文件内容的 sha256 —— 「这批结论是对哪一版代码成立的」的凭据。
+ *
+ * 读不到文件（被删了 / 路径不对）就返回 null ——
+ * 「没有指纹」和「指纹对不上」是两回事，不能混成同一个结论。
+ */
+function sha256OfFile(relPath: string): string | null {
+  try {
+    return createHash('sha256').update(readFileSync(resolve(ROOT, relPath))).digest('hex');
+  } catch {
+    return null;
+  }
+}
+
 /** 统计子串出现次数 —— 用来判定锚点是否唯一 */
 function countOccurrences(haystack: string, needle: string): number {
   let count = 0;
@@ -1389,6 +1464,15 @@ async function runChecks(): Promise<number> {
     note: string;
     /** 失败时的输出尾部 —— 没有它，"基线挂了"就只是一句没有线索的话 */
     outputTail: string;
+    /**
+     * 跑批时**源文件原文**的 sha256 —— 这条结论是对这一版源码成立的。
+     *
+     * 刻意取**注入前**的内容，而不是还原完再读一遍：
+     * 还原万一没还原干净，事后再读读到的就是被改坏的内容，
+     * 指纹会跟当前文件对得上，于是新鲜度判定报「仍然成立」——
+     * 一份自己给自己作证的死报告。取注入前的原文，这条路就堵死了。
+     */
+    sourceSha256: string | null;
   }> = [];
 
   /**
@@ -1410,7 +1494,7 @@ async function runChecks(): Promise<number> {
   /**
    * 只跑指定判据 —— `MUTATION_CHECK_ONLY=AC-E2E-011,AC-E2E-012`。
    *
-   * 迭代某个验证器时用：整轮 88 个用例要十几分钟，只验一条是几秒。
+   * 迭代某个验证器时用：整轮全部用例要十几分钟，只验一条是几秒。
    * 子集跑的证据写**独立文件**（见 reportPathFor），全量报告一个字节都不动。
    */
   const only = process.env['MUTATION_CHECK_ONLY'];
@@ -1435,6 +1519,9 @@ async function runChecks(): Promise<number> {
     const originals = new Map<string, string>();
     for (const f of files) originals.set(f, readFileSync(resolve(ROOT, f), 'utf-8'));
 
+    // 跑批时这一版源码的指纹 —— 结论是对它成立的，报告里必须留凭据。
+    // 取的是**注入前**的原文（见 results 的 sourceSha256 说明）。
+    const sourceSha256 = sha256Of(originals.get(m.file) ?? '');
     const missing = edits.filter((e) => !originals.get(e.file)!.includes(e.find));
     if (missing.length > 0) {
       results.push({
@@ -1449,6 +1536,7 @@ async function runChecks(): Promise<number> {
         restored: false,
         note: `锚点未命中 —— ${missing[0]!.file} 里找不到待替换文本，注入未执行`,
         outputTail: '',
+        sourceSha256,
       });
       continue;
     }
@@ -1476,6 +1564,7 @@ async function runChecks(): Promise<number> {
         restored: false,
         note: `锚点不唯一 —— ${e.file} 里该文本出现 ${countOccurrences(originals.get(e.file)!, e.find)} 次，注入只会落到第一处，可能与被测路径无关`,
         outputTail: '',
+        sourceSha256,
       });
       continue;
     }
@@ -1493,6 +1582,7 @@ async function runChecks(): Promise<number> {
         restored: false,
         note: '锚点命中（干跑模式，未执行注入）',
         outputTail: '',
+        sourceSha256,
       });
       continue;
     }
@@ -1501,8 +1591,23 @@ async function runChecks(): Promise<number> {
     const baseline = await runTest(m.testFile, m.testName, m.wholeFile, `${m.criterion}-baseline`);
 
     // 2) 注入
+    //
+    // `injected` 提到 try 外面 —— finally 里的还原要用它判断
+    // 「磁盘上的内容是不是我们写的那份」（见 spec/verify/mutationRestore.ts）。
+    const injected = new Map<string, string>();
+
+    /**
+     * 跑批期间有人动过被注入的文件。
+     *
+     * null = 没人动过；非 null = 动了，记下是哪个文件。
+     * 一旦动了，**这一轮的结论就不可信**（验证器跑的不是我们控制的那份代码）。
+     */
+    let foreignEdit: string | null = null;
+
+    /** 还原时撞上冲突（不敢动那个文件）—— 文件路径 + 原因 */
+    let restoreConflict: string | null = null;
+
     try {
-      const injected = new Map<string, string>();
       for (const f of files) {
         let src = originals.get(f)!;
         for (const e of edits.filter((x) => x.file === f)) src = src.replace(e.find, e.replace);
@@ -1547,10 +1652,53 @@ async function runChecks(): Promise<number> {
           tail(mutated.output) +
           serverTail(baseline) +
           serverTail(mutated),
+        sourceSha256,
       });
     } finally {
-      // 3) 还原
-      for (const f of files) writeFileSync(resolve(ROOT, f), originals.get(f)!, 'utf-8');
+      // 3) 还原 —— **绝不能覆盖别人的改动**
+      //
+      // 早先这里是 `writeFileSync(f, originals.get(f))`：无条件覆盖回跑批前的快照。
+      // 同一个工作树里还有别人在改代码时，这一下会把对方的改动**静默抹掉** ——
+      // 症状是「对方的改动凭空没了」，而跑批日志一切正常。
+      //
+      // 讽刺的是，上面那段「环境完整性」检查**能发现**这件事，
+      // 但发现之后的 finally 仍然无条件覆盖 —— 「发现了」不等于「没造成损失」。
+      //
+      // 现在按 spec/verify/mutationRestore.ts 的策略还原：
+      //   · 没人动过        → 写回原文
+      //   · 别人动过（别处）→ 反向打补丁：去掉注入，**保留对方的改动**
+      //   · 别人动过（冲突）→ 不写这个文件，备份 + 大声报出来
+      const restored = restoreFiles({
+        root: ROOT,
+        files,
+        originals,
+        injected,
+        edits,
+        backupDir: 'spec/evidence/.mutation-conflicts',
+        backupSuffix: String(process.pid),
+      });
+
+      for (const f of restored.foreignEdits) {
+        foreignEdit = f;
+        console.error(`\n⚠️  跑批期间有人改过：${f}`);
+        console.error('   已反向还原注入，**对方的改动保留了下来**。');
+        console.error('   但这一轮的结论不可信 —— 整轮作废，不落报告。\n');
+      }
+
+      for (const c of restored.conflicts) {
+        restoreConflict = c;
+        console.error(`\n❌ 还原时撞上冲突：${c}`);
+        console.error('   **这个文件没有被改动** —— 对方的改动一个字都没动。');
+        console.error('   当前内容已备份到 spec/evidence/.mutation-conflicts/。');
+        console.error('   文件里可能还留着本次注入的痕迹，请人工确认后清理。\n');
+      }
+    }
+
+    // 还原时才发现有外来改动（改动恰好落在完整性检查之后那个窗口里）
+    // → 结论不可信，别再往下跑
+    if (foreignEdit !== null || restoreConflict !== null) {
+      environmentCompromised = [foreignEdit, restoreConflict].filter(Boolean).join('、');
+      break;
     }
 
     const restored = await runTest(m.testFile, m.testName, m.wholeFile, `${m.criterion}-restored`);
@@ -1575,8 +1723,11 @@ async function runChecks(): Promise<number> {
   if (environmentCompromised !== null) {
     console.error('\n❌ 跑批期间源文件被改动了 —— 这一轮的结论不可信，报告没有落盘。');
     console.error(`   受影响文件：${environmentCompromised}`);
-    console.error('   多半是同一个工作树里还有另一个注入检查在跑（互相改源码又互相还原）。');
-    console.error('   确认没有别的跑批在跑，再来一次。\n');
+    console.error('   两种可能：');
+    console.error('     · 同一个工作树里还有另一个注入检查在跑（互相改源码又互相还原）；');
+    console.error('     · 同一个工作树里还有**别人在改代码**（改动与注入撞在同一个文件上）。');
+    console.error('   还原时已经保护过对方的改动 —— 见上面「已反向还原注入」或备份路径。');
+    console.error('   确认没有别的跑批在跑、目标文件也没人在改，再来一次。\n');
     return 2;
   }
 
@@ -1598,6 +1749,8 @@ async function runChecks(): Promise<number> {
       `${JSON.stringify(
         {
           generated_by: 'spec/verify/mutation-check.ts',
+          // 报告是什么时候生成的 —— 与文件指纹一起，构成「这批结论对哪一版代码成立」
+          generated_at: new Date().toISOString(),
           total: results.length,
           unqualified: broken,
           cases: results.map((r) => ({
@@ -1605,10 +1758,28 @@ async function runChecks(): Promise<number> {
             description: r.description,
             mutated_file: r.file,
             verifier: r.wholeFile ? `${r.testFile}（整文件）` : `${r.testFile}::${r.testName}`,
+            // 指纹要能定位到**文件**，不能只有用例名 ——
+            // 追溯矩阵要拿它跟当前的文件内容比对（见 spec/verify/evidenceFreshness.ts）
+            verifier_file: r.testFile,
             baseline_pass: r.baseline,
             caught: r.caught,
             restored_pass: r.restored,
             note: r.note,
+            // ---- 文件指纹：这批结论是对**哪一版代码**成立的 ----
+            //
+            // 「验证器抓得住这个错」是**某一版**验证器与**某一版**实现的结论。
+            // 跑完之后验证器或实现被改过，这条结论就不再自动适用于当前代码 ——
+            // 而报告若不留下指纹，读者根本看不出这一点。
+            //
+            // 实测（2026-11-05）：报告生成后 20 分钟内就有 21 个源文件、
+            // 1 个验证器被改过 —— 88 条结论里有 67 条已经对不上当前代码。
+            // 光看「不合格 0 个」完全看不出来。
+            //
+            // 源文件的指纹取**注入前**的原文（r.sourceSha256），不是还原完再读一遍：
+            // 还原万一没还原干净，事后再读读到的就是被改坏的内容，
+            // 指纹会跟当前文件对得上 —— 一份自己给自己作证的死报告。
+            verifier_sha256: sha256OfFile(r.testFile),
+            source_sha256: r.sourceSha256,
             // 只有失败时才留输出 —— 报告是给人看的，不是日志转储
             output_tail:
               r.baseline && r.caught && r.restored
@@ -1695,4 +1866,12 @@ async function main(): Promise<number> {
   }
 }
 
-process.exit(await main());
+/**
+ * 只有**直接跑这个文件**时才启动跑批。
+ *
+ * 被别的模块 `import` 时（比如追溯矩阵要读 MUTATIONS 做对账），
+ * 绝不能顺手把整轮注入检查跑起来 —— 那是十几分钟的跑批，还会改源码。
+ */
+if (import.meta.main) {
+  process.exit(await main());
+}
