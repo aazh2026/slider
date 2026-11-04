@@ -9,9 +9,33 @@
     <meta property="og:description" content="AI-native Presentation Creation Platform: Content Generation, Slide IR, SVG Rendering, Smart Editing & Multi-Format Export" />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
+    <!--
+      字体样式表必须**非阻塞**加载。
+
+      一张 pending 的**渲染阻塞**样式表会连带**阻塞脚本执行** ——
+      外部字体 CDN 不可达时，<script type="module"> 一直不跑，
+      React 应用永远挂不上，整页白屏（连 /api/auth/me 都不会发）。
+
+      这不是"慢"，是"起不来"：E2E 里表现为每条用例都卡在 page.goto('/') 上，
+      最后以 180s 超时收场，看不出是实现的锅还是外网的锅。
+
+      media="print" 让这张表不匹配当前媒体类型 ⇒ 不参与渲染阻塞 ⇒ 不挡脚本；
+      加载完成后 onload 把它切回 all 生效。
+      CDN 拿不到时字体退回 src/index.css 里的系统字体兜底
+      （'Plus Jakarta Sans', system-ui, sans-serif 等），页面照常可用。
+
+      依据：docs/backend-features.md TPL-12「字体资源托管 …… 服务端渲染不依赖外网」、
+      EXP-12「resvg fontBuffers 注册本地字体」、docs/architecture.md ADR-009
+      「渲染字体 vendored 进仓库，不运行时拉外网」。
+    -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
+    >
   </head>
   <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased font-sans selection:bg-blue-500/20 selection:text-blue-700">
     <div id="root"></div>
