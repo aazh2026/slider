@@ -17,6 +17,7 @@
  */
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import type { Dirent } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -29,6 +30,17 @@ import {
   type FingerprintedCase,
 } from './evidenceFreshness.ts';
 import { reconcile, reconciliationQualifier, renderReconciliationSection } from './anchorHealth.ts';
+import {
+  assessVerdict,
+  dependencyClosure,
+  groupStale,
+  listFiles,
+  renderVerdictFreshnessSection,
+  summarizeVerdicts,
+  verdictFreshnessQualifier,
+  type EvidenceSource,
+  type VerdictAssessment,
+} from './verdictFreshness.ts';
 // 只取定义，不跑批 —— mutation-check.ts 里有 `import.meta.main` 守卫，
 // 被 import 时不会启动那十几分钟的跑批。
 import { MUTATIONS } from './mutation-check.ts';
@@ -378,6 +390,88 @@ function criteriaList(items: Array<{ criterion: string }>): string {
 }
 
 // ---------------------------------------------------------------------------
+// 主证据的新鲜度
+// ---------------------------------------------------------------------------
+//
+// 「PASS 65 / FAIL 0」是一份**静态文件**里的结论 —— 它记录的是**跑批那一刻**的代码。
+// 跑完之后动过实现，那 65 条 PASS 里有几条还在说当前代码？读者没有别的办法知道。
+//
+// 判定口径（见 spec/verify/verdictFreshness.ts）：
+//   · 单元 / 集成 —— 按**验证器文件的 import 闭包**逐条归属：
+//     闭包里的文件在证据之后被动过 → 这条结论已过期。
+//   · E2E —— Playwright 规格**不 import** 前端代码，它的闭包里没有前端与服务端。
+//     所以 E2E 的依赖按**整条链**算：前端 + 服务端 + 领域内核，任何一个被动过，
+//     E2E 结论就过期。归因到文件级做不到，这一点必须写在矩阵里，不能藏。
+
+/** 仓库相对路径 → 读文件（读不到返回 null） */
+function readRepo(rel: string): string | null {
+  try {
+    return readFileSync(resolve(ROOT, rel), 'utf-8');
+  } catch {
+    return null;
+  }
+}
+
+/** 仓库相对路径 → 修改时间（毫秒，不在树里返回 null） */
+function mtimeRepo(rel: string): number | null {
+  try {
+    return statSync(resolve(ROOT, rel)).mtimeMs;
+  } catch {
+    return null;
+  }
+}
+
+/** 仓库相对路径 → 在不在树里 */
+function existsRepo(rel: string): boolean {
+  try {
+    statSync(resolve(ROOT, rel));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** 毫秒 → 人话时间 */
+function fmtTime(ms: number): string {
+  const d = new Date(ms);
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(
+    d.getMinutes()
+  )}:${p(d.getSeconds())}`;
+}
+
+/**
+ * 「这条结论跑出来时，整条链是什么样」的源码范围。
+ *
+ * E2E 走真实浏览器 + 真实服务端，任何一个源文件被动过都可能影响它。
+ */
+const APP_SCOPE_ROOTS = ['packages/core/src', 'apps/api/src', 'src'];
+
+/** 递归列出目录下的 .ts / .tsx（仓库相对路径） */
+function walkSources(rel: string, out: string[] = []): string[] {
+  let entries: Dirent[];
+  try {
+    entries = readdirSync(resolve(ROOT, rel), { withFileTypes: true });
+  } catch {
+    return out;
+  }
+  for (const e of entries) {
+    if (e.name === 'node_modules' || e.name.startsWith('.')) continue;
+    const child = `${rel}/${e.name}`;
+    if (e.isDirectory()) walkSources(child, out);
+    else if (/\.(ts|tsx)$/.test(e.name)) out.push(child);
+  }
+  return out;
+}
+
+/** 一条判据对应的那次执行（junit 用例） */
+function junitHitOf(a: Acceptance, junit: JunitCase[]): JunitCase | undefined {
+  const [file, caseName] = a.verification.target.split('::');
+  if (!caseName) return undefined;
+  return junit.find((c) => c.name === caseName && c.file === file);
+}
+
+// ---------------------------------------------------------------------------
 // 主流程
 // ---------------------------------------------------------------------------
 
@@ -478,6 +572,95 @@ function main(): void {
     const verdicts = criteria.map((a) => verdictOf(a, junit));
     return { clause, criteria, verdicts, verdict: worstOf(verdicts) };
   });
+
+  // --- 主证据的新鲜度 ---
+  //
+  // 每一条 PASS/FAIL 都是**跑批那一刻**的结论。这里逐条判定：
+  // 它依赖的文件，在证据生成之后被动过没有？
+  const evidenceTimes = new Map<string, number>();
+  const evidenceSources: EvidenceSource[] = [];
+  for (const { label } of JUNIT_FILES) {
+    const t = mtimeRepo(label);
+    if (t === null) continue;
+    evidenceTimes.set(label, t);
+    evidenceSources.push({ label, at: fmtTime(t) });
+  }
+
+  const appScopeFiles = APP_SCOPE_ROOTS.flatMap((r) => walkSources(r));
+
+  const assessmentCache = new Map<string, VerdictAssessment>();
+  const closureCache = new Map<string, string[]>();
+  const verdictAssessments: Array<{
+    criterion: string;
+    assessment: VerdictAssessment;
+    isE2e: boolean;
+  }> = [];
+
+  for (const r of rows) {
+    for (const a of r.criteria) {
+      const v = verdictOf(a, junit);
+      if (v !== 'PASS' && v !== 'FAIL') continue; // 没有结论，谈不上过期
+      const hit = junitHitOf(a, junit);
+      if (!hit) continue;
+      const evidenceAt = evidenceTimes.get(hit.evidence);
+      if (evidenceAt === undefined) continue; // 证据文件不在，判不了
+
+      const isE2e = a.verification.target.startsWith('e2e/');
+      const key = `${hit.file}::${hit.evidence}::${isE2e ? 'e2e' : 'unit'}`;
+      let assessment = assessmentCache.get(key);
+      if (!assessment) {
+        assessment = isE2e
+          ? assessVerdict(hit.file, evidenceAt, readRepo, mtimeRepo, existsRepo, {
+              deps: appScopeFiles,
+              basis: 'E2E 走真实浏览器 + 服务端整条链，归因不到文件级',
+            })
+          : assessVerdict(hit.file, evidenceAt, readRepo, mtimeRepo, existsRepo);
+        assessmentCache.set(key, assessment);
+      }
+      verdictAssessments.push({ criterion: a.id, assessment, isE2e });
+    }
+  }
+
+  const verdictFreshness = summarizeVerdicts(
+    verdictAssessments.map((x) => ({ criterion: x.criterion, assessment: x.assessment }))
+  );
+
+  // 兜底：证据之后被动过、但**任何一条单元/集成结论的闭包都没覆盖**的源文件。
+  // 闭包覆盖不到的改动，逐条归属就看不见 —— 这一列是保守性的兜底。
+  const unitClosureFiles = new Set<string>();
+  for (const r of rows) {
+    for (const a of r.criteria) {
+      if (a.verification.target.startsWith('e2e/')) continue;
+      const hit = junitHitOf(a, junit);
+      if (!hit) continue;
+      let files = closureCache.get(hit.file);
+      if (!files) {
+        files = dependencyClosure([hit.file], readRepo, existsRepo).files;
+        closureCache.set(hit.file, files);
+      }
+      for (const f of files) unitClosureFiles.add(f);
+    }
+  }
+  const unitEvidenceAt = evidenceTimes.get('spec/evidence/junit.xml');
+  const uncoveredChanged =
+    unitEvidenceAt === undefined
+      ? []
+      : appScopeFiles.filter((f) => {
+          const t = mtimeRepo(f);
+          if (t === null || t <= unitEvidenceAt) return false;
+          return !unitClosureFiles.has(f);
+        });
+
+  // E2E 单独说一句 —— 它的依赖是整条链，不能跟单元/集成混在一个口径里。
+  const e2eEvidenceAt = evidenceTimes.get('spec/evidence/junit-e2e.xml');
+  const e2eChangedScope =
+    e2eEvidenceAt === undefined
+      ? []
+      : appScopeFiles.filter((f) => {
+          const t = mtimeRepo(f);
+          return t !== null && t > e2eEvidenceAt;
+        });
+  const e2eAssessed = verdictAssessments.filter((x) => x.isE2e);
 
   // --- 反向孤儿检查 ---
   // 判据 ID（AC-*）与条款 ID（SPEC-*）是两套命名空间，不能直接互相包含比较 ——
@@ -692,6 +875,30 @@ function main(): void {
     `> 「未覆盖（无判据）」的 ${uncoveredClauses} 条（${noAcceptance.join(', ') || '—'}）连判据都不存在，既不是 PASS 也不是 FAIL —— 见 §2.5。`
   );
   P();
+
+  // ---- 2.1.1 这批结论对应的是哪一版代码 ----
+  P('#### 2.1.1 这批结论对应的是哪一版代码');
+  P();
+  for (const line of renderVerdictFreshnessSection(
+    verdictFreshness,
+    evidenceSources,
+    uncoveredChanged
+  )) {
+    P(line);
+  }
+  P();
+  if (e2eAssessed.length > 0) {
+    P(
+      `> **E2E 的依赖只能按整条链算**：Playwright 规格通过浏览器操作页面、通过 HTTP 打到服务端，` +
+        `它的 import 闭包里**没有**前端与服务端的代码。` +
+        (e2eChangedScope.length > 0
+          ? `本次有 **${e2eChangedScope.length} 个源文件**在 E2E 证据之后被改过（${listFiles(
+              e2eChangedScope
+            )}），因此 **${e2eAssessed.length} 条 E2E 结论全部已过期**。`
+          : `本次 E2E 证据之后没有源文件被改过，${e2eAssessed.length} 条 E2E 结论仍然成立。`)
+    );
+    P();
+  }
 
   // ---- 2.2 失败明细 ----
   P('### 2.2 失败明细');
@@ -937,10 +1144,14 @@ function main(): void {
   P('### 实际验证了什么');
   P();
   P(
-    `- 真的跑了证据集（\`bun test spec/verify/ packages/core/tests/ apps/api/tests/ ./scripts/check-coverage.check.ts ./apps/api/tests/perf/export-latency.bench.ts\`）：**${junitCases} 个用例，${junitFailed} 失败，${junitPassed} 通过**，覆盖 ${junitFiles} 个测试文件`
+    `- 真的跑了证据集（\`bun test spec/verify/ packages/core/tests/ apps/api/tests/ ./scripts/check-coverage.check.ts ./apps/api/tests/perf/export-latency.bench.ts\`）：**${junitCases} 个用例，${junitFailed} 失败，${junitPassed} 通过**，覆盖 ${junitFiles} 个测试文件` +
+      verdictFreshnessQualifier(verdictFreshness)
   );
   P(
-    `- 真的跑了前后端集成 E2E（\`bun test ${e2eChainFiles.map((f) => `./${f}`).join(' ')}\`，Playwright 驱动真实 Chromium + 真实服务端）：**${e2eCases} 个用例，${e2eFailed} 失败**`
+    `- 真的跑了前后端集成 E2E（\`bun test ${e2eChainFiles.map((f) => `./${f}`).join(' ')}\`，Playwright 驱动真实 Chromium + 真实服务端）：**${e2eCases} 个用例，${e2eFailed} 失败**` +
+      (e2eAssessed.length > 0 && e2eChangedScope.length > 0
+        ? ` —— 其中 ${e2eAssessed.length} 条结论**已过期**（证据之后整条链被动过，见 §2.1.1）`
+        : '')
   );
   P(
     `- 真的跑了 \`python3 spec/verify/spec-schema.py\`：Spec 结构校验通过（${spec.clauses.length} 条条款 / ${totalCriteria} 条判据引用完整）`
@@ -959,6 +1170,20 @@ function main(): void {
   P();
   P('### 哪些结论仍不可信');
   P();
+  if (verdictFreshness.stale > 0 || verdictFreshness.unknown > 0) {
+    const staleGroups = groupStale(verdictFreshness.staleDetails);
+    const families = new Set(
+      verdictFreshness.staleCriteria.map((c) => c.replace(/-\d+$/, ''))
+    );
+    P(
+      `- **${verdictFreshness.stale} 条结论已过期、${verdictFreshness.unknown} 条说清不了新鲜度**` +
+        `（涉及 ${staleGroups.length} 个验证器文件、${families.size} 个判据族：${[...families]
+          .sort()
+          .join('、')}）` +
+        ` —— 它们是**跑批那一刻**的结论，证据之后动过依赖的文件；逐条见 §2.1.1。` +
+        `**已过期 ≠ 已失败**，但也不能当成对当前代码的证明`
+    );
+  }
   P(
     `- **${unmutatedCriteria.length} 条判据没有做注入错误检查**（${unmutatedCriteria.join('、')}）—— 它们的 PASS 只来自「测试跑过了」，没有被元验证证明「抓得住错」`
   );
@@ -1005,6 +1230,9 @@ function main(): void {
   console.log(`注入检查：${mutation.total} 个用例，不合格 ${mutation.unqualified} 个`);
   console.log(
     `注入对账：定义 ${reconciliation.defined} / 报告 ${reconciliation.reported} / 跑不起来 ${reconciliation.broken.length} / 缺报告 ${reconciliation.notInReport.length} / 孤儿 ${reconciliation.orphanInReport.length}`
+  );
+  console.log(
+    `主证据新鲜度：结论 ${verdictFreshness.total} 条 —— 仍然成立 ${verdictFreshness.fresh} / 已过期 ${verdictFreshness.stale} / 说清不了 ${verdictFreshness.unknown} / 文件已不在 ${verdictFreshness.missing}`
   );
 }
 
