@@ -95,6 +95,40 @@ const MUTATIONS: Mutation[] = [
     testFile: 'e2e/workbench.e2e.ts',
     testName: 'AC-CORE-011 工作台画布在屏幕上保持 16:9，不出现信箱边',
   },
+  // ---- SPEC-CORE-009 画布完整可见、完整可达 ----
+  //
+  // 注入的是**同一类错误**：用普通 `center` 给一个可能溢出的滚动内容居中。
+  // 溢出量被平均分到两侧，左侧那半落在负坐标上 —— 滚多少都看不见。
+  // 判据必须失败（AC-CORE-012 断言起始边不被裁 + 整段溢出都可滚）。
+  {
+    criterion: 'AC-CORE-012',
+    description: '水平方向把 safe center 改回普通 center —— 溢出的一半被推到不可达的左侧',
+    file: 'src/components/Workbench.tsx',
+    find: 'justify-[safe_center]',
+    replace: 'justify-center',
+    testFile: 'e2e/workbench.e2e.ts',
+    testName: 'AC-CORE-012 画布放大超出可视区后，左右上下都滚得到，不被裁掉',
+  },
+  {
+    criterion: 'AC-CORE-012',
+    description: '垂直方向把 safe center 改回普通 center —— 溢出的一半被推到不可达的顶部',
+    file: 'src/components/Workbench.tsx',
+    find: 'items-[safe_center]',
+    replace: 'items-center',
+    testFile: 'e2e/workbench.e2e.ts',
+    testName: 'AC-CORE-012 画布放大超出可视区后，左右上下都滚得到，不被裁掉',
+  },
+  // 注入的是**同一类错误**：适配缩放只在挂载时算一次，容器尺寸变了也不重算
+  // → 缩放档位停在旧值上，画布比可视区宽，超出的一侧被裁掉。
+  {
+    criterion: 'AC-CORE-013',
+    description: '不再观察容器尺寸变化 —— 缩放档位停在旧值上，画布不再适配新的可视区',
+    file: 'src/components/Workbench.tsx',
+    find: '    ro.observe(el);\n    fitZoomToContainer();',
+    replace: '    fitZoomToContainer();',
+    testFile: 'e2e/workbench.e2e.ts',
+    testName: 'AC-CORE-013 容器尺寸变化后缩放档位自动重新适配，画布不被裁掉',
+  },
   // ---- SPEC-CORE-002 元素不越界 ----
   {
     criterion: 'AC-CORE-002',

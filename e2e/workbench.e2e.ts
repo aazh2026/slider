@@ -291,6 +291,200 @@ describe('工作台链（真实浏览器 + 真实服务端）', () => {
     }
   }, TEST_TIMEOUT);
 
+  // ---------------------------------------------------------------------------
+  // AC-CORE-012 —— 画布超出可视区时，溢出的两侧都**滚得到**
+  //
+  // 2026-11-05 实测到的真实缺陷：滚动容器写的是 `justify-content: center`。
+  // 放大到超过适配档位后画布比可视内容区宽，center 会把溢出量**平均分到两侧**，
+  // 而滚动容器只能往右滚 —— 左边那一半落在负坐标上，滚多少都看不到。
+  // 实测 73% 缩放下左侧 460px 被裁掉且不可达（scrollLeft 已经是 0 了）。
+  //
+  // 这跟 SLD-02/SLD-04 是直接冲突的：位于幻灯片左侧的元素根本没法选中、没法拖。
+  // 而这一类缺陷断言是抓不到的 —— DOM 里元素都在，只是"屏幕上看不见"。
+  // ---------------------------------------------------------------------------
+  test('AC-CORE-012 画布放大超出可视区后，左右上下都滚得到，不被裁掉', async () => {
+    const session = await harness.newSession();
+    try {
+      await registerAndEnterApp(session);
+      await createProjectViaUi(session, unique('E2E 画布可达项目'));
+      await generateOutlineViaUi(session, { topic: unique('E2E 画布可达主题'), pageCount: 4 });
+      await confirmOutlineViaUi(session);
+
+      const canvas = session.page.getByTestId('slide-canvas');
+      await canvas.waitFor({ state: 'visible', timeout: 30_000 });
+      await session.page.waitForTimeout(400);
+
+      // 放大到超过「适配缩放」—— 让画布确实比可视内容区宽
+      for (let i = 0; i < 6; i++) {
+        await session.page.getByTestId('wb-zoom-in').click();
+        await session.page.waitForTimeout(40);
+      }
+      await session.page.waitForTimeout(400);
+
+      const m = await session.page.evaluate(() => {
+        const canvas = document.querySelector('[data-testid="slide-canvas"]');
+        if (!canvas) return null;
+        const holder = canvas.parentElement;
+        const placeholder = holder?.parentElement;
+        const viewport = placeholder?.parentElement;
+        if (!viewport || !placeholder) return null;
+
+        const cs = getComputedStyle(viewport);
+        const padL = parseFloat(cs.paddingLeft);
+        const padT = parseFloat(cs.paddingTop);
+        const padR = parseFloat(cs.paddingRight);
+        const padB = parseFloat(cs.paddingBottom);
+        const vr = viewport.getBoundingClientRect();
+        // 可视内容区（去掉内边距）—— 画布能看见的范围
+        const contentLeft = vr.x + padL;
+        const contentTop = vr.y + padT;
+        const contentW = viewport.clientWidth - padL - padR;
+        const contentH = viewport.clientHeight - padT - padB;
+
+        const ph = placeholder.getBoundingClientRect();
+
+        // 滚到最左 / 最上：幻灯片的起始边必须还在视野里
+        viewport.scrollLeft = 0;
+        viewport.scrollTop = 0;
+        const atStart = canvas.getBoundingClientRect();
+        // 滚到最右 / 最下：幻灯片的末端边必须能滚进视野
+        viewport.scrollLeft = 999_999;
+        viewport.scrollTop = 999_999;
+        const atEnd = canvas.getBoundingClientRect();
+        const maxScrollLeft = viewport.scrollWidth - viewport.clientWidth;
+        const maxScrollTop = viewport.scrollHeight - viewport.clientHeight;
+        viewport.scrollLeft = 0;
+        viewport.scrollTop = 0;
+
+        return {
+          contentLeft,
+          contentTop,
+          contentW,
+          contentH,
+          phW: ph.width,
+          phH: ph.height,
+          startX: atStart.x,
+          startY: atStart.y,
+          endRight: atEnd.x + atEnd.width,
+          endBottom: atEnd.y + atEnd.height,
+          maxScrollLeft,
+          maxScrollTop,
+        };
+      });
+
+      expect(m).not.toBeNull();
+      const d = m!;
+
+      // --- 前置：这条用例必须真的处在「画布比可视区宽」的状态，否则它没测到东西 ---
+      expect(d.phW).toBeGreaterThan(d.contentW + 100);
+      expect(d.phH).toBeGreaterThan(d.contentH + 100);
+
+      // --- 起始边不能被裁掉：滚到最左时，画布左边缘落在内容框内 ---
+      expect(d.startX).toBeGreaterThanOrEqual(d.contentLeft - 1);
+      expect(d.startY).toBeGreaterThanOrEqual(d.contentTop - 1);
+
+      // --- 末端边必须能滚进来：滚到最右时，画布右边缘贴住内容框右边界 ---
+      expect(d.endRight).toBeGreaterThanOrEqual(d.contentLeft + d.contentW - 2);
+      expect(d.endRight).toBeLessThanOrEqual(d.contentLeft + d.contentW + 2);
+      expect(d.endBottom).toBeGreaterThanOrEqual(d.contentTop + d.contentH - 2);
+      expect(d.endBottom).toBeLessThanOrEqual(d.contentTop + d.contentH + 2);
+
+      // --- 整段溢出都必须可滚：scrollLeft 的行程 == 溢出量，而不是溢出量的一半 ---
+      // （`justify-content: center` 的症状正是这里只给了一半）
+      expect(d.maxScrollLeft).toBeGreaterThanOrEqual(d.phW - d.contentW - 2);
+      expect(d.maxScrollTop).toBeGreaterThanOrEqual(d.phH - d.contentH - 2);
+    } finally {
+      await session.close();
+    }
+  }, TEST_TIMEOUT);
+
+  // ---------------------------------------------------------------------------
+  // AC-CORE-013 —— 缩放档位始终跟着容器走
+  //
+  // 适配缩放如果只按"挂载时那一次"的容器尺寸算，容器一变宽它就停在旧值上：
+  // 画布比可视区宽 → 多出来的一侧被裁掉（AC-CORE-012 那个坑）。
+  // 容器尺寸会因很多原因变：窗口缩放、左右面板收起/展开、面板换宽度。
+  // 这里用「改变窗口宽度」来验证：改完之后画布必须重新适配到新的可视区。
+  // ---------------------------------------------------------------------------
+  test('AC-CORE-013 容器尺寸变化后缩放档位自动重新适配，画布不被裁掉', async () => {
+    const session = await harness.newSession();
+    try {
+      await registerAndEnterApp(session);
+      await createProjectViaUi(session, unique('E2E 画布适配项目'));
+      await generateOutlineViaUi(session, { topic: unique('E2E 画布适配主题'), pageCount: 4 });
+      await confirmOutlineViaUi(session);
+
+      const canvas = session.page.getByTestId('slide-canvas');
+      await canvas.waitFor({ state: 'visible', timeout: 30_000 });
+      await session.page.waitForTimeout(500);
+
+      const read = async () =>
+        session.page.evaluate(() => {
+          const canvas = document.querySelector('[data-testid="slide-canvas"]');
+          if (!canvas) return null;
+          const holder = canvas.parentElement;
+          const placeholder = holder?.parentElement;
+          const viewport = placeholder?.parentElement;
+          if (!viewport || !placeholder) return null;
+          const cs = getComputedStyle(viewport);
+          const padL = parseFloat(cs.paddingLeft);
+          const padT = parseFloat(cs.paddingTop);
+          const vr = viewport.getBoundingClientRect();
+          const contentW = viewport.clientWidth - padL - parseFloat(cs.paddingRight);
+          const contentH = viewport.clientHeight - padT - parseFloat(cs.paddingBottom);
+          const box = canvas.getBoundingClientRect();
+          return {
+            contentW,
+            contentH,
+            canvasW: box.width,
+            canvasH: box.height,
+            contentLeft: vr.x + padL,
+            contentTop: vr.y + padT,
+            canvasX: box.x,
+            canvasY: box.y,
+          };
+        });
+
+      const before = await read();
+      expect(before).not.toBeNull();
+
+      // 把窗口拉宽 —— 画布容器随之变宽
+      await session.page.setViewportSize({ width: 1600, height: 900 });
+      await session.page.waitForTimeout(600);
+      const after = await read();
+      expect(after).not.toBeNull();
+
+      const a = after!;
+      const b = before!;
+
+      // 容器确实变宽了（否则这条用例没测到东西）
+      expect(a.contentW).toBeGreaterThan(b.contentW + 100);
+
+      // 画布必须重新适配到新的可视区。
+      // 注意"适配"是取宽高两个方向里**更紧的那个**（min(scaleW, scaleH)），
+      // 所以不能要求画布把两个方向都填满 —— 容器比 16:9 更宽时，
+      // 幻灯片按宽度贴合，高度方向本来就会留白。正确的判据是：
+      // 画布尺寸 == 按新容器算出来的适配尺寸（容差 20px：
+      // 适配缩放向下取整到 1%，最多差 0.01×1920 = 19.2px）。
+      const fit = Math.min(a.contentW / 1920, a.contentH / 1080);
+      const expectW = 1920 * fit;
+      const expectH = 1080 * fit;
+      expect(Math.abs(a.canvasW - expectW)).toBeLessThanOrEqual(20);
+      expect(Math.abs(a.canvasH - expectH)).toBeLessThanOrEqual(20);
+
+      // 且任何方向都不许超出可视内容区（超出 = 被裁掉）
+      expect(a.canvasW).toBeLessThanOrEqual(a.contentW + 1);
+      expect(a.canvasH).toBeLessThanOrEqual(a.contentH + 1);
+
+      // 画布必须完整落在可视内容区里（左上角不被切）
+      expect(a.canvasX).toBeGreaterThanOrEqual(a.contentLeft - 1);
+      expect(a.canvasY).toBeGreaterThanOrEqual(a.contentTop - 1);
+    } finally {
+      await session.page.setViewportSize({ width: 1280, height: 720 }).catch(() => undefined);
+      await session.close();
+    }
+  }, TEST_TIMEOUT);
+
   test('AC-E2E-006 就地改文本 → 防抖写回服务端，并产生新版本号', async () => {
     const session = await harness.newSession();
     try {

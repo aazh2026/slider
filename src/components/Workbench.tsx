@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import {
   Undo2,
   Redo2,
@@ -163,22 +163,47 @@ export const Workbench: React.FC<WorkbenchProps> = ({
         const scaleW = availableW / 1920;
         const scaleH = availableH / 1080;
         const calculated = Math.min(scaleW, scaleH);
-        setZoomLevel(Math.max(0.2, Math.min(1.4, Math.round(calculated * 100) / 100)));
+        // **向下取整**，不向上取整：适配缩放的语义是「装得下」。
+        // 向上取整最多会多出 0.005×1920 ≈ 9.6px，
+        // 而画布一旦比可视内容区宽，多出来的部分就会被裁掉（见下面的 safe 对齐说明）。
+        setZoomLevel(Math.max(0.2, Math.min(1.4, Math.floor(calculated * 100) / 100)));
       }
     }
   }, []);
 
-  useEffect(() => {
-    // Slight delay to allow CSS transitions to finish before recalculating
-    const timer = setTimeout(() => {
+  /**
+   * 适配缩放：容器尺寸一变就重算。
+   * ---------------------------------------------------------------------------
+   * 为什么不用 `window.resize`（2026-11-05 实测出来的坑）：
+   * 容器变宽**不一定**是窗口变宽 —— 左右面板收起/展开、面板换宽度都会改容器宽度；
+   * 窗口变宽也**不一定**改容器宽度（外面还有别的栏）。
+   * 只监听 window.resize，缩放档位就会停在旧值上：
+   * 画布比可视区宽 → 超出的一侧被裁掉且滚不到（见下面的 safe 对齐说明）。
+   *
+   * 为什么用 `useLayoutEffect` 而不是 `useEffect`：
+   * 初次挂载时 zoomLevel 的初值是 0.55（画布 1056px 宽），
+   * useEffect 在**首帧画出来之后**才跑 —— 那一帧用户看到的就是一张被裁掉的画布。
+   * useLayoutEffect 在浏览器绘制之前跑，首帧就是适配好的。
+   */
+  useLayoutEffect(() => {
+    const el = canvasContainerRef.current;
+    if (!el) return;
+    let lastW = 0;
+    let lastH = 0;
+    const ro = new ResizeObserver(() => {
+      const rect = el.getBoundingClientRect();
+      // 用**边框盒**判断容器是不是真的变了：
+      // clientWidth/clientHeight 不含滚动条，滚动条一出现高度就少 15px，
+      // 拿它当触发条件会「适配 → 冒出滚动条 → 高度又变了 → 再适配」地来回抖。
+      if (Math.abs(rect.width - lastW) < 0.5 && Math.abs(rect.height - lastH) < 0.5) return;
+      lastW = rect.width;
+      lastH = rect.height;
       fitZoomToContainer();
-    }, 120);
-    window.addEventListener('resize', fitZoomToContainer);
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('resize', fitZoomToContainer);
-    };
-  }, [isLeftRailCollapsed, isRightInspectorCollapsed, fitZoomToContainer]);
+    });
+    ro.observe(el);
+    fitZoomToContainer();
+    return () => ro.disconnect();
+  }, [fitZoomToContainer]);
 
   // Click outside to close Insert Menu
   useEffect(() => {
@@ -1192,7 +1217,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
             setSelectedElementId(null);
             setEditingTextElementId(null);
           }}
-          className="flex-1 overflow-auto flex items-center justify-center p-6 relative"
+          className="flex-1 overflow-auto flex items-[safe_center] justify-[safe_center] p-6 relative"
           style={{
             backgroundImage: showGrid
               ? 'radial-gradient(circle, rgba(148, 163, 184, 0.25) 1px, transparent 1px)'
@@ -1212,6 +1237,16 @@ export const Workbench: React.FC<WorkbenchProps> = ({
             上下留大片空白 —— 画布看起来是竖着的，幻灯片只剩四分之一高。
             外层给 flex 一个 shrink-0 的占位盒，尺寸正好等于缩放后的视觉尺寸，
             滚动区也不会因为 transform 不改变布局尺寸而出现幽灵滚动条。
+
+            为什么对齐要写 `safe center` 而不是 `center`（2026-11-05 实测）：
+            放大到超过适配档位后，画布比可视内容区宽。
+            `center` 会把**溢出量平均分到两侧**，而滚动容器只能往右滚 ——
+            左边那一半落在负坐标上，滚多少都看不到。
+            实测 73% 缩放下左侧 460px 被裁掉且不可达（scrollLeft 已经是 0 了）。
+            `safe center` 的语义是「放不下就退回起点对齐」：
+            放得下就居中，放不下就贴左/贴上，溢出全部甩到可滚动的那一侧。
+            （Chromium 之外的浏览器若不认识 `safe`，整条声明会被丢弃 →
+            退回 `flex-start`，同样安全，只是不再居中。）
           */}
           <div
             className="relative shrink-0 transition-all duration-100"
