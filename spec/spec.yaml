@@ -36,6 +36,9 @@ meta:
     - doc: "docs/test-cases.md"
       version: "2026-11-01"
       role: supplementary
+    - doc: "docs/quality-rules.md"
+      version: "2026-11-01"
+      role: supplementary
 
 conventions:
   error_shape:
@@ -520,8 +523,8 @@ clauses:
       - id: AC-QLT-002
         criterion: "构造一份仅有一页 canvas 为 1600×900、其余维度无缺陷的演示文稿，断言 structureScore 等于 85"
         oracle:
-          tier: self-derived
-          source: "src/engine/qualityEngine.ts 的扣分幅度（经 docs/backend-design.md §1.2 F7『原样搬到后端』追认）"
+          tier: authoritative
+          source: "docs/quality-rules.md §struct_dim —— 画布尺寸不符扣结构分 15（幅度以规则表为准；原幅度由现状实现追认，见 ADR-015）"
           confidence: medium
         verification:
           kind: test
@@ -548,8 +551,8 @@ clauses:
       - id: AC-QLT-003
         criterion: "构造一份含 1 个重复 ID 的演示文稿，断言 structureScore 等于 95；构造含 2 个重复 ID 的演示文稿，断言 structureScore 等于 90"
         oracle:
-          tier: self-derived
-          source: "src/engine/qualityEngine.ts 的扣分幅度（经 docs/backend-design.md §1.2 F7 追认）"
+          tier: authoritative
+          source: "docs/quality-rules.md §struct_id —— 元素 ID 重复扣结构分 5（幅度以规则表为准；原幅度由现状实现追认，见 ADR-015）"
           confidence: medium
         verification:
           kind: test
@@ -577,8 +580,8 @@ clauses:
       - id: AC-QLT-004
         criterion: "构造一个 x+width = 1921 的元素，断言 visualScore 等于 90；构造一个 x+width = 1920 的元素，断言 visualScore 等于 100"
         oracle:
-          tier: self-derived
-          source: "src/engine/qualityEngine.ts 的扣分幅度（经 docs/backend-design.md §1.2 F7 追认）"
+          tier: authoritative
+          source: "docs/quality-rules.md §vis_bounds —— 元素越界扣视觉分 10（幅度以规则表为准；原幅度由现状实现追认，见 ADR-015）"
           confidence: medium
         verification:
           kind: test
@@ -594,20 +597,21 @@ clauses:
     risk: medium
     status: active
     maturity: automated
-    statement: "任两个 card/layer 类元素的轴对齐包围盒在 10px 缓冲内相交时，视觉分必须被扣 8 分"
+    statement: "任两个 card/layer 类元素的轴对齐包围盒之间**间距不足 10px**（含相互重叠）时，视觉分必须被扣 8 分。10px 是**安全距**而非容差（AMB-004 裁决，见 DEC-014）"
     source:
       doc: "docs/backend-features.md"
       section: "§I 质量评估（QLT）· QLT-03"
-      quote: "卡片/层 AABB 碰撞检测（10px 缓冲）"
+      quote: "卡片/层 AABB 碰撞检测（10px 安全距 —— 间距不足 10px 即判碰撞，恰好 10px 判不碰撞）"
     boundaries:
-      - "本判据只覆盖『文档与实现两种读法一致』的区间：重叠 > 10px 判碰撞；间隙 > 10px 判不碰撞"
-      - "重叠 0~10px 与间隙 0~10px 区间两种读法结论相反（实现按 10px 容差容忍重叠），已登记为 AMB-004，本条不裁决"
+      - "间距恰好 10px 判**不**碰撞（安全距取到即算分开）"
+      - "间距的度量取两轴间隙的较大者：separation = max(dx, dy)，负值表示重叠"
+      - "只检查 role 为 card / layer 的元素；标题、副标题、徽标、指标卡不参与"
     acceptance:
       - id: AC-QLT-005
-        criterion: "构造两个卡片，其水平重叠量为 15px（区间 15 > 10，两种读法均判碰撞），断言 visualScore 等于 92；构造两个卡片，其水平间隙为 20px（区间 20 > 10，两种读法均判不碰撞），断言 visualScore 等于 100"
+        criterion: "构造两个卡片，其水平重叠量为 15px，断言 visualScore 等于 92；构造两个卡片，其水平间隙为 20px，断言 visualScore 等于 100；构造两个卡片，其水平重叠量为 5px（容差读法会放过，安全距读法判碰撞），断言 visualScore 等于 92；构造两个卡片，其水平间隙为 5px（容差读法会放过，安全距读法判碰撞），断言 visualScore 等于 92；构造两个卡片，其水平间隙恰好 10px，断言 visualScore 等于 100"
         oracle:
           tier: authoritative
-          source: "docs/backend-features.md §I QLT-03 —— 卡片/层 AABB 碰撞检测（10px 缓冲）；取文档与实现结论一致的重叠>10px 与间隙>10px 两个区间"
+          source: "docs/quality-rules.md §vis_collide —— 10px 是安全距：两块之间必须留出 10px 才算分开（AMB-004 裁决，见 DEC-014）"
           confidence: high
         verification:
           kind: test
@@ -634,8 +638,8 @@ clauses:
       - id: AC-QLT-006
         criterion: "构造一页 title 为 'ab'（2 字符），断言 contentScore 等于 85；构造一页 title 为 'abc'（3 字符），断言 contentScore 等于 100"
         oracle:
-          tier: self-derived
-          source: "src/engine/qualityEngine.ts 的扣分幅度（经 docs/backend-design.md §1.2 F7 追认）"
+          tier: authoritative
+          source: "docs/quality-rules.md §content_title —— 标题缺失或过短扣内容分 15（幅度以规则表为准；原幅度由现状实现追认，见 ADR-015）"
           confidence: medium
         verification:
           kind: test
@@ -662,8 +666,8 @@ clauses:
       - id: AC-QLT-007
         criterion: "构造一个非封面页且 keyMessage 为空的演示文稿，断言 contentScore 等于 92；构造一个 title_cover 且 keyMessage 为空的演示文稿，断言 contentScore 不因本项扣分"
         oracle:
-          tier: self-derived
-          source: "src/engine/qualityEngine.ts 的扣分幅度（经 docs/backend-design.md §1.2 F7 追认）"
+          tier: authoritative
+          source: "docs/quality-rules.md §content_keymsg —— 非封面页缺核心结论扣内容分 8（幅度以规则表为准；原幅度由现状实现追认，见 ADR-015）"
           confidence: medium
         verification:
           kind: test
@@ -691,8 +695,8 @@ clauses:
       - id: AC-QLT-008
         criterion: "构造 2 页且含 title_cover 的演示文稿，断言 consistencyScore 等于 85（仅触发页数惩罚）；构造 3 页但无 title_cover 的演示文稿，断言 consistencyScore 等于 90（仅触发缺封面惩罚）；构造 3 页且含 title_cover 的演示文稿，断言 consistencyScore 等于 100"
         oracle:
-          tier: self-derived
-          source: "src/engine/qualityEngine.ts 的扣分幅度（经 docs/backend-design.md §1.2 F7 追认）"
+          tier: authoritative
+          source: "docs/quality-rules.md §consist_count 与 §consist_cover —— 页数不足扣 15、缺封面扣 10（幅度以规则表为准；原幅度由现状实现追认，见 ADR-015）"
           confidence: medium
         verification:
           kind: test
@@ -828,6 +832,193 @@ clauses:
         verification:
           kind: test
           target: "spec/verify/quality-engine.test.ts::issues-declare-fixability"
+          command: "bun test ./spec/verify/quality-engine.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-QLT-013 规则表与文档必须对齐 ----
+  - id: SPEC-QLT-013
+    title: 质量规则的扣分幅度以规则表为准，规则表与文档必须逐行对齐
+    type: technical
+    risk: high
+    status: active
+    maturity: automated
+    statement: "扣分幅度的唯一真相源是 `docs/quality-rules.md` 的规则表；`packages/core/src/engine/qualityRules.ts` 是它的机器副本 —— 表多一行、文档少一节、或扣分幅度对不上，验收用例必须失败"
+    source:
+      doc: "docs/quality-rules.md"
+      section: "§2 规则总表"
+      quote: "`struct_dim` | `structure` | 15 | 是 | 画布尺寸必须是 1920×1080"
+    inference: "以前扣分幅度写死在引擎里（`totalStructurePenalties += 15`），判据只能自证；把幅度搬进规则表并让表与文档互相校验，判据才外部化"
+    boundaries:
+      - "规则表的**幅度**由 ADR-015 追认为契约（原幅度来自现状实现，不是独立推导出来的）"
+      - "规则表的**判据**必须逐条落地 —— 有规则没实现，或有实现没规则，都算漂移"
+    acceptance:
+      - id: AC-QLT-014
+        criterion: "逐条比对 `QUALITY_RULES` 与 `docs/quality-rules.md` 的规则总表，断言：① 两边条数相同；② 每条规则的维度、扣分幅度、是否可自动修复、判据文字四项全部相同"
+        oracle:
+          tier: authoritative
+          source: "docs/quality-rules.md §2 规则总表 —— 规则表是扣分幅度的权威依据；§1 记录了「幅度写在文档里、引擎从表里读」的决策"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/quality-rules.test.ts::rule-table-matches-doc"
+          command: "bun test ./spec/verify/quality-rules.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+      - id: AC-QLT-015
+        criterion: "断言每条规则在 `docs/quality-rules.md` 里都有对应的 `<a id=\"规则id\">` 锚点，且文档里**没有**表里不存在的孤儿锚点；每条规则的 `basis` 必须正好指向 `docs/quality-rules.md#<规则id>`"
+        oracle:
+          tier: authoritative
+          source: "docs/quality-rules.md §1 —— 规则 id 同时是诊断 id 的前缀，保证「诊断」与「规则」一一对应"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/quality-rules.test.ts::every-rule-has-doc-anchor"
+          command: "bun test ./spec/verify/quality-rules.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-QLT-014 诊断必须可追溯 ----
+  - id: SPEC-QLT-014
+    title: 每条诊断都必须能追溯到规则表里的一行
+    type: technical
+    risk: high
+    status: active
+    maturity: automated
+    statement: "质量引擎产出的每一条诊断，其 id 必须以某条规则的 id 为前缀（或与之相等）；规则表里的每一条规则都必须能被诊断触发 —— 没有诊断能命中的规则等于没写"
+    source:
+      doc: "docs/quality-rules.md"
+      section: "§1 为什么需要这张表"
+      quote: "规则 `id` 同时是**诊断 id 的前缀**"
+    boundaries:
+      - "全局性诊断（页数不足、缺封面）的 id 与规则 id 相等，不带后缀"
+      - "「每条规则都能被触发」用的是一份「什么毛病都有」的夹具 —— 少触发一条说明夹具没造出那个毛病，用例是空转的"
+    acceptance:
+      - id: AC-QLT-016
+        criterion: "构造一份含全部 11 类缺陷的演示文稿（外加一份 2 页文稿用于触发页数规则），断言：① 没有任何一条诊断的 id 无法追溯到规则表；② 11 条规则全部被至少一条诊断触发"
+        oracle:
+          tier: authoritative
+          source: "docs/quality-rules.md §2 规则总表 —— 11 条规则覆盖四个维度，每一条都必须有诊断能命中"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/quality-rules.test.ts::diagnostic-ids-map-to-rules"
+          command: "bun test ./spec/verify/quality-rules.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+      - id: AC-QLT-017
+        criterion: "构造一份仅有一页画布比例错误的演示文稿，断言其 structureScore === 100 − 规则表里 `struct_dim` 的扣分幅度（幅度改自规则表而非写死在引擎里）"
+        oracle:
+          tier: authoritative
+          source: "docs/quality-rules.md §1 —— 规则表是数据，评分器退化成它的解释器"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/quality-rules.test.ts::penalties-come-from-rule-table"
+          command: "bun test ./spec/verify/quality-rules.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-QLT-015 空话页 ----
+  - id: SPEC-QLT-015
+    title: 非封面页没有实质内容件扣内容分 8
+    type: technical
+    risk: medium
+    status: active
+    maturity: automated
+    statement: "非封面页里 `role ∈ {card, layer, metric, badge, chart}` 的元素个数为 0 时，内容分必须被扣 8 分"
+    source:
+      doc: "docs/quality-rules.md"
+      section: "§3 content_thin"
+      quote: "非封面页里 `role ∈ {card, layer, metric, badge, chart}` 的元素个数"
+    inference: "标题、副标题、连接线、图标都不承载可汇报的信息；一页只有「标题 + 一句话结论 + 一个图标」时，它讲不出东西 —— 这是「数据正确」与「PPT 好」的交界，原规则表没有覆盖"
+    boundaries:
+      - "封面豁免本条（封面本就不该有卡片）"
+      - "与 `vis_sparse` 互斥 —— 同一页不因「没有内容」与「因此显得稀疏」重复扣两次分"
+    acceptance:
+      - id: AC-QLT-018
+        criterion: "构造一份第 2 页删掉了全部卡片的演示文稿，断言 contentScore 等于 92、visualScore 仍等于 100（不重复扣稀疏分），且存在 `content_thin_p2` 诊断；把封面的卡片删掉则不得出现任何 `content_thin_*` 诊断"
+        oracle:
+          tier: authoritative
+          source: "docs/quality-rules.md §3 content_thin —— 扣 8 分；与 vis_sparse 互斥；封面豁免"
+          confidence: medium
+        verification:
+          kind: test
+          target: "spec/verify/quality-engine.test.ts::thin-page-penalty"
+          command: "bun test ./spec/verify/quality-engine.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-QLT-016 跨页结论重复 ----
+  - id: SPEC-QLT-016
+    title: 不同页的核心结论重复扣内容分 10
+    type: technical
+    risk: medium
+    status: active
+    maturity: automated
+    statement: "把每页的 keyMessage 归一化（去空白、去标点、转小写）后分组，同一组里第 2..n 页各扣一次内容分 10"
+    source:
+      doc: "docs/quality-rules.md"
+      section: "§3 content_dup"
+      quote: "把每页的 `keyMessage` 归一化（去空白、去标点、转小写）后分组"
+    inference: "同一个结论在三页里各说一遍，观众听完只记住一件事 —— 内容分此前完全看不见这类缺陷"
+    boundaries:
+      - "封面不参与（封面的 keyMessage 常常是空的）"
+      - "空结论不参与（已由 content_keymsg 判，不重复扣分）"
+      - "一组 n 页扣 (n−1) 次 —— 第一页是「原版」，后面才是重复"
+    acceptance:
+      - id: AC-QLT-019
+        criterion: "构造一份第 3 页 keyMessage 与第 2 页一字不差的演示文稿，断言 contentScore 等于 90 且存在 `content_dup_p3` 诊断；把第 3 页的结论加上句号（归一化后等价）断言同样扣分；让封面与第 2 页结论相同则不得出现 `content_dup_*` 诊断"
+        oracle:
+          tier: authoritative
+          source: "docs/quality-rules.md §3 content_dup —— 扣 10 分；归一化后算同一句；封面不参与"
+          confidence: medium
+        verification:
+          kind: test
+          target: "spec/verify/quality-engine.test.ts::duplicate-keymessage-penalty"
+          command: "bun test ./spec/verify/quality-engine.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-QLT-017 留白过多 ----
+  - id: SPEC-QLT-017
+    title: 内容只盖住版心 20% 以下扣视觉分 8
+    type: technical
+    risk: medium
+    status: active
+    maturity: automated
+    statement: "一页里承载信息的元素的矩形并集（与内容安全区求交后）占内容安全区的比例低于 20% 时，视觉分必须被扣 8 分"
+    source:
+      doc: "docs/quality-rules.md"
+      section: "§3 vis_sparse"
+      quote: "面积占比 < 20% 即违例"
+    inference: "大片留白本身不违法，但一页 PPT 看起来像「没排完」；阈值 20% 是实测标定的 —— 真实版式覆盖率 30.8%–82.2%，「只有标题」的页面 9.5%"
+    boundaries:
+      - "用**矩形并集**而不是包围盒或面积之和（后者分别高估 53.6% 与 137.9%）"
+      - "与 `content_thin` 互斥 —— 同一页不重复扣两次分"
+      - "封面不豁免本条（真实封面覆盖率 30.8%，不会被误判）"
+    acceptance:
+      - id: AC-QLT-020
+        criterion: "构造一份第 2 页的内容块被缩到版心一角的演示文稿（约 11% 版心），断言 visualScore 等于 92、contentScore 仍等于 100（有卡片 → 不是空页），且存在 `vis_sparse_p2` 诊断"
+        oracle:
+          tier: authoritative
+          source: "docs/quality-rules.md §3 vis_sparse —— 20% 阈值与矩形并集算法，附实测标定表"
+          confidence: medium
+        verification:
+          kind: test
+          target: "spec/verify/quality-engine.test.ts::sparse-page-penalty"
+          command: "bun test ./spec/verify/quality-engine.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+      - id: AC-QLT-021
+        criterion: "构造一份第 2 页删掉全部卡片的演示文稿（既空话又稀疏），断言 visualScore 等于 100、contentScore 等于 92，且不得出现任何 `vis_sparse_*` 诊断 —— 同一页不重复扣两次分"
+        oracle:
+          tier: authoritative
+          source: "docs/quality-rules.md §3 vis_sparse —— 与 content_thin 互斥"
+          confidence: medium
+        verification:
+          kind: test
+          target: "spec/verify/quality-engine.test.ts::thin-page-not-double-charged"
           command: "bun test ./spec/verify/quality-engine.test.ts"
           pass_when: "退出码 0，且该用例未被 skip"
         maturity: automated
@@ -2214,7 +2405,7 @@ ambiguities:
     question: "LAY-05 说「内容区 100px 边距、底部 1020px；元素不得越界」，而质量引擎按 1920×1080 画布判定越界。以哪一个为准？"
     impact: none
     blocks: []
-    proposed_default: "两者并存且不矛盾：画布判定用于质量扣分（现状，已被 F7 追认），安全区用于版式生成的布局约束（LAY-05）。本 Spec 按此解读记录为 DEC-002。"
+    proposed_default: "两者并存且不矛盾：画布判定用于质量扣分（现状，已被 F7 追认），安全区用于版式生成的布局约束（LAY-05）。本 Spec 按此解读记录为 DEC-002；波 0 的 ADR-014（越界判据取画布边界）与波 1 的 ADR-015（扣分幅度的真相源是规则表）把这一读法固化为实现与文档。"
     status: RESOLVED
 
   - id: AMB-003
@@ -2232,8 +2423,8 @@ ambiguities:
     question: "『卡片/层 AABB 碰撞检测（10px 缓冲）』有两种读法：(a) 10px 是容差 —— 重叠不超过 10px 不算碰撞；(b) 10px 是安全距 —— 两个盒子间距不足 10px 即算碰撞。两者在重叠 0~10px 与间隙 0~10px 区间结论相反。"
     impact: correctness
     blocks: []
-    proposed_default: "不阻塞：SPEC-QLT-005 的验收判据只取两种读法结论一致的区间（重叠 > 10px 判碰撞、间隙 > 10px 判不碰撞）。冲突区间留待产品/设计确认后单独成条。"
-    status: OPEN
+    proposed_default: "裁决为 DEC-014：取 **(b) 安全距**。两块之间必须留出 10px 才算「分开的」，间距 = max(dx, dy)（负值表示重叠），恰好 10px 判不碰撞。理由：容差读法会把间距 5px 的两张卡放过 —— 而 5px 间距的卡片在视觉上是糊成一块的，那正是这条规则要抓的缺陷。真实版式输出的最小间距是 20px 且零重叠，改成安全距语义不会误伤既有版式。"
+    status: RESOLVED
 
 conflicts:
   - id: CONF-001
@@ -2356,6 +2547,14 @@ decisions:
     decided_at: "2026-11-04"
     rationale: "五份设计文档**从头到尾没有规定页码从几开始** —— 这正是「不可判定就承认」要处理的情况。三条独立的线索指向同一个答案：(1) **形式化契约** —— packages/core/src/contracts/outline.ts 写死 `order: z.number().int().min(1)`，starterProjects 的样例数据也是 order 1..6；(2) **文档把两者绑在一起** —— docs/backend-features.md PRJ-10 / SLD-08「重排后同步更新 `order` 字段与 `slides.orderIndex`」，既然是同步字段，同基线是唯一自洽的读法；(3) **服务端别处的写法** —— slideService / quality 两处写库都是 `idx + 1`。前两条来自被测系统**之外**（领域内核的 Zod 契约 + 源文档），oracle tier 是 formal + authoritative，不是 self-derived。**可观测性说明**：前端从不直接读 orderIndex（页码用的是数组下标 `index + 1`），所以这个基线错了不会立刻在 UI 上暴露 —— 但它会经由导入端变成**静默**的数据损坏（排序键重复 → 页序随机化），所以必须在边界上挡住。"
     applies_to: [SPEC-EXP-005]
+
+  - id: DEC-014
+    question: AMB-004
+    decision: "10px 是**安全距**而非容差：两块之间必须留出 10px 才算『分开的』，否则判碰撞。间距取两轴间隙的较大者 separation = max(dx, dy)（负值表示重叠），**恰好 10px 判不碰撞**"
+    decided_by: "spec 化执行者"
+    decided_at: "2026-11-05"
+    rationale: "两种读法的结论只在 0~10px 的重叠带与 0~10px 的间隙带上相反，而这两条带正是**这条规则存在的理由**。容差读法（重叠 ≤ 10px 放过、间隙一律放过）意味着：两张卡之间只留 5px —— 视觉上已经糊成一块 —— 却被判为『没碰撞』，那这条规则只能抓「大面积糊在一起」，抓不住「挤在一起」这种更常见的失误。反过来安全距读法把「重叠 5px」也判为碰撞，这是对的：5px 的重叠在卡片带描边、带阴影的视觉语言里就是**压字**。**代价评估**：改判要确认不会误伤既有版式 —— 实测 8 种版式 × 8 套主题的真实输出，最小间距是 20px 且零重叠，所以安全距语义对既有输出零误报。这个读法还让 `separation` 的定义变得自洽：负值即重叠，0 即相接，正值即间隙，一个数覆盖三种关系，不需要为『相接』单开分支。"
+    applies_to: [SPEC-QLT-005]
 
 # ===========================================================================
 # 未决与已知限制

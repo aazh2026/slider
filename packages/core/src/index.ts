@@ -47,6 +47,14 @@ export type {
   ContentIssue,
 } from './engine/contentBinding';
 export { QualityEngine } from './engine/qualityEngine';
+export {
+  QUALITY_RULES,
+  ruleById,
+  penaltyOf,
+  fixableOf,
+  rulesOfDimension,
+} from './engine/qualityRules';
+export type { QualityDimension, QualityRule } from './engine/qualityRules';
 export { SVGRenderer } from './engine/svgRenderer';
 export { ExportEngine } from './engine/exportEngine';
 export {

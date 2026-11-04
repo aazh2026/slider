@@ -154,27 +154,34 @@ describe('SPEC-QLT-004 元素几何越界扣视觉分 10', () => {
 
 describe('SPEC-QLT-005 卡片 AABB 碰撞扣视觉分 8', () => {
   test('aabb-collision-penalty', () => {
-    // 重叠 15px —— 文档与实现两种读法都判碰撞
-    const overlapping = makeCleanProject();
-    overlapping.slides[1].elements.push(
-      makeElement('aabb_a', { role: 'card', geometry: { x: 200, y: 300, width: 300, height: 200 } })
-    );
-    overlapping.slides[1].elements.push(
-      makeElement('aabb_b', { role: 'card', geometry: { x: 485, y: 300, width: 300, height: 200 } })
-    );
-    const overlapReport = QualityEngine.evaluatePresentation(overlapping);
+    /** 造一页：左边一张卡 + 右边一张卡，横向间距由 gap 决定 */
+    function withTwoCards(secondX: number): ReturnType<typeof makeCleanProject> {
+      const project = makeCleanProject();
+      project.slides[1].elements.push(
+        makeElement('aabb_a', { role: 'card', geometry: { x: 200, y: 300, width: 300, height: 200 } })
+      );
+      project.slides[1].elements.push(
+        makeElement('aabb_b', { role: 'card', geometry: { x: secondX, y: 300, width: 300, height: 200 } })
+      );
+      return project;
+    }
+
+    // 重叠 15px —— 判碰撞
+    const overlapReport = QualityEngine.evaluatePresentation(withTwoCards(485));
     expect(overlapReport.visualScore).toBe(92);
     expect(overlapReport.issues.some((i) => i.dimension === 'visual')).toBe(true);
 
-    // 间隙 20px —— 文档与实现两种读法都判不碰撞
-    const separated = makeCleanProject();
-    separated.slides[1].elements.push(
-      makeElement('aabb_a', { role: 'card', geometry: { x: 200, y: 300, width: 300, height: 200 } })
-    );
-    separated.slides[1].elements.push(
-      makeElement('aabb_b', { role: 'card', geometry: { x: 520, y: 300, width: 300, height: 200 } })
-    );
-    expect(QualityEngine.evaluatePresentation(separated).visualScore).toBe(100);
+    // 间隙 20px —— 判不碰撞
+    expect(QualityEngine.evaluatePresentation(withTwoCards(520)).visualScore).toBe(100);
+
+    // 重叠 5px —— **容差读法会放过，安全距读法判碰撞**（AMB-004 裁决的分水岭）
+    expect(QualityEngine.evaluatePresentation(withTwoCards(495)).visualScore).toBe(92);
+
+    // 间隙 5px —— 同上：容差读法（间隙一律放过）会放过，安全距读法判碰撞
+    expect(QualityEngine.evaluatePresentation(withTwoCards(505)).visualScore).toBe(92);
+
+    // 间隙恰好 10px —— 安全距取到即算分开，判不碰撞
+    expect(QualityEngine.evaluatePresentation(withTwoCards(510)).visualScore).toBe(100);
   });
 });
 
@@ -454,5 +461,74 @@ describe('SPEC-QLT-012 每条诊断必须声明可否自动修复', () => {
     expect(bounds?.fixable).toBe(true);
     const title = report.issues.find((i) => i.id.startsWith('content_title_'));
     expect(title?.fixable).toBe(false);
+  });
+});
+
+describe('SPEC-QLT-015 非封面页没有实质内容件扣内容分 8', () => {
+  test('thin-page-penalty', () => {
+    const project = makeCleanProject();
+    // 把第 2 页的实质内容件（卡片）删掉 —— 只剩标题与结论
+    project.slides[1].elements = project.slides[1].elements.filter((el) => el.role !== 'card');
+
+    const report = QualityEngine.evaluatePresentation(project);
+    expect(report.contentScore).toBe(92);
+    expect(report.visualScore).toBe(100); // 稀疏判定与「空页」互斥，不重复扣
+    expect(report.issues.some((i) => i.id === 'content_thin_p2')).toBe(true);
+
+    // 封面豁免 —— 封面本就不该有卡片
+    const cover = makeCleanProject();
+    cover.slides[0].elements = cover.slides[0].elements.filter((el) => el.role !== 'card');
+    const coverReport = QualityEngine.evaluatePresentation(cover);
+    expect(coverReport.issues.some((i) => i.id.startsWith('content_thin_'))).toBe(false);
+  });
+});
+
+describe('SPEC-QLT-016 跨页核心结论重复扣内容分 10', () => {
+  test('duplicate-keymessage-penalty', () => {
+    const project = makeCleanProject();
+    // 第 3 页的核心结论与第 2 页一字不差
+    project.slides[2].keyMessage = project.slides[1].keyMessage;
+
+    const report = QualityEngine.evaluatePresentation(project);
+    expect(report.contentScore).toBe(90);
+    expect(report.issues.some((i) => i.id === 'content_dup_p3')).toBe(true);
+
+    // 归一化后算同一句 —— 标点与空格不算差异
+    const normalized = makeCleanProject();
+    normalized.slides[2].keyMessage = `${normalized.slides[1].keyMessage}。`;
+    expect(QualityEngine.evaluatePresentation(normalized).contentScore).toBe(90);
+
+    // 封面不参与重复判定
+    const withCover = makeCleanProject();
+    withCover.slides[0].keyMessage = withCover.slides[1].keyMessage;
+    expect(
+      QualityEngine.evaluatePresentation(withCover).issues.some((i) => i.id.startsWith('content_dup_'))
+    ).toBe(false);
+  });
+});
+
+describe('SPEC-QLT-017 内容只盖住版心 20% 以下扣视觉分 8', () => {
+  test('sparse-page-penalty', () => {
+    const project = makeCleanProject();
+    // 把第 2 页的内容块缩到版心一角：标题 + 结论 + 一张小卡片 ≈ 11% 版心
+    const card = project.slides[1].elements.find((el) => el.role === 'card')!;
+    card.geometry = { x: 100, y: 300, width: 200, height: 150 };
+
+    const report = QualityEngine.evaluatePresentation(project);
+    expect(report.visualScore).toBe(92);
+    expect(report.contentScore).toBe(100); // 有卡片 → 不是空页，不扣内容分
+    expect(report.issues.some((i) => i.id === 'vis_sparse_p2')).toBe(true);
+  });
+
+  test('thin-page-not-double-charged', () => {
+    // 「没有实质内容件」与「因此显得稀疏」是同一件事的两种说法 ——
+    // 同一页不重复扣两次分
+    const project = makeCleanProject();
+    project.slides[1].elements = project.slides[1].elements.filter((el) => el.role !== 'card');
+
+    const report = QualityEngine.evaluatePresentation(project);
+    expect(report.visualScore).toBe(100);
+    expect(report.contentScore).toBe(92);
+    expect(report.issues.filter((i) => i.id.startsWith('vis_sparse_'))).toEqual([]);
   });
 });

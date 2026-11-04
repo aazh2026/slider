@@ -172,7 +172,17 @@ export function slideTexts(slide: SlideIR): string[] {
   return slide.elements.flatMap((el) => collectStrings(el.content));
 }
 
-/** 造一个最小、无缺陷的 SlideIR —— 用于质量引擎的扣分断言基线 */
+/**
+ * 造一个最小、无缺陷的 SlideIR —— 用于质量引擎的扣分断言基线
+ * ---------------------------------------------------------------------------
+ * 「无缺陷」不只是没有报错，还必须**真的长得像一页 PPT**：
+ *   · 每页有一个实质内容件（卡片）—— 否则 `content_thin` 会扣分；
+ *   · 内容并集占版心足够多 —— 否则 `vis_sparse` 会扣分；
+ *   · 每页的标题与核心结论**互不相同** —— 否则 `content_dup` 会扣分。
+ * 这三条合起来意味着：夹具的几何必须与真实版式对得上（实测真实版式的
+ * 版心占用率是 53.6%–95.8%），否则基线本身就是脏的，后面所有扣分断言
+ * 都不可信。
+ */
 export function makeCleanSlide(
   slideId: string,
   layout: SlideLayoutType = 'cards_grid',
@@ -192,12 +202,64 @@ export function makeCleanSlide(
     },
   ];
 
-  if (!isCover) {
+  if (isCover) {
+    // 几何对齐真实 title_cover（kicker / maintitle / subtitle / accent_line / metacard）
+    elements.push({
+      id: `kicker_${slideId}`,
+      type: 'text',
+      role: 'badge',
+      content: `夹具封面眉标 ${slideId}`,
+      geometry: { x: 160, y: 240, width: 240, height: 36 },
+      style: {},
+      editable: true,
+      zIndex: 10,
+    });
+    elements.push({
+      id: `maintitle_${slideId}`,
+      type: 'text',
+      role: 'title',
+      content: `夹具封面标题 ${slideId}`,
+      geometry: { x: 160, y: 310, width: 1450, height: 180 },
+      style: {},
+      editable: true,
+      zIndex: 10,
+    });
+    elements.push({
+      id: `subtitle_${slideId}`,
+      type: 'text',
+      role: 'subtitle',
+      content: `夹具封面副标题 ${slideId}`,
+      geometry: { x: 160, y: 520, width: 1200, height: 80 },
+      style: {},
+      editable: true,
+      zIndex: 10,
+    });
+    elements.push({
+      id: `metacard_${slideId}`,
+      type: 'shape',
+      role: 'card',
+      content: `夹具封面信息卡 ${slideId}`,
+      geometry: { x: 160, y: 720, width: 1100, height: 130 },
+      style: {},
+      editable: true,
+      zIndex: 10,
+    });
+  } else {
+    elements.push({
+      id: `header_${slideId}`,
+      type: 'text',
+      role: 'subtitle',
+      content: `夹具页面眉标 ${slideId}`,
+      geometry: { x: 100, y: 55, width: 800, height: 30 },
+      style: {},
+      editable: true,
+      zIndex: 10,
+    });
     elements.push({
       id: `title_${slideId}`,
       type: 'text',
       role: 'title',
-      content: '夹具页面标题',
+      content: `夹具页面标题 ${slideId}`,
       geometry: { x: 100, y: 90, width: 1350, height: 60 },
       style: {},
       editable: true,
@@ -207,8 +269,19 @@ export function makeCleanSlide(
       id: `keymsg_${slideId}`,
       type: 'text',
       role: 'subtitle',
-      content: '核心结论：夹具核心结论',
+      content: `核心结论：夹具核心结论 ${slideId}`,
       geometry: { x: 100, y: 155, width: 1450, height: 36 },
+      style: {},
+      editable: true,
+      zIndex: 10,
+    });
+    // 实质内容件 —— 放在版心右侧，不与 SPEC-QLT-005 注入的卡片（x∈[200,800]）打架
+    elements.push({
+      id: `card_${slideId}`,
+      type: 'shape',
+      role: 'card',
+      content: `夹具内容卡 ${slideId}`,
+      geometry: { x: 1000, y: 240, width: 700, height: 680 },
       style: {},
       editable: true,
       zIndex: 10,
@@ -218,9 +291,9 @@ export function makeCleanSlide(
   return {
     slideId,
     order: 1,
-    title: '夹具页面标题',
+    title: `夹具页面标题 ${slideId}`,
     purpose: '夹具目的',
-    keyMessage: '夹具核心结论',
+    keyMessage: `夹具核心结论 ${slideId}`,
     speakerNotes: '',
     visualIntent: 'fixture',
     layout: { type: layout },
