@@ -25,6 +25,30 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '../..');
 const REPORT_PATH = resolve(ROOT, 'spec/evidence/mutation-report.json');
 
+/**
+ * 子集跑的落盘位置 —— **绝不能盖掉全量报告**。
+ * ---------------------------------------------------------------------------
+ * `mutation-report.json` 是追溯矩阵「注入错误检查」一节**唯一**的数据来源。
+ * 而 `MUTATION_CHECK_ONLY` 是调试开关 —— 迭代某个验证器时用它只跑一条，
+ * 几秒钟就出结果。
+ *
+ * 原先子集跑照样覆盖整份报告，于是：
+ *   「跑完一轮全量 → 顺手验一条锚点 → 报告只剩那一条 →
+ *     下一轮追溯矩阵把另外 87 条判据全判成「没做注入检查」」
+ *
+ * 方向特别危险：追溯矩阵会把这件事如实写成「这些判据没做元验证」，
+ * 读起来像"这条判据没人管" —— **没有人会来查**。
+ * （实测踩过：只想验一条锚点，报告从 88 条变成 1 条。）
+ *
+ * 所以子集跑写**独立文件**，全量报告一个字节都不动 ——
+ * 与 `spec/verify/run-e2e.ts` 对 E2E 证据用的是同一条纪律。
+ */
+function reportPathFor(subset: boolean): string {
+  return subset
+    ? resolve(ROOT, 'spec/evidence/mutation-report-partial.json')
+    : REPORT_PATH;
+}
+
 interface Mutation {
   /** 判据 ID —— 出问题时要能追溯回 Spec */
   criterion: string;
@@ -367,12 +391,17 @@ const MUTATIONS: Mutation[] = [
     testName: 'consistency-penalties',
   },
   // ---- SPEC-QLT-010 自动修复 ID 重排 ----
+  //
+  // 锚点跟着实现走：ID 重排现在**保留语义前缀**，只改后半截
+  // （`header_s1` → `header_s1_1`，不是 `text_s1_1`）——
+  // 注入点必须落在那一行上，否则「锚点未命中」，
+  // 报告里就是一条「注入未执行」，判据等于没被元验证过。
   {
     criterion: 'AC-QLT-010',
     description: '自动修复不再重排元素 ID（保留重复 ID）',
     file: 'packages/core/src/engine/qualityEngine.ts',
-    find: 'el.id = `${el.type}_${slide.slideId}_${eIdx}`;',
-    replace: '// mutation: 不再重排 ID',
+    find: '        el.id = `${semantic}_${slide.slideId}_${idx}`;',
+    replace: '        // mutation: 不再重排 ID',
     testFile: 'spec/verify/quality-engine.test.ts',
     testName: 'autofix-restores-id-uniqueness',
   },
@@ -499,15 +528,16 @@ const MUTATIONS: Mutation[] = [
     testName: 'missing-slides-field-is-rejected',
   },
   // ---- SPEC-QLT-009 自动修复不制造越界 ----
+  //
+  // 锚点跟着实现走：现在**只有真越出画布的元素**才会被挪回安全区，
+  // 没越界的一个坐标都不动。注入点落在那一处调用上 ——
+  // 去掉它，越界的元素就留在画布外，判据必须失败。
   {
     criterion: 'AC-QLT-009',
-    description: '自动修复不再收窄超宽元素（修复后仍然越界）',
+    description: '自动修复不再把越出画布的元素挪回安全区（修复后仍然越界）',
     file: 'packages/core/src/engine/qualityEngine.ts',
-    find:
-      '          if (el.geometry.x + el.geometry.width > SAFE_RIGHT) {\n' +
-      '            el.geometry.width = Math.max(1, SAFE_RIGHT - el.geometry.x);\n' +
-      '          }',
-    replace: '          // mutation: 不收窄超宽元素',
+    find: '        clampIntoSafeArea(el);',
+    replace: '        // mutation: 不把越界元素挪回安全区',
     testFile: 'spec/verify/quality-engine.test.ts',
     testName: 'autofix-restores-bounds',
   },
@@ -1372,12 +1402,12 @@ async function main(): Promise<number> {
   /**
    * 只跑指定判据 —— `MUTATION_CHECK_ONLY=AC-E2E-011,AC-E2E-012`。
    *
-   * 迭代某个验证器时用：整轮 59 个用例要十几分钟，只验一条是几秒。
-   * 注意这是**调试开关**，报告落盘时依然会覆盖整份报告 ——
-   * 所以只在迭代时用，正式出报告必须跑全量。
+   * 迭代某个验证器时用：整轮 88 个用例要十几分钟，只验一条是几秒。
+   * 子集跑的证据写**独立文件**（见 reportPathFor），全量报告一个字节都不动。
    */
   const only = process.env['MUTATION_CHECK_ONLY'];
   const onlySet = only ? new Set(only.split(',').map((s) => s.trim())) : null;
+  const reportPath = reportPathFor(onlySet !== null);
 
   for (const m of MUTATIONS) {
     if (onlySet && !onlySet.has(m.criterion)) continue;
@@ -1510,9 +1540,9 @@ async function main(): Promise<number> {
 
   // 落盘机器可读结果 —— 追溯矩阵的「注入错误检查」一节由它生成，不手写
   if (!dryRun) {
-    mkdirSync(dirname(REPORT_PATH), { recursive: true });
+    mkdirSync(dirname(reportPath), { recursive: true });
     writeFileSync(
-      REPORT_PATH,
+      reportPath,
       `${JSON.stringify(
         {
           generated_by: 'spec/verify/mutation-check.ts',
