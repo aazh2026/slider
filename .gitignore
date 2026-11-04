@@ -25,3 +25,6 @@ spec/evidence/mutation-report-partial.json
 # Claude Code 调度器的运行时锁 —— 每个工作目录一份、随进程生命周期变化，
 # 入库只会带来无意义的冲突
 .claude/scheduled_tasks.lock
+
+# 注入检查的跑批互斥锁 —— 随进程生命周期变化，入库只会带来无意义的冲突
+spec/evidence/.mutation-check.lock

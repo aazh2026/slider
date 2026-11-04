@@ -20,10 +20,18 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { startServers, type ServerHandle } from './servers';
+import { acquireMutationLock } from './mutationLock';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '../..');
 const REPORT_PATH = resolve(ROOT, 'spec/evidence/mutation-report.json');
+
+/**
+ * 跑批互斥锁 —— 见 `spec/verify/mutationLock.ts` 的文件头。
+ *
+ * 锁放在**工作树里**，不是 /tmp：要防的正是「同一个工作树里两个跑批互相踩」。
+ */
+const LOCK_PATH = resolve(ROOT, 'spec/evidence/.mutation-check.lock');
 
 /**
  * 子集跑的落盘位置 —— **绝不能盖掉全量报告**。
@@ -1367,7 +1375,7 @@ function serverTail(run: RunResult): string {
   return `\n--- 该轮服务端日志（失败轮）---\n${tail(run.serverLog, 60)}`;
 }
 
-async function main(): Promise<number> {
+async function runChecks(): Promise<number> {
   const results: Array<{
     criterion: string;
     description: string;
@@ -1408,6 +1416,12 @@ async function main(): Promise<number> {
   const only = process.env['MUTATION_CHECK_ONLY'];
   const onlySet = only ? new Set(only.split(',').map((s) => s.trim())) : null;
   const reportPath = reportPathFor(onlySet !== null);
+
+  /**
+   * 跑批期间源文件被**别人**动过 —— 一旦发生，这一轮的结论全部不可信。
+   * 记下受影响文件，跑完直接作废（不落报告），而不是把不可信的结论写进去。
+   */
+  let environmentCompromised: string | null = null;
 
   for (const m of MUTATIONS) {
     if (onlySet && !onlySet.has(m.criterion)) continue;
@@ -1488,12 +1502,34 @@ async function main(): Promise<number> {
 
     // 2) 注入
     try {
+      const injected = new Map<string, string>();
       for (const f of files) {
         let src = originals.get(f)!;
         for (const e of edits.filter((x) => x.file === f)) src = src.replace(e.find, e.replace);
+        injected.set(f, src);
         writeFileSync(resolve(ROOT, f), src, 'utf-8');
       }
       const mutated = await runTest(m.testFile, m.testName, m.wholeFile, `${m.criterion}-mutated`);
+
+      // ---- 环境完整性：注入还在不在？ ----
+      //
+      // 跑批期间源文件被人动过（另一个跑批在同一个工作树里抢），
+      // 验证器跑的就不是我们注入的那份代码 —— 这一条结论**不可信**。
+      //
+      // 实测症状（2026-11-05）：对方把注入还原了，我们这边浏览器里跑的是
+      // 干净源码 → 验证器通过 → 被记成「验证器抓不到这个错」。
+      // 验证器没毛病，是环境被抢了 —— 这种结论一旦落进报告，
+      // 下一步就会去"修"一个没毛病的验证器。
+      //
+      // 所以这里**直接判环境被污染**，整轮作废，不落报告。
+      const tampered = files.filter(
+        (f) => readFileSync(resolve(ROOT, f), 'utf-8') !== injected.get(f)!
+      );
+      if (tampered.length > 0) {
+        environmentCompromised = tampered.join('、');
+        break;
+      }
+
       results.push({
         criterion: m.criterion,
         description: m.description,
@@ -1526,6 +1562,22 @@ async function main(): Promise<number> {
   // 覆盖率证据还原 —— 注入期间的写入不代表真仓库的覆盖率
   if (coverageEvidenceBefore !== null) {
     writeFileSync(coverageEvidencePath, coverageEvidenceBefore, 'utf-8');
+  }
+
+  // ---- 环境被污染：整轮作废 ----
+  //
+  // 报告是追溯矩阵「注入错误检查」一节的唯一数据来源。
+  // 一旦有一轮的结论是「别的跑批抢走了源码」造成的，
+  // 把它落进报告 = 给追溯矩阵喂一条假结论 ——
+  // 读的人会以为那条判据的验证器有毛病，然后去"修"一个没毛病的验证器。
+  //
+  // 所以这里**不落盘**，直接以退出码 2 退出，并说清楚发生了什么。
+  if (environmentCompromised !== null) {
+    console.error('\n❌ 跑批期间源文件被改动了 —— 这一轮的结论不可信，报告没有落盘。');
+    console.error(`   受影响文件：${environmentCompromised}`);
+    console.error('   多半是同一个工作树里还有另一个注入检查在跑（互相改源码又互相还原）。');
+    console.error('   确认没有别的跑批在跑，再来一次。\n');
+    return 2;
   }
 
   let broken = 0;
@@ -1601,6 +1653,46 @@ async function main(): Promise<number> {
   }
   console.log('\n✅ 每个注入错误都被对应验证器抓到，且源文件已全部还原。');
   return 0;
+}
+
+/**
+ * 入口 —— 先拿互斥锁，再跑检查。
+ * ---------------------------------------------------------------------------
+ * 为什么必须互斥（2026-11-05 实测）：
+ *
+ *   注入检查会**改坏源码**再还原。两个跑批同时在一个工作树里跑，
+ *   结论两边都不可信，而且症状会被误读：
+ *
+ *     · 一边记「验证器抓不到注入错误」—— 冤枉了验证器（真凶是对方抢了源码）
+ *     · 另一边记「还原后没有重新 PASS」—— 假的失败（真凶是对方注入还没撤）
+ *
+ *   两种症状都会把整轮流水线判成红，而真正要修的东西根本不在验证器里。
+ *
+ *   所以这里**宁可直接拒绝启动**，也不产出一份不可信的结论：
+ *   拿不到锁就退出（退出码 2），并说清楚是谁占着、什么时候开始的。
+ */
+async function main(): Promise<number> {
+  const lock = acquireMutationLock(LOCK_PATH, {
+    pid: process.pid,
+    startedAt: new Date().toISOString(),
+  });
+
+  if (!lock.ok) {
+    console.error('\n❌ 同一个工作树里已经有另一个注入检查在跑 —— 这一轮不启动。');
+    if (lock.holder) {
+      console.error(`   占锁的是 pid ${lock.holder.pid}，开始于 ${lock.holder.startedAt || '未知时间'}。`);
+    }
+    console.error('   两个跑批会互相改源码又互相还原，两边的结论都不可信。');
+    console.error('   等它跑完再来；或者在另一个工作树里跑（那才是正解）。');
+    console.error(`   锁文件：${LOCK_PATH}\n`);
+    return 2;
+  }
+
+  try {
+    return await runChecks();
+  } finally {
+    lock.release();
+  }
 }
 
 process.exit(await main());
