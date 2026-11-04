@@ -14,22 +14,48 @@
  * 运行：
  *     bun run spec/verify/all.ts
  *
- * 退出码：0 = 全链路通过；1 = 有环节失败（具体哪一环看输出）。
+ * 退出码（判定逻辑在 spec/verify/pipelineVerdict.ts）：
+ *     0 = 全链路通过（每一层都跑出了结论，结论都是「通过」）
+ *     1 = 有结论，结论是「不通过」—— 判据不满足，不该放行
+ *     2 = 有环节**没跑出结论**—— 工具链/环境坏了，这一层的结论一律不算数
+ *
+ * **为什么「实现不满足判据」也要退出 1**
+ *
+ * 这一轮之前，判据执行与 E2E 两步的失败被标成「预期内」，退出码仍是 0，
+ * 终端还打印「✅ 工具链全绿」。可 docs/testing-strategy.md §7.1 写的是
+ * 「Stage 2 任何失败 → 阻断、Stage 3 E2E 失败 → 阻断」，
+ * SPEC-GOV-001 写的是「覆盖率不足 → 阻断发布」——
+ * 契约跟文档对不上时，以能说真话为准。
+ *
+ * **为什么还要 2**
+ *
+ * 「跑红了」和「压根没跑」是两件事：前者有结论（结论是坏的），
+ * 后者**没有结论**（旧证据不能拿来当这一版的证明）。
+ * 把两者混成同一个 0，就是把「没验证」说成「验证通过」。
  */
 
 import { spawn } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { startServers } from './servers';
 import { discoverChains, runE2eChains } from './run-e2e';
+import {
+  artifactFresh,
+  artifactStamp,
+  EXIT_CODE_MEANING,
+  pipelineVerdict,
+  type MtimeOf,
+  type PipelineVerdict,
+  type StepInput,
+} from './pipelineVerdict';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '../..');
 const EVIDENCE_DIR = resolve(ROOT, 'spec/evidence');
 
-interface Step {
+export interface Step {
   name: string;
   /** 命令式步骤 —— 直接跑 */
   cmd?: string[];
@@ -37,6 +63,17 @@ interface Step {
   run?: () => Promise<number>;
   /** 失败是否可接受 —— 实现缺陷导致的测试失败不算「工具链坏了」 */
   tolerateFailure: boolean;
+  /**
+   * 这一步产出的**结论证据**（相对仓库根）。
+   *
+   * **它是「这一步有没有跑出结论」的唯一判据**：
+   * 跑之前拍一次修改时间，跑完再拍一次 —— 两次一样就说明它压根没写这份证据，
+   * 这一步的结论**不算数**，哪怕它没报错。
+   *
+   * 没有声明证据的步骤（结构校验、类型检查）**不产出结论** ——
+   * 它们失败就是「工具链坏了」，退出码 2。
+   */
+  artifact?: string;
   /**
    * 这一步的 stderr 落盘到哪儿（相对 spec/evidence/）。
    *
@@ -53,20 +90,35 @@ interface Step {
    * 事后只剩一句"某某用例失败"，连根因的方向都没有。
    */
   stderrFile?: string;
+  /**
+   * 这一步的 stdout 要不要刷屏。
+   *
+   * 默认刷（跑批时看得见进度）；关掉只留 stderr 落盘。
+   * 测试里用得上 —— 让子进程的输出别混进测试报告里。
+   */
+  quiet?: boolean;
 }
 
-const STEPS: Step[] = [
+/**
+ * 全链路的步骤表。
+ *
+ * 导出是为了让「这张表本身对不对」也能被测到 ——
+ * 比如「每一步都声明了它产出哪份证据」，靠人记是记不住的。
+ */
+export const STEPS: Step[] = [
   {
     name: 'Spec 结构校验（JSON Schema 2020-12）',
     cmd: ['python3', 'spec/verify/spec-schema.py'],
     tolerateFailure: false,
     stderrFile: 'step-schema.txt',
+    // 不产出结论证据 —— 它失败就是「Spec/工具链坏了」，不是「判据不满足」
   },
   {
     name: '类型检查（验证器代码自身）',
     cmd: ['npx', 'tsc', '--noEmit'],
     tolerateFailure: false,
     stderrFile: 'step-typecheck.txt',
+    // 同上：类型检查失败 = 验证器代码本身跑不起来 = 没有结论
   },
   {
     // 证据集 = 判据真正被执行到的全部测试。
@@ -93,6 +145,8 @@ const STEPS: Step[] = [
     ],
     tolerateFailure: true,
     stderrFile: 'junit-output.txt',
+    // 结论证据 —— 这一步产出的 junit 就是追溯矩阵读的那一份
+    artifact: 'spec/evidence/junit.xml',
   },
   {
     // 前后端集成 E2E —— 真实浏览器 + 真实服务端。
@@ -105,20 +159,41 @@ const STEPS: Step[] = [
     name: '前后端集成 E2E（真实浏览器 + 真实服务端）',
     run: runE2e,
     tolerateFailure: true,
+    // 结论证据 —— 服务起不来时这个文件不会更新，
+    // 于是这一步是「没跑出结论」（退出码 2），而不是「E2E 失败」
+    artifact: 'spec/evidence/junit-e2e.xml',
   },
   {
     name: '注入错误检查（验证器的元验证）',
     cmd: ['bun', 'run', 'spec/verify/mutation-check.ts'],
     tolerateFailure: false,
     stderrFile: 'step-mutation.txt',
+    // 结论证据 —— 报告里有「不合格 N 个」的判定；
+    // 跑崩了报告就不会更新 → 「没跑出结论」
+    artifact: 'spec/evidence/mutation-report.json',
   },
   {
     name: '生成追溯矩阵',
     cmd: ['bun', 'run', 'spec/verify/traceability.ts'],
     tolerateFailure: false,
     stderrFile: 'step-traceability.txt',
+    artifact: 'spec/traceability.md',
   },
 ];
+
+/**
+ * 读一个文件的修改时间；文件不存在 → null。
+ *
+ * 用来给「结论证据」拍快照：跑之前拍一次，跑完再拍一次，
+ * 两次不一样才说明这一步真的产出了新证据。
+ */
+const mtimeRepo: MtimeOf = (path) => {
+  try {
+    return statSync(path).mtimeMs;
+  } catch {
+    return null;
+  }
+};
 
 /**
  * 跑一个命令式步骤，并把 stderr 落盘。
@@ -133,18 +208,20 @@ const STEPS: Step[] = [
  * 这是一条与浏览器无关的挂死路径，症状和 E2E 那条一模一样。
  * 用异步 spawn 把它从根上排掉。
  */
-async function runCmd(cmd: string[], stderrFile?: string): Promise<number> {
+async function runCmd(cmd: string[], stderrFile?: string, quiet?: boolean): Promise<number> {
   const proc = spawn(cmd[0]!, cmd.slice(1), {
     cwd: ROOT,
     // stdout 直接继承（应用的日志照常流式打屏），
     // stderr 接出来 —— 见 Step.stderrFile 的说明
-    stdio: ['inherit', 'inherit', 'pipe'],
+    stdio: ['inherit', quiet ? 'ignore' : 'inherit', 'pipe'],
     env: process.env,
   });
 
   const chunks: Buffer[] = [];
   proc.stderr?.on('data', (chunk: Buffer) => {
     chunks.push(chunk);
+    // quiet 时不往终端倒 —— 内容照样落进 stderrFile，诊断材料不丢
+    if (quiet) return;
     try {
       process.stderr.write(chunk);
     } catch {
@@ -212,77 +289,112 @@ async function runE2e(): Promise<number> {
  * 而"漏掉一条链"意味着"新用例没跑但报告说全绿"。
  */
 
-async function main(): Promise<number> {
-  mkdirSync(EVIDENCE_DIR, { recursive: true });
+/**
+ * 跑一个步骤，返回它的退出码与「结论证据是不是本轮产出的」。
+ */
+export async function runStep(
+  step: Step
+): Promise<{ code: number; artifactFresh: boolean }> {
+  const artifactPath = step.artifact ? resolve(ROOT, step.artifact) : undefined;
+  // 跑之前拍一张快照 —— 跑完再拍一张，两张不一样才说明证据是新的
+  const before = artifactPath ? artifactStamp(mtimeRepo, artifactPath) : 0;
 
-  const results: Array<{ name: string; code: number; ok: boolean; tolerated: boolean }> = [];
+  let code: number;
+  if (step.run) {
+    try {
+      code = await step.run();
+    } catch (err) {
+      console.error(`  步骤自身出错：${err instanceof Error ? err.message : String(err)}`);
+      code = 1;
+    }
+  } else {
+    const cmd = step.cmd!;
+    // 判据执行这一步要额外产出 junit 证据，供追溯矩阵消费
+    const args =
+      cmd[0] === 'bun' && cmd[1] === 'test'
+        ? [
+            ...cmd,
+            '--reporter=junit',
+            `--reporter-outfile=${resolve(ROOT, step.artifact ?? 'spec/evidence/junit.xml')}`,
+          ]
+        : cmd;
 
-  for (const step of STEPS) {
-    console.log(`\n${'='.repeat(72)}\n▶ ${step.name}\n${'='.repeat(72)}`);
+    code = await runCmd(args, step.stderrFile, step.quiet);
+  }
 
-    let code: number;
-    if (step.run) {
-      try {
-        code = await step.run();
-      } catch (err) {
-        console.error(`  步骤自身出错：${err instanceof Error ? err.message : String(err)}`);
-        code = 1;
-      }
-    } else {
-      const cmd = step.cmd!;
-      // 判据执行这一步要额外产出 junit 证据，供追溯矩阵消费
-      const args =
-        cmd[0] === 'bun' && cmd[1] === 'test'
-          ? [...cmd, '--reporter=junit', `--reporter-outfile=${join(EVIDENCE_DIR, 'junit.xml')}`]
-          : cmd;
+  const after = artifactPath ? artifactStamp(mtimeRepo, artifactPath) : 0;
+  return { code, artifactFresh: artifactPath ? artifactFresh(before, after) : false };
+}
 
-      code = await runCmd(args, step.stderrFile);
+/**
+ * 跑完整条链路，返回判定。
+ *
+ * **失败不中断后续步骤** —— 追溯矩阵必须照常生成，
+ * 否则「为什么红」这件事就永远没人看得见。
+ * 失败影响的是**退出码**，不是「还跑不跑」。
+ */
+export async function runPipeline(
+  steps: Step[],
+  opts: { quiet?: boolean } = {}
+): Promise<PipelineVerdict> {
+  const results: StepInput[] = [];
+
+  for (const step of steps) {
+    if (!opts.quiet) {
+      console.log(`\n${'='.repeat(72)}\n▶ ${step.name}\n${'='.repeat(72)}`);
     }
 
-    const ok = code === 0;
+    const { code, artifactFresh } = await runStep(step);
+
     results.push({
       name: step.name,
       code,
-      ok,
-      tolerated: !ok && step.tolerateFailure,
+      artifact: step.artifact,
+      artifactFresh,
+      tolerateFailure: step.tolerateFailure,
     });
   }
 
-  console.log(`\n${'='.repeat(72)}\n汇总\n${'='.repeat(72)}`);
-  for (const r of results) {
-    const tag = r.ok ? '✅ 通过' : r.tolerated ? '⚠️  失败（预期内：实现不满足判据）' : '❌ 失败';
-    console.log(`${tag}  ${r.name}${r.ok ? '' : `  (exit ${r.code})`}`);
+  const verdict = pipelineVerdict(results);
+
+  if (!opts.quiet) {
+    console.log(`\n${'='.repeat(72)}\n汇总\n${'='.repeat(72)}`);
+    for (const line of verdict.lines) console.log(line);
   }
 
-  const hardFailures = results.filter((r) => !r.ok && !r.tolerated);
-  if (hardFailures.length > 0) {
-    console.log(
-      `\n❌ ${hardFailures.length} 个环节失败：${hardFailures.map((r) => r.name).join('；')}`
-    );
-    console.log('   追溯矩阵已更新 —— 见 spec/traceability.md 的「失败明细」与「证据不足的结论」。');
-    return 1;
-  }
-
-  const tolerated = results.filter((r) => r.tolerated);
-  if (tolerated.length > 0) {
-    console.log(
-      `\n✅ 工具链全绿。判据执行中有 ${tolerated.length} 处失败 —— 那是**实现不满足判据**，不是工具坏了。`
-    );
-    console.log('   逐条根因见 spec/traceability.md §2.2。');
-  } else {
-    console.log('\n✅ 全链路通过。');
-  }
-  return 0;
+  return verdict;
 }
 
-const exitCode = await main();
+async function main(): Promise<number> {
+  mkdirSync(EVIDENCE_DIR, { recursive: true });
 
-// 显式等输出落盘再退 —— process.exit 不会等 stdout/stderr 的异步写完。
-// 管道场景下（`bun run spec/verify/all.ts > log.txt`）末尾的汇总会丢，
-// 而汇总恰恰是整轮跑批最该被看到的那几行。
-await new Promise<void>((resolve) => {
-  process.stdout.write('', () => {
-    process.stderr.write('', () => resolve());
+  const verdict = await runPipeline(STEPS);
+
+  console.log(`\n${verdict.headline}`);
+  if (verdict.exitCode === 1) {
+    console.log('   逐条根因见 spec/traceability.md §2.2「失败明细」。');
+  } else if (verdict.exitCode === 2) {
+    console.log(
+      '   没有结论的环节**不能**算通过 —— 修好环境（或让这一步真的产出证据）再跑一次。'
+    );
+  }
+  console.log(
+    `   退出码 ${verdict.exitCode} —— ${EXIT_CODE_MEANING[verdict.exitCode]}`
+  );
+
+  return verdict.exitCode;
+}
+
+if (import.meta.main) {
+  const exitCode = await main();
+
+  // 显式等输出落盘再退 —— process.exit 不会等 stdout/stderr 的异步写完。
+  // 管道场景下（`bun run spec/verify/all.ts > log.txt`）末尾的汇总会丢，
+  // 而汇总恰恰是整轮跑批最该被看到的那几行。
+  await new Promise<void>((resolve) => {
+    process.stdout.write('', () => {
+      process.stderr.write('', () => resolve());
+    });
   });
-});
-process.exit(exitCode);
+  process.exit(exitCode);
+}
