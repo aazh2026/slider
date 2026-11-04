@@ -21,6 +21,22 @@ function escapeXml(unsafe: string | null | undefined): string {
 }
 
 /**
+ * 把 SVG 片段还原成纯文本
+ *
+ * 渲染出来的文字可能被拆进多个 `<tspan>`（折行），也可能被截断（补省略号）。
+ * 判断「这段文字到底出现在页面上没有」时，要先把标记剥掉再比对文本本身。
+ */
+function markupText(markup: string): string {
+  return markup
+    .replace(/<[^>]*>/g, '')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&amp;/g, '&');
+}
+
+/**
  * 一个排版块
  * ---------------------------------------------------------------------------
  * 原生 SVG 没有 flex/grid，也不替我们折行 —— 每一段文字的字号、颜色、间距、
@@ -286,6 +302,24 @@ function contentBlocks(el: SlideElement, theme: TemplateTheme): TextBlock[] {
 }
 
 export class SVGRenderer {
+  /**
+   * 这个元素渲染之后，**页面上真的看得见**这段文字吗？
+   * ---------------------------------------------------------------------------
+   * 「IR 里有这段文字」不等于「页面上有这段文字」：
+   *   · 排版盒装不下的块会被整块丢弃（"装不下的块整块丢弃，不允许溢出版心"）
+   *   · 装得下但超长的行会被截断并补省略号
+   *
+   * 服务端的本地降级必须先过这一关再提交补丁 —— 否则会出现
+   * 「接口说改好了，页面却一点没变」，用户完全看不出发生过什么。
+   */
+  static rendersText(el: SlideElement, theme: TemplateTheme, needle: string): boolean {
+    const text = (needle ?? '').trim();
+    if (text.length === 0) return false;
+    // 折行可能吞掉行尾空格（wrapText 在空格处断行），比对前把空白统一去掉
+    const squash = (s: string) => s.replace(/\s+/g, '');
+    return squash(markupText(SVGRenderer.renderElement(el, theme))).includes(squash(text));
+  }
+
   /**
    * Generates a scrollbar-free inline SVG string designed for HTML embedding (without XML prolog, with 100% width/height and overflow hidden)
    */

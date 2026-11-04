@@ -34,6 +34,7 @@ import {
   SlideOutlineItemSchema,
   type SlideElement,
   type SlideIR,
+  type TemplateIR,
 } from '@ppt/core';
 
 import { ApiError } from '../errors';
@@ -517,16 +518,30 @@ projectRoutes.post(
       id: el.id,
       role: el.role,
       text: typeof el.content === 'string' ? el.content : extractText(el),
+      // 下面几项**只给本地降级用**，不进提示词：
+      //   content  —— 用来保持内容结构（字符串还是字符串、对象还是对象）
+      //   editable —— 用来避开背景这类改不动的元素
+      //   type/geometry/style —— 用来把元素重新渲染一遍，
+      //                            确认改动**真的画得出来**（排版盒装不下会被丢弃）
+      content: el.content,
+      editable: el.editable,
+      type: el.type,
+      geometry: el.geometry,
+      style: el.style,
     }));
 
     const agent = new EditAgent({ router: c.get('modelRouter') });
     const agentResult = await agent.generate({
       slideId: slide.slideId,
       instruction: body.instruction,
-      layout: 'cards_grid',
+      // 版式要报**这一页真实的版式** —— 早先写死 'cards_grid'，
+      // 模型拿到的版式信息从头到尾都是错的
+      layout: ir.layout?.type ?? 'cards_grid',
       currentContent: { bullets: [] },
       elementDigest,
       mode: body.mode,
+      // 主题只给本地降级做"画得出来"的验证，不进提示词
+      theme: (project.template as TemplateIR | undefined)?.theme,
     });
 
     const { IRPatchSchema } = await import('@ppt/core');
@@ -618,13 +633,45 @@ function mergeElements(ir: SlideIR, updates: SlideElement[]): SlideIR {
   return next;
 }
 
-/** 提取元素里的文本（用于 AI 元素摘要） */
+/**
+ * 提取元素里的文本（用于 AI 元素摘要）
+ *
+ * 结构化内容（卡片 `{title, items[]}`、指标卡 `{value, title, desc}`……）也要能读出文字 ——
+ * 早先只认 `{ text }` 一种形状，于是这类元素的摘要文本恒为空：
+ *   · 模型在提示词里看到的是一堆空字符串
+ *   · 本地降级按"文本非空"挑目标时，这些元素全部被排除
+ */
 function extractText(el: SlideElement): string {
   const c = el.content as unknown;
   if (typeof c === 'string') return c;
-  if (c && typeof c === 'object' && 'text' in c) {
-    const t = (c as { text?: unknown }).text;
-    if (typeof t === 'string') return t;
+  if (!c || typeof c !== 'object') return '';
+
+  const rec = c as Record<string, unknown>;
+  const parts: string[] = [];
+
+  for (const key of [
+    'text',
+    'title',
+    'desc',
+    'headline',
+    'subtitle',
+    'value',
+    'trend',
+    'phase',
+    'time',
+    'tag',
+  ]) {
+    const v = rec[key];
+    if (typeof v === 'string' && v.trim()) parts.push(v);
   }
-  return '';
+
+  for (const key of ['items', 'bullets', 'points', 'deliverables']) {
+    const v = rec[key];
+    if (!Array.isArray(v)) continue;
+    for (const item of v) {
+      if (typeof item === 'string' && item.trim()) parts.push(item);
+    }
+  }
+
+  return parts.join(' / ');
 }

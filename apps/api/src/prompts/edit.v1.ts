@@ -12,7 +12,41 @@
  */
 
 import type { PromptBundle } from './types';
-import type { SlideContent, SlideLayoutType } from '@ppt/core';
+import type {
+  ElementStyle,
+  ElementType,
+  Geometry,
+  SlideContent,
+  SlideLayoutType,
+} from '@ppt/core';
+
+export interface EditDigestEntry {
+  id: string;
+  role: string;
+  /** 元素的可见文本 —— 提示词与本地降级都用它 */
+  text: string;
+  /**
+   * 原始 content —— **只给本地降级用，不进提示词**。
+   *
+   * 本地降级要靠它保持内容结构（字符串还是字符串、对象还是对象）：
+   * 直接把 content 换成 `{ text }` 会让 `type: 'text'` 的元素在渲染时变成空白
+   * （渲染器对 text 类型只认字符串）。
+   */
+  content?: unknown;
+  /** 是否可编辑 —— **只给本地降级用**，用来避开背景这类改不动的元素 */
+  editable?: boolean;
+  /**
+   * 元素类型 —— **只给本地降级用**。
+   *
+   * 渲染器按 type 分派（text 认字符串、card 认结构化对象……），
+   * 本地降级要拿它把候选元素重新渲染一遍，才能确认改动**真的画得出来**。
+   */
+  type?: ElementType;
+  /** 几何 —— **只给本地降级用**（重建渲染用） */
+  geometry?: Geometry;
+  /** 样式 —— **只给本地降级用**（重建渲染用） */
+  style?: ElementStyle;
+}
 
 export interface EditPromptContext {
   slideId: string;
@@ -21,7 +55,7 @@ export interface EditPromptContext {
   /** 当前内容槽位摘要 —— 只传内容，不传几何 */
   currentContent: SlideContent;
   /** 元素摘要 —— id + role + 文本，不含 geometry */
-  elementDigest: Array<{ id: string; role: string; text: string }>;
+  elementDigest: EditDigestEntry[];
   mode?: 'content' | 'style' | 'layout';
 }
 
@@ -70,7 +104,13 @@ export function build(ctx: EditPromptContext): PromptBundle {
   lines.push('## 元素清单（只列出 id / 角色 / 文本 —— targetId 必须取自这里）');
   lines.push(
     ctx.elementDigest.length > 0
-      ? JSON.stringify(ctx.elementDigest, null, 2)
+      ? // 只投影 id / role / text —— content 与 editable 是给**本地降级**用的，
+        // 不进提示词（提示词契约不变，模型看到的元素清单始终是这三个字段）
+        JSON.stringify(
+          ctx.elementDigest.map((e) => ({ id: e.id, role: e.role, text: e.text })),
+          null,
+          2
+        )
       : '（当前页没有可编辑元素）'
   );
 
