@@ -70,6 +70,15 @@ export {
 export type { ElementLayer, ElementVariantSpec } from './engine/elementVariant';
 export { remapElementsToTheme, remapSlidesToTheme } from './engine/themeRemap';
 export {
+  estimateTextWidth,
+  wrapText,
+  charWidth,
+  isWideChar,
+  latinCharWidth,
+  profileTextWidth,
+} from './engine/textMetrics';
+export type { TextWidthProfile } from './engine/textMetrics';
+export {
   applyPatches,
   applyPatch,
   PatchApplyError,

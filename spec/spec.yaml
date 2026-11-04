@@ -1399,6 +1399,54 @@ clauses:
           pass_when: "退出码 0，且该用例未被 skip"
         maturity: automated
 
+  # ---- SPEC-RND-007 文本宽度估算必须区分全角与半角 ----
+  - id: SPEC-RND-007
+    title: 文本宽度估算必须区分全角与半角字符
+    type: technical
+    risk: medium
+    status: active
+    maturity: automated
+    statement: "文本宽度估算必须区分**全角字符**（CJK / 全角标点 / 韩文，按 1em 计）与**半角字符**（按标准西文 advance width 计，且不得低于真实字宽）；**折行结果的每一行，其估算宽度都不得超过可用宽度**"
+    source:
+      doc: "docs/architecture.md"
+      section: "§12 ADR-019"
+      quote: "**两路模型**：**全角字符**（CJK / 全角标点 / 韩文）按 1em —— 各家 CJK 字体都是等宽 1em，这一路不需要查表；**半角字符**按标准西文 advance width 表（Helvetica/Arial，单位 1/1000 em）。"
+    derived_from: SPEC-RND-006
+    inference: "ADR-011 把折行与截断交给渲染层自研，而「文字有多宽」只能估 —— 宽度模型就是折行的精度天花板：估窄了文字横向溢出容器（ADR-011 的硬约束被从下面捅破），估宽了白白多折一行。ADR-019 把旧口径「半角一律 0.56em」换成「全角 1em + 半角查标准西文 advance width 表 × 1.08 安全系数」，并要求折行结果不溢出。"
+    behaviors:
+      - when: "估算 'WWWW' 的宽度"
+        then: "不得低于 4 × 0.944em（估窄了会横向溢出排版盒）"
+      - when: "估算 'iiii' 的宽度"
+        then: "不得高于旧口径（4 × 0.56em）的一半（旧口径多估 2.5 倍，白白多折一行）"
+      - when: "把一段中英混排的文本折进一个给定宽度的排版盒"
+        then: "折出来的每一行，其估算宽度都 ≤ 可用宽度"
+    acceptance:
+      - id: AC-RND-007
+        criterion: "对 'WWWW'、'iiii'、'中英 mixed 混排' 等样本断言：① 全角字符宽度恰为 1em；② 半角字符宽度落在「标准西文 advance width」与「标准 × 1.08 安全系数」之间；③ 'WWWW' 的估算宽度不小于 4 × 0.944em、'iiii' 的估算宽度不大于旧口径（4 × 0.56em）的一半；④ 未知字符的兜底宽度不窄于数字；⑤ 宽度构成（profileTextWidth）的全角宽 + 半角宽等于总宽、字符计数正确"
+        oracle:
+          tier: expert
+          source: "docs/architecture.md §12 ADR-019 —— 半角按标准西文 advance width 表计宽并乘 1.08 安全系数；Helvetica/Arial 的字宽在实务上被当作「西文标准档」"
+          confidence: medium
+        verification:
+          kind: test
+          target: "spec/verify/text-metrics.test.ts::text-width-model-is-calibrated"
+          command: "bun test ./spec/verify/text-metrics.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+      - id: AC-RND-008
+        criterion: "对一组中英混排样本（含 'i WWWW m, W W W…'、'iiii iiii …'、纯 CJK 串）在 8 个可用宽度（40~600px）下折行，断言：① 每一行的估算宽度都 ≤ 可用宽度；② 折出来的内容不丢字（去掉空白后与原文一致）"
+        oracle:
+          tier: expert
+          source: "docs/architecture.md §12 ADR-019 —— 空格断行时尾段超宽必须退化为硬断，保证每一行的估算宽度都不超过可用宽度"
+          confidence: medium
+        verification:
+          kind: test
+          target: "spec/verify/text-metrics.test.ts::wrapped-lines-never-exceed-the-available-width"
+          command: "bun test ./spec/verify/text-metrics.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
 # ===========================================================================
 # E. IRPatch 协议（已实现 · 判据已可执行）
 # ===========================================================================
