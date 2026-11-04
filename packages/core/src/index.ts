@@ -17,6 +17,7 @@ export type {
   SlideLayoutType,
   ElementRole,
   ElementType,
+  ElementVariant,
   Geometry,
   ElementStyle,
   SlideElement,
@@ -36,11 +37,30 @@ export type { SlideContent } from './types/content';
 
 // ---- 引擎 ----
 export { LayoutEngine, splitBullet, contentBullets, distributeEvenly } from './engine/layoutEngine';
-export { bindContent, isLayoutContentConsistent } from './engine/contentBinding';
+export {
+  bindContent,
+  isLayoutContentConsistent,
+  validateContentForLayout,
+} from './engine/contentBinding';
+export type {
+  ContentValidation,
+  ContentIssue,
+} from './engine/contentBinding';
 export { QualityEngine } from './engine/qualityEngine';
 export { SVGRenderer } from './engine/svgRenderer';
 export { ExportEngine } from './engine/exportEngine';
-export { estimateTextWidth, wrapText } from './engine/textMetrics';
+export {
+  ELEMENT_VARIANTS,
+  ALL_ELEMENT_VARIANTS,
+  legacyVariantOf,
+  variantOf,
+  layerOf,
+  followsAccentColor,
+  idPrefixOf,
+  withVariants,
+} from './engine/elementVariant';
+export type { ElementLayer, ElementVariantSpec } from './engine/elementVariant';
+export { remapElementsToTheme, remapSlidesToTheme } from './engine/themeRemap';
 export {
   applyPatches,
   applyPatch,
@@ -70,5 +90,15 @@ export {
 
 // ---- 数据 ----
 export { BUILT_IN_TEMPLATES } from './data/templates';
-export { LAYOUT_VISUAL_INTENT, defaultVisualIntent } from './data/layoutIntents';
+export {
+  LAYOUT_VISUAL_INTENT,
+  defaultVisualIntent,
+  LAYOUT_SLOT_CONTRACTS,
+  slotContractOf,
+} from './data/layoutIntents';
+export type {
+  ContentSlotKey,
+  LayoutSlotContract,
+  SlotRequirement,
+} from './data/layoutIntents';
 export { createStarterProjects } from './data/starterProjects';

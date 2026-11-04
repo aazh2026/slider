@@ -35,6 +35,7 @@ import {
 } from '@ppt/core';
 import { BUILT_IN_TEMPLATES } from '@ppt/core';
 import { QualityEngine } from '@ppt/core';
+import { remapSlidesToTheme } from '@ppt/core';
 import { ProjectStorage } from './services/projectStorage';
 import { mergeProjectSummaries, pageCountOf } from './services/projectMerge';
 import { AuthService, type AuthUser } from './services/authService';
@@ -512,59 +513,9 @@ export default function App() {
     const applied = await handleApplyTemplate(targetTemplate);
     if (!applied) return;
 
-    const updatedSlides = currentProject.slides.map((s) => {
-      const newElements = s.elements.map((el) => {
-        if (el.role === 'background') {
-          return { ...el, style: { ...el.style, backgroundColor: targetTemplate.theme.backgroundColor } };
-        }
-        if (el.id.startsWith('header_')) {
-          return { ...el, style: { ...el.style, color: targetTemplate.theme.accentColor } };
-        }
-        if (el.role === 'title') {
-          return { ...el, style: { ...el.style, color: targetTemplate.theme.textPrimary } };
-        }
-        if (el.role === 'subtitle' || el.role === 'footer') {
-          return { ...el, style: { ...el.style, color: targetTemplate.theme.textSecondary } };
-        }
-        if (el.role === 'card' || el.role === 'layer' || el.role === 'metric') {
-          return {
-            ...el,
-            style: {
-              ...el.style,
-              backgroundColor: targetTemplate.theme.surfaceColor,
-              borderColor: targetTemplate.theme.surfaceBorder,
-              color: targetTemplate.theme.textPrimary,
-            },
-          };
-        }
-        if (el.role === 'badge') {
-          return {
-            ...el,
-            style: {
-              ...el.style,
-              color: targetTemplate.theme.accentColor,
-              backgroundColor: targetTemplate.theme.isDark
-                ? `${targetTemplate.theme.accentColor}20`
-                : `${targetTemplate.theme.accentColor}15`,
-              borderColor: targetTemplate.theme.accentColor,
-            },
-          };
-        }
-        if (el.role === 'divider') {
-          return {
-            ...el,
-            style: {
-              ...el.style,
-              color: el.id.includes('accent')
-                ? targetTemplate.theme.accentColor
-                : targetTemplate.theme.surfaceBorder,
-            },
-          };
-        }
-        return el;
-      });
-      return { ...s, elements: newElements };
-    });
+    // 主题重映射只有一份实现（packages/core/src/engine/themeRemap.ts）——
+    // 语义判断读 `variant` 字段，不猜 ID 字符串（ADR-018）。
+    const updatedSlides = remapSlidesToTheme(currentProject.slides, targetTemplate.theme);
 
     const updatedProject: PresentationProject = {
       ...currentProject,

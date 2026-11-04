@@ -21,6 +21,7 @@ import {
   QualityEngine,
   createStarterProjects,
   defaultVisualIntent,
+  withVariants,
   type PresentationProject,
   type PresentationRequirement,
   type SlideIR,
@@ -259,7 +260,12 @@ export const ProjectStorage = {
     const data = await api.get<{ slide: ServerSlide }>(
       `/api/projects/${projectId}/slides/${slideId}`
     );
-    return { slideId: data.slide.slideId, versionId: data.slide.versionId, ir: data.slide.ir };
+    // 老数据没有 `variant` 字段 —— 读进来时补齐，前端就只读字段、不猜 ID（ADR-018）
+    return {
+      slideId: data.slide.slideId,
+      versionId: data.slide.versionId,
+      ir: withVariants(data.slide.ir),
+    };
   },
 
   /** 创建项目 */

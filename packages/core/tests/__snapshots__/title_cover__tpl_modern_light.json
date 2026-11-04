@@ -16,6 +16,7 @@
   "elements": [
     {
       "id": "bg_s1",
+      "variant": "background",
       "type": "shape",
       "role": "background",
       "content": "",
@@ -33,6 +34,7 @@
     },
     {
       "id": "kicker_s1",
+      "variant": "kicker",
       "type": "badge",
       "role": "badge",
       "content": "黄金快照夹具核心结论",
@@ -58,6 +60,7 @@
     },
     {
       "id": "maintitle_s1",
+      "variant": "maintitle",
       "type": "text",
       "role": "title",
       "content": "黄金快照夹具标题",
@@ -79,6 +82,7 @@
     },
     {
       "id": "subtitle_s1",
+      "variant": "subtitle",
       "type": "text",
       "role": "subtitle",
       "content": "黄金快照夹具目的",
@@ -99,6 +103,7 @@
     },
     {
       "id": "accent_line_s1",
+      "variant": "accent_line",
       "type": "shape",
       "role": "divider",
       "content": "",
@@ -117,6 +122,7 @@
     },
     {
       "id": "metacard_s1",
+      "variant": "metacard",
       "type": "card",
       "role": "card",
       "content": {

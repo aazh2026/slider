@@ -63,6 +63,25 @@ export function makeOutline(partial: Partial<SlideOutlineItem> = {}): SlideOutli
   };
 }
 
+/**
+ * 某个版式适合的要点
+ * ---------------------------------------------------------------------------
+ * **`stats_kpi` 必须要点带数字** —— 契约表（`data/layoutIntents.ts`）里
+ * `stats_kpi` 的槽位要求是「metrics 至少 1 条，且条目里要有数字」，整页没有
+ * 数字时版式引擎会把它**降级成 `cards_grid`**（一页没有数字的「核心指标」
+ * 不是指标页）。
+ *
+ * 以前 64 组黄金快照用的是同一份无数字要点，于是 **`stats_kpi` 那 8 组
+ * 渲染出来的其实是 `cards_grid`** —— 「8 版式 × 8 主题」里有一个版式从来没被
+ * 真正测过。这里给指标页配带数字的要点，让 8 种版式**真的**各渲染各的。
+ */
+export function bulletsFor(layout: SlideLayoutType): string[] {
+  if (layout === 'stats_kpi') {
+    return ['85% 转化率提升', '1200 家客户接入', '3.5倍 回本周期', '99.9% 服务可用性'];
+  }
+  return ['快照要点一', '快照要点二', '快照要点三', '快照要点四'];
+}
+
 /** 抹掉时间戳类非确定性字段 —— 快照比较的前提（AC-GOV-002） */
 export function stripVolatile(slide: SlideIR): SlideIR {
   const clone = structuredClone(slide);
@@ -84,7 +103,7 @@ export function makeSnapshot(
   total = 12
 ): SlideIR {
   return LayoutEngine.generateSlideIR(
-    makeOutline({ layoutPreference: layout }),
+    makeOutline({ layoutPreference: layout, bulletPoints: bulletsFor(layout) }),
     theme,
     order,
     total

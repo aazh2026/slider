@@ -7,6 +7,7 @@
 
 import { describe, expect, test } from 'bun:test';
 import { QualityEngine } from '../../packages/core/src/engine/qualityEngine';
+import { variantOf } from '../../packages/core/src/engine/elementVariant';
 import type { PresentationProject, SlideIR } from '../../packages/core/src/types/slide';
 import {
   makeCleanProject,
@@ -254,7 +255,7 @@ const SEMANTIC_PREFIXES = [
 ];
 
 /** 母版元素 —— 它们本来就贴着画布边缘，修复时不得挪动 */
-const MASTER_PREFIXES = ['pagenum_', 'footernote_', 'header_', 'kicker_'];
+const MASTER_VARIANTS = ['pagenum', 'footernote', 'header', 'kicker'];
 
 /**
  * 元素 ID 的语义部分 —— 去掉末尾的页号段与序号段
@@ -283,7 +284,13 @@ describe('SPEC-QLT-009 自动修复只把真越出画布的元素挪回安全区
     ];
     // 注入越界元素与重复 ID
     slides[0].elements.push(
-      makeElement('bad_geo', { role: 'footer', geometry: { x: 40, y: 40, width: 1900, height: 900 } })
+      makeElement('bad_geo', {
+        role: 'footer',
+        // 语义住进字段（ADR-018）—— 修复后的 ID 由 variant 派生，
+        // 不再能从 ID 前缀认出它是哪个元素，所以这里按 variant 找。
+        variant: 'footer',
+        geometry: { x: 40, y: 40, width: 1900, height: 900 },
+      })
     );
     slides[1].elements[0].id = slides[0].elements[0].id;
 
@@ -291,7 +298,7 @@ describe('SPEC-QLT-009 自动修复只把真越出画布的元素挪回安全区
     const fixed = QualityEngine.autoFixProject(project);
 
     // 1) 越出画布的元素必须被挪回内容安全区
-    const bad = fixed.slides[0].elements.find((el) => el.id.startsWith('bad_geo'));
+    const bad = fixed.slides[0].elements.find((el) => el.variant === 'footer');
     expect(bad).toBeDefined();
     const g = bad!.geometry;
     expect(g.x).toBeGreaterThanOrEqual(100);
@@ -383,7 +390,8 @@ describe('SPEC-QLT-010 自动修复不得挪动母版元素', () => {
     const moved: string[] = [];
     project.slides.forEach((slide, sIdx) => {
       slide.elements.forEach((el, elIdx) => {
-        if (!MASTER_PREFIXES.some((p) => el.id.startsWith(p))) return;
+        // 按 variant 认母版槽位，不按 ID 前缀（ADR-018：语义住在字段里）
+        if (!MASTER_VARIANTS.includes(variantOf(el))) return;
         const after = fixed.slides[sIdx].elements[elIdx].geometry;
         if (JSON.stringify(el.geometry) !== JSON.stringify(after)) {
           moved.push(

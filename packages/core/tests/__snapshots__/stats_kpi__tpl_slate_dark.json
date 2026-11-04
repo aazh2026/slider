@@ -7,7 +7,7 @@
   "speakerNotes": "黄金快照夹具演讲者备注",
   "visualIntent": "golden snapshot visual intent",
   "layout": {
-    "type": "cards_grid"
+    "type": "stats_kpi"
   },
   "canvas": {
     "width": 1920,
@@ -16,6 +16,7 @@
   "elements": [
     {
       "id": "bg_s1",
+      "variant": "background",
       "type": "shape",
       "role": "background",
       "content": "",
@@ -33,6 +34,7 @@
     },
     {
       "id": "header_s1",
+      "variant": "header",
       "type": "text",
       "role": "subtitle",
       "content": "GOLDEN SNAPSHOT VISUAL INTENT",
@@ -53,6 +55,7 @@
     },
     {
       "id": "title_s1",
+      "variant": "title",
       "type": "text",
       "role": "title",
       "content": "黄金快照夹具标题",
@@ -73,6 +76,7 @@
     },
     {
       "id": "keymsg_s1",
+      "variant": "keymsg",
       "type": "text",
       "role": "subtitle",
       "content": "核心结论：黄金快照夹具核心结论",
@@ -92,6 +96,7 @@
     },
     {
       "id": "pagenum_s1",
+      "variant": "pagenum",
       "type": "text",
       "role": "footer",
       "content": "01 / 12",
@@ -112,6 +117,7 @@
     },
     {
       "id": "footernote_s1",
+      "variant": "footernote",
       "type": "text",
       "role": "footer",
       "content": "黄金快照夹具目的",
@@ -131,19 +137,21 @@
       "zIndex": 5
     },
     {
-      "id": "grid_card_s1_0",
-      "type": "card",
-      "role": "card",
+      "id": "kpi_card_s1_0",
+      "variant": "kpi_card",
+      "type": "metric",
+      "role": "metric",
       "content": {
-        "tag": "DIMENSION 01",
-        "title": "快照要点一",
+        "value": "85%",
+        "trend": "",
+        "title": "转化率提升",
         "desc": ""
       },
       "geometry": {
         "x": 100,
-        "y": 240,
-        "width": 412,
-        "height": 680
+        "y": 250,
+        "width": 405.25,
+        "height": 650
       },
       "style": {
         "backgroundColor": "#141a24",
@@ -156,19 +164,21 @@
       "zIndex": 5
     },
     {
-      "id": "grid_card_s1_1",
-      "type": "card",
-      "role": "card",
+      "id": "kpi_card_s1_1",
+      "variant": "kpi_card",
+      "type": "metric",
+      "role": "metric",
       "content": {
-        "tag": "DIMENSION 02",
-        "title": "快照要点二",
+        "value": "1200",
+        "trend": "",
+        "title": "家客户接入",
         "desc": ""
       },
       "geometry": {
-        "x": 536,
-        "y": 240,
-        "width": 412,
-        "height": 680
+        "x": 538.25,
+        "y": 250,
+        "width": 405.25,
+        "height": 650
       },
       "style": {
         "backgroundColor": "#141a24",
@@ -181,19 +191,21 @@
       "zIndex": 5
     },
     {
-      "id": "grid_card_s1_2",
-      "type": "card",
-      "role": "card",
+      "id": "kpi_card_s1_2",
+      "variant": "kpi_card",
+      "type": "metric",
+      "role": "metric",
       "content": {
-        "tag": "DIMENSION 03",
-        "title": "快照要点三",
+        "value": "3.5倍",
+        "trend": "",
+        "title": "回本周期",
         "desc": ""
       },
       "geometry": {
-        "x": 972,
-        "y": 240,
-        "width": 412,
-        "height": 680
+        "x": 976.5,
+        "y": 250,
+        "width": 405.25,
+        "height": 650
       },
       "style": {
         "backgroundColor": "#141a24",
@@ -206,19 +218,21 @@
       "zIndex": 5
     },
     {
-      "id": "grid_card_s1_3",
-      "type": "card",
-      "role": "card",
+      "id": "kpi_card_s1_3",
+      "variant": "kpi_card",
+      "type": "metric",
+      "role": "metric",
       "content": {
-        "tag": "DIMENSION 04",
-        "title": "快照要点四",
+        "value": "99.9%",
+        "trend": "",
+        "title": "服务可用性",
         "desc": ""
       },
       "geometry": {
-        "x": 1408,
-        "y": 240,
-        "width": 412,
-        "height": 680
+        "x": 1414.75,
+        "y": 250,
+        "width": 405.25,
+        "height": 650
       },
       "style": {
         "backgroundColor": "#141a24",

@@ -6,7 +6,14 @@
 import { SlideIR, SlideOutlineItem, SlideElement, TemplateTheme, SlideLayoutType } from '../types/slide';
 import { SlideContent } from '../types/content';
 import { estimateTextWidth } from './textMetrics';
-import { bindContent, contentBullets, distributeEvenly, splitBullet } from './contentBinding';
+import {
+  bindContent,
+  contentBullets,
+  distributeEvenly,
+  splitBullet,
+  validateContentForLayout,
+} from './contentBinding';
+import { slotContractOf } from '../data/layoutIntents';
 
 export { splitBullet, contentBullets, distributeEvenly };
 
@@ -32,6 +39,7 @@ export class LayoutEngine {
     // 1. Background layer element
     elements.push({
       id: `bg_${outline.slideId}`,
+      variant: 'background',
       type: 'shape',
       role: 'background',
       content: '',
@@ -49,6 +57,7 @@ export class LayoutEngine {
       // Header category / kicker —— 取自 outline.visualIntent，不再有固定演示文案
       elements.push({
         id: `header_${outline.slideId}`,
+        variant: 'header',
         type: 'text',
         role: 'subtitle',
         content: outline.visualIntent.toUpperCase(),
@@ -66,6 +75,7 @@ export class LayoutEngine {
       // Main slide title
       elements.push({
         id: `title_${outline.slideId}`,
+        variant: 'title',
         type: 'text',
         role: 'title',
         content: outline.title,
@@ -83,6 +93,7 @@ export class LayoutEngine {
       // Key message / Takeaway subheader
       elements.push({
         id: `keymsg_${outline.slideId}`,
+        variant: 'keymsg',
         type: 'text',
         role: 'subtitle',
         content: `核心结论：${outline.keyMessage}`,
@@ -99,6 +110,7 @@ export class LayoutEngine {
       // Footer Slide Counter
       elements.push({
         id: `pagenum_${outline.slideId}`,
+        variant: 'pagenum',
         type: 'text',
         role: 'footer',
         content: `${String(slideOrder).padStart(2, '0')} / ${String(totalSlides).padStart(2, '0')}`,
@@ -116,6 +128,7 @@ export class LayoutEngine {
       // Footer note —— 取自 outline.purpose（页脚不是演示文案的藏身处）
       elements.push({
         id: `footernote_${outline.slideId}`,
+        variant: 'footernote',
         type: 'text',
         role: 'footer',
         content: outline.purpose,
@@ -189,19 +202,22 @@ export class LayoutEngine {
   /**
    * 版式降级裁决
    * ---------------------------------------------------------------------------
-   * 槽位映射表只写了一条降级规则：stats_kpi「无数字则降级为 cards_grid 版式」。
-   * 其余版式保持 outline 指定的偏好。
+   * 降级规则写在**契约表**里（`data/layoutIntents.ts` 的 `degradesTo`），
+   * 不写在这里 —— 引擎只负责执行，规则本身是数据。
+   *
+   * 契约表现在只声明了一条降级：`stats_kpi` 的指标里没有数字时降级为
+   * `cards_grid`（一页没有数字的「核心指标」不是指标页）。
    */
   private static resolveLayout(outline: SlideOutlineItem, bound: SlideContent): SlideLayoutType {
-    if (outline.layoutPreference === 'stats_kpi') {
-      // 槽位里已经给出了带数值的指标 → 保留 stats_kpi
-      if (bound.metrics?.length && bound.metrics.some((m) => /\d/.test(m.value ?? ''))) {
-        return 'stats_kpi';
-      }
-      const hasNumber = contentBullets(outline).some((b) => /\d/.test(b));
-      if (!hasNumber) return 'cards_grid';
-    }
-    return outline.layoutPreference;
+    const preferred = outline.layoutPreference;
+    const contract = slotContractOf(preferred);
+    if (!contract.degradesTo) return preferred;
+
+    // 契约要求的槽位都达标 → 保留首选版式
+    if (validateContentForLayout(preferred, bound).ok) return preferred;
+
+    // 不达标 → 降级到契约声明的兜底版式
+    return contract.degradesTo;
   }
 
   /**
@@ -222,6 +238,7 @@ export class LayoutEngine {
     );
     elements.push({
       id: `kicker_${outline.slideId}`,
+      variant: 'kicker',
       type: 'badge',
       role: 'badge',
       content: bound.keyMessage,
@@ -244,6 +261,7 @@ export class LayoutEngine {
     // Giant Title
     elements.push({
       id: `maintitle_${outline.slideId}`,
+      variant: 'maintitle',
       type: 'text',
       role: 'title',
       content: bound.title,
@@ -262,6 +280,7 @@ export class LayoutEngine {
     // Subtitle / Narrative
     elements.push({
       id: `subtitle_${outline.slideId}`,
+      variant: 'subtitle',
       type: 'text',
       role: 'subtitle',
       content: bound.subtitle,
@@ -279,6 +298,7 @@ export class LayoutEngine {
     // Accent line
     elements.push({
       id: `accent_line_${outline.slideId}`,
+      variant: 'accent_line',
       type: 'shape',
       role: 'divider',
       content: '',
@@ -294,6 +314,7 @@ export class LayoutEngine {
     // Metadata card —— 视觉意图 + 演讲者备注
     elements.push({
       id: `metacard_${outline.slideId}`,
+      variant: 'metacard',
       type: 'card',
       role: 'card',
       content: {
@@ -349,6 +370,7 @@ export class LayoutEngine {
       // Layer background container
       elements.push({
         id: `layer_box_${outline.slideId}_${index}`,
+        variant: 'layer_box',
         type: 'architecture_layer',
         role: 'layer',
         content: '',
@@ -368,6 +390,7 @@ export class LayoutEngine {
       // Layer Title —— 要点的标签
       elements.push({
         id: `layer_title_${outline.slideId}_${index}`,
+        variant: 'layer_title',
         type: 'text',
         role: 'title',
         content: layer.title,
@@ -386,6 +409,7 @@ export class LayoutEngine {
       if (layerBody) {
         elements.push({
           id: `layer_body_${outline.slideId}_${index}`,
+          variant: 'layer_body',
           type: 'text',
           // role 不能是 'card'：它嵌套在 role='layer' 的容器里，
           // 而质量引擎的碰撞检测会拿所有 card/layer 元素两两比 AABB，
@@ -448,6 +472,7 @@ export class LayoutEngine {
       // Card container —— 卡片内容整体由卡片元素承载，文字不再重复一份
       elements.push({
         id: `grid_card_${outline.slideId}_${i}`,
+        variant: 'grid_card',
         type: 'card',
         role: 'card',
         content: c,
@@ -487,6 +512,7 @@ export class LayoutEngine {
     // Left Column: Challenges / Pain Points
     elements.push({
       id: `problem_box_${outline.slideId}`,
+      variant: 'problem_box',
       type: 'card',
       role: 'card',
       content: {
@@ -508,6 +534,7 @@ export class LayoutEngine {
     // Right Column: Target Solution
     elements.push({
       id: `solution_box_${outline.slideId}`,
+      variant: 'solution_box',
       type: 'card',
       role: 'card',
       content: {
@@ -549,6 +576,7 @@ export class LayoutEngine {
     // Timeline Connecting Bar
     elements.push({
       id: `timeline_bar_${outline.slideId}`,
+      variant: 'timeline_bar',
       type: 'shape',
       role: 'divider',
       content: '',
@@ -566,6 +594,7 @@ export class LayoutEngine {
       // Node Milestone Circle
       elements.push({
         id: `timeline_node_${outline.slideId}_${idx}`,
+        variant: 'timeline_node',
         type: 'shape',
         role: 'badge',
         content: String(idx + 1),
@@ -586,6 +615,7 @@ export class LayoutEngine {
       // Milestone Card
       elements.push({
         id: `timeline_card_${outline.slideId}_${idx}`,
+        variant: 'timeline_card',
         type: 'card',
         role: 'card',
         content: {
@@ -639,6 +669,7 @@ export class LayoutEngine {
 
       elements.push({
         id: `kpi_card_${outline.slideId}_${idx}`,
+        variant: 'kpi_card',
         type: 'metric',
         role: 'metric',
         content: s,
@@ -675,6 +706,7 @@ export class LayoutEngine {
     // Center Core Card
     elements.push({
       id: `radial_center_node_${outline.slideId}`,
+      variant: 'radial_center_node',
       type: 'card',
       role: 'card',
       content: {
@@ -707,6 +739,7 @@ export class LayoutEngine {
       .forEach((satellite, i) => {
         elements.push({
           id: `radial_sat_${outline.slideId}_${i}`,
+          variant: 'radial_sat',
           type: 'card',
           role: 'card',
           content: {
@@ -741,6 +774,7 @@ export class LayoutEngine {
   ) {
     elements.push({
       id: `summary_main_card_${outline.slideId}`,
+      variant: 'summary_main_card',
       type: 'card',
       role: 'card',
       content: {

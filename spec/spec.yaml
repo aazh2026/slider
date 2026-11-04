@@ -393,6 +393,82 @@ clauses:
           pass_when: "退出码 0，且该用例未被 skip"
         maturity: automated
 
+  # ---- SPEC-CORE-010 语义住在字段里 ----
+  - id: SPEC-CORE-010
+    title: 元素语义住在字段里，不住在 ID 字符串里
+    type: technical
+    risk: high
+    status: active
+    maturity: automated
+    statement: "版式引擎产出的每个元素必须带 `variant` 字段（它属于哪个版式槽位）；渲染分层、主题重映射、ID 重排一律读该字段，不得解析元素 ID 的字符串；除唯一的 legacy 兼容层（`elementVariant.ts` 的 `legacyVariantOf`，仅在字段缺失时启用）外，全仓不得有任何消费方对 `element.id` 做字符串解析"
+    source:
+      doc: "docs/architecture.md"
+      section: "§12 ADR-018 · 语义住在字段里，不住在 ID 里"
+      quote: "字符串即语义意味着任何一次重命名都是事故"
+    inference: "波 0 的 ADR-014 修的正是「一键修复洗掉语义前缀」这个缺陷，但当时的修法是**保留 ID 前缀** —— 语义仍然住在字符串里，一次重命名仍会掉层、掉配色。波 2 ① 把语义搬到显式字段，ID 退化为派生结果"
+    behaviors:
+      - when: "把某个元素的 ID 改名（不改它的 variant）"
+        then: "渲染分层与主题配色必须一字不变 —— 语义不再由 ID 决定"
+      - when: "一键修复重排元素 ID"
+        then: "新 ID 的语义前缀必须来自 variant 字段；元素被洗成不含语义的 ID 也不丢语义"
+      - when: "读入一份没有 variant 字段的旧 IR"
+        then: "必须在唯一的兼容层补齐，之后整条链路只读字段"
+    boundaries:
+      - "本条只管**语义归属**，不管 ID 是否唯一 —— ID 唯一性由 SPEC-QLT-003 管"
+      - "旧数据迁移只在读入时补齐（幂等），不要求一次性重写历史库"
+    acceptance:
+      - id: AC-CORE-014
+        criterion: "对 8 种版式各生成一页，断言每个元素都带 `variant` 字段且取值属于已知变体集合；断言每个元素的 ID 都以该 variant 对应的语义前缀加下划线开头（ID 是 variant 的派生结果，不是反过来）"
+        oracle:
+          tier: authoritative
+          source: "docs/architecture.md §12 ADR-018 —— 变体的全部语义收进一张表（ELEMENT_VARIANTS），渲染层、主题重映射、ID 修复一律读表"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/element-variant.test.ts::layout-engine-sets-variant-on-every-element"
+          command: "bun test ./spec/verify/element-variant.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+      - id: AC-CORE-015
+        criterion: "把一页的所有元素 ID 洗成不含任何语义的字符串（zzz_<slideId>_<序号>）后执行一键修复，断言修复后每个元素的 ID 形如 `{variant 的语义前缀}_{slideId}_{序号}` —— 即语义前缀来自 variant 字段而非旧 ID"
+        oracle:
+          tier: authoritative
+          source: "docs/architecture.md §12 ADR-018 —— ID 重排的语义前缀取自 variant 字段，绝不从旧 ID 里抠"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/element-variant.test.ts::id-repair-derives-prefix-from-variant"
+          command: "bun test ./spec/verify/element-variant.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+      - id: AC-CORE-016
+        criterion: "对同一页分别用原 ID 与洗过的 ID 渲染 SVG（去掉 id 属性后逐字节比对，断言渲染结果完全一致）；对同一页分别用原 ID 与洗过的 ID 执行主题重映射，断言每个元素的 style 完全一致；断言 accent 强调线在换主题后其 backgroundColor 等于新主题的 accentColor（分隔线画的是 backgroundColor 而非 color）"
+        oracle:
+          tier: authoritative
+          source: "docs/architecture.md §12 ADR-018 —— 语义判断一律读 variant 字段，不猜 ID 字符串"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/element-variant.test.ts::render-and-theme-follow-variant-not-id"
+          command: "bun test ./spec/verify/element-variant.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+      - id: AC-CORE-017
+        criterion: "扫描生产源码目录（src/、packages/core/src/、apps/api/src/）的全部 .ts/.tsx 文件，去掉注释后不得出现任何 `.id.` 后接字符串方法（startsWith / includes / endsWith / match / split / replace / search / indexOf）的调用；同时断言 legacy 兼容层 `legacyVariantOf` 仍然存在且能识别旧 ID 前缀"
+        oracle:
+          tier: authoritative
+          source: "docs/architecture.md §12 ADR-018 —— legacyVariantOf 是全仓唯一一处解析 ID 语义的地方，且只在字段缺失时触发"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/element-variant.test.ts::no-consumer-parses-element-ids"
+          command: "bun test ./spec/verify/element-variant.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
 # ===========================================================================
 # B. 质量引擎
 # ===========================================================================

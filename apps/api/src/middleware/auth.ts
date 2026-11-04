@@ -15,6 +15,7 @@ import type { MiddlewareHandler } from 'hono';
 import { and, eq, isNull } from 'drizzle-orm';
 
 import { ApiError } from '../errors';
+import { withVariants, type SlideIR } from '@ppt/core';
 import { findSession } from '../services/authService';
 import { projects, slides } from '../db/schema';
 import { isUuid } from '../utils/uuid';
@@ -107,6 +108,8 @@ export const requireSlide: MiddlewareHandler<AppEnv> = async (c, next) => {
   const slide = rows[0];
   if (!slide) throw ApiError.notFound('幻灯片不存在');
 
-  c.set('slide', slide);
+  // 旧库存的页没有 `variant` 字段 —— 读出来时补齐，
+  // 下游就只读字段、不猜 ID 字符串（ADR-018）。
+  c.set('slide', { ...slide, ir: withVariants(slide.ir as SlideIR) });
   await next();
 };

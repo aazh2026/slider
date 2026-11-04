@@ -11,6 +11,7 @@ import { BUILT_IN_TEMPLATES } from '../../packages/core/src/data/templates';
 import type {
   ElementRole,
   ElementType,
+  ElementVariant,
   Geometry,
   PresentationProject,
   SlideElement,
@@ -235,12 +236,15 @@ export function makeElement(
   opts: {
     type?: ElementType;
     role?: ElementRole;
+    /** 版式槽位（ADR-018）—— 不给就由 role/ID 兜底推断 */
+    variant?: ElementVariant;
     geometry?: Geometry;
     content?: unknown;
   } = {}
 ): SlideElement {
   return {
     id,
+    ...(opts.variant ? { variant: opts.variant } : {}),
     type: opts.type ?? 'text',
     // 默认用 footer —— 它既不参与 AABB 碰撞检测，也不像 background 那样被越界检查豁免
     role: opts.role ?? 'footer',

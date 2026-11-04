@@ -6,6 +6,7 @@
 import { SlideIR, TemplateTheme, SlideElement } from '../types/slide';
 import { wrapText } from './textMetrics';
 import { CONTENT_TYPE_SCALE } from './typography';
+import { layerOf } from './elementVariant';
 
 /**
  * Escapes characters for safe inclusion in SVG / XML
@@ -340,13 +341,12 @@ export class SVGRenderer {
     const { width, height } = slide.canvas;
 
     // Group elements by architectural SVG layers
-    const bgElements = slide.elements.filter((el) => el.role === 'background');
-    const templateElements = slide.elements.filter(
-      (el) => el.role === 'footer' || (el.role === 'subtitle' && el.id.startsWith('header_'))
-    );
-    const contentElements = slide.elements.filter(
-      (el) => el.role !== 'background' && el.role !== 'footer' && !el.id.startsWith('header_')
-    );
+    // 层归属读 `variant` 字段，不猜 ID（ADR-018）。
+    // 旧行为是「role==='footer' 或 (role==='subtitle' 且 id 以 header_ 开头)」——
+    // 语义住在 ID 字符串里，一次重命名就会让元素掉出模板层。
+    const bgElements = slide.elements.filter((el) => layerOf(el) === 'background');
+    const templateElements = slide.elements.filter((el) => layerOf(el) === 'template');
+    const contentElements = slide.elements.filter((el) => layerOf(el) === 'content');
 
     const shadowOpacity = theme.isDark ? '0.35' : '0.07';
     const shadowDeviation = theme.isDark ? '12' : '8';

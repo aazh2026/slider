@@ -11,6 +11,19 @@
  * 现状（2026-11-01 之前）的降级实现对任何主题都返回同一份
  * 「企业 AI Agent 技术架构规划」大纲 —— 那不是降级，那是撒谎。
  *
+ * **波 2 ③ 之后，这一层从「绑定器」变成了「绑定器 + 校验器」。**
+ *
+ * 过去的内容绑定只做一件事：把 outline 与 AI 给的 content 揉成一份
+ * `SlideContent`。揉的时候**不管版式**—— 于是 AI 给 `cards_grid` 的页面
+ * 附带了 `layers`，那份 layers 就被原样带进 `SlideContent`，一路带到渲染层，
+ * 没有任何一处会报告「这个槽位不属于这个版式」。
+ *
+ * 现在：
+ *
+ *   · **绑定按契约裁剪** —— 只有版式契约（`data/layoutIntents.ts` 的
+ *     `LAYOUT_SLOT_CONTRACTS`）声明消费的槽位才会进入这一页；
+ *   · **校验给出结论** —— `validateContentForLayout()` 报告缺什么、丢了什么。
+ *
  * 版式 ↔ 槽位映射表（§4.2）：
  *
  * | layoutPreference    | 消费槽位          | 缺省降级                          |
@@ -27,6 +40,7 @@
 
 import { SlideContent } from '../types/content';
 import { SlideOutlineItem, SlideLayoutType } from '../types/slide';
+import { ContentSlotKey, slotContractOf } from '../data/layoutIntents';
 
 /**
  * 要点 → 标签 / 正文
@@ -88,6 +102,158 @@ function nonEmpty(v: string | undefined): string | undefined {
 }
 
 /**
+ * 一个槽位里「像样」的那些条目
+ * ---------------------------------------------------------------------------
+ * 校验 `requires` 时要数的是**条目**，不是字段是否存在 ——
+ * `layers: [{title: '', items: []}]` 有一个条目，但那个条目是空的。
+ */
+function slotItems(slot: ContentSlotKey, content: SlideContent | undefined): string[] {
+  if (!content) return [];
+  switch (slot) {
+    case 'title':
+      return content.title ? [content.title] : [];
+    case 'subtitle':
+      return content.subtitle ? [content.subtitle] : [];
+    case 'keyMessage':
+      return content.keyMessage ? [content.keyMessage] : [];
+    case 'bullets':
+      return (content.bullets ?? []).filter((b) => (b ?? '').trim().length > 0);
+    case 'columns':
+      return (content.columns ?? []).map((c) => c.title ?? '');
+    case 'layers':
+      return (content.layers ?? []).map((l) => l.title ?? '');
+    case 'phases':
+      return (content.phases ?? []).map((p) => p.phase ?? '');
+    case 'metrics':
+      return (content.metrics ?? []).map((m) => m.value ?? '');
+    case 'radial':
+      return content.radial ? content.radial.satellites.map((s) => s.title ?? '') : [];
+    case 'summary':
+      return content.summary ? [content.summary.headline ?? ''] : [];
+    case 'meta':
+      return Object.values(content.meta ?? {});
+    default:
+      return [];
+  }
+}
+
+/** 槽位在内容里「有东西」吗 */
+function slotPresent(slot: ContentSlotKey, content: SlideContent | undefined): boolean {
+  return slotItems(slot, content).some((v) => (v ?? '').trim().length > 0);
+}
+
+/**
+ * 内容校验结果
+ * ---------------------------------------------------------------------------
+ * `ok` 只看 **error** 级问题：被丢弃的槽位是 warning —— 丢弃本身是
+ * 正确行为（那一页不该有那个槽位），但值得让人知道 AI 给了多余的东西。
+ */
+export interface ContentValidation {
+  /** 没有 error 级问题 */
+  ok: boolean;
+  /** 问题清单 */
+  issues: ContentIssue[];
+  /** 这个版式实际消费的槽位 */
+  consumed: ContentSlotKey[];
+  /** 因为不属于这个版式而被丢弃的槽位 */
+  dropped: ContentSlotKey[];
+}
+
+/** 一条校验问题 */
+export interface ContentIssue {
+  /** 出问题的槽位 */
+  slot: ContentSlotKey;
+  /** error = 这一页按这个版式排不出来；warning = 有多余的东西被丢弃 */
+  level: 'error' | 'warning';
+  /** 人能读的一句话 */
+  message: string;
+}
+
+/**
+ * 校验内容与版式是否匹配（波 2 ③）
+ * ---------------------------------------------------------------------------
+ * 这就是「校验器」：它**回答**「这份内容配这个版式行不行」，而不是把不配的
+ * 内容硬塞进去。
+ *
+ * 两种问题：
+ *   · **error** —— 契约要求的槽位没内容，或条目里没有要求的值
+ *     （`stats_kpi` 的指标没有数字）；
+ *   · **warning** —— 内容里带了不属于这个版式的槽位（会被丢弃）。
+ */
+export function validateContentForLayout(
+  layout: SlideLayoutType,
+  content: SlideContent | undefined
+): ContentValidation {
+  const contract = slotContractOf(layout);
+  const consumed = [...contract.consumes];
+  const issues: ContentIssue[] = [];
+
+  if (!content) {
+    issues.push({
+      slot: 'bullets',
+      level: 'error',
+      message: `内容缺失 —— 无法按「${layout}」版式排版`,
+    });
+    return { ok: false, issues, consumed, dropped: [] };
+  }
+
+  // 1) 契约要求的槽位必须有内容
+  for (const req of contract.requires) {
+    const items = slotItems(req.slot, content);
+    if (items.length < req.min) {
+      issues.push({
+        slot: req.slot,
+        level: 'error',
+        message: `版式「${layout}」需要至少 ${req.min} 个「${req.slot}」，实际只有 ${items.length} 个`,
+      });
+      continue;
+    }
+    if (req.pattern) {
+      const matched = items.filter((v) => req.pattern!.test(v ?? ''));
+      if (matched.length === 0) {
+        issues.push({
+          slot: req.slot,
+          level: 'error',
+          message: `版式「${layout}」的「${req.slot}」里没有任何符合要求的条目（要求匹配 ${req.pattern.source}）`,
+        });
+      }
+    }
+  }
+
+  // 2) 不属于这个版式的槽位会被丢弃 —— 报告出来，但不判失败
+  const allSlots: ContentSlotKey[] = [
+    'title',
+    'subtitle',
+    'keyMessage',
+    'bullets',
+    'columns',
+    'layers',
+    'phases',
+    'metrics',
+    'radial',
+    'summary',
+    'meta',
+  ];
+  const droppedSlots = allSlots.filter(
+    (s) => !consumed.includes(s) && slotPresent(s, content)
+  );
+  for (const slot of droppedSlots) {
+    issues.push({
+      slot,
+      level: 'warning',
+      message: `「${slot}」不属于版式「${layout}」，已从这一页丢弃`,
+    });
+  }
+
+  return {
+    ok: !issues.some((i) => i.level === 'error'),
+    issues,
+    consumed,
+    dropped: droppedSlots,
+  };
+}
+
+/**
  * 绑定内容槽位
  *
  * @param outline 大纲项 —— 降级内容的**唯一**来源
@@ -108,13 +274,30 @@ export function bindContent(
     keyMessage: nonEmpty(c.keyMessage) ?? outline.keyMessage,
   };
 
+  const derived = deriveDedicatedSlots(outline, c, bullets);
+  const merged: SlideContent = { ...base, ...derived };
+
+  // **按契约裁剪** —— 不属于这个版式的槽位不进这一页（波 2 ③）
+  return pickConsumedSlots(merged, slotContractOf(outline.layoutPreference).consumes);
+}
+
+/**
+ * 专属槽位的推导 —— 每个版式怎么把通用要点变成自己的形状
+ * ---------------------------------------------------------------------------
+ * 这里只管**怎么推导**；「这个版式该不该有这个槽位」由契约表回答。
+ */
+function deriveDedicatedSlots(
+  outline: SlideOutlineItem,
+  c: Partial<SlideContent>,
+  bullets: string[]
+): Partial<SlideContent> {
   switch (outline.layoutPreference) {
     case 'title_cover': {
       const meta = { ...(c.meta ?? {}) };
       if (!meta['visualIntent']) meta['visualIntent'] = outline.visualIntent;
       if (!meta['purpose']) meta['purpose'] = outline.purpose;
       if (!meta['speakerNotes'] && outline.speakerNotes) meta['speakerNotes'] = outline.speakerNotes;
-      return { ...base, meta };
+      return { meta };
     }
 
     case 'architecture_diagram': {
@@ -124,7 +307,7 @@ export function bindContent(
             const { label, body } = splitBullet(b);
             return { title: label, items: body ? [body] : [] };
           });
-      return { ...base, layers };
+      return { layers };
     }
 
     case 'problem_solution': {
@@ -137,7 +320,7 @@ export function bindContent(
               { title: '解决方案', items: bullets.slice(half) },
             ];
           })();
-      return { ...base, columns };
+      return { columns };
     }
 
     case 'timeline_roadmap': {
@@ -153,12 +336,12 @@ export function bindContent(
               deliverables: items,
             }));
           })();
-      return { ...base, phases };
+      return { phases };
     }
 
     case 'stats_kpi': {
       const metrics = c.metrics?.length ? c.metrics : bullets.map(deriveMetric);
-      return { ...base, metrics };
+      return { metrics };
     }
 
     case 'radial_center': {
@@ -174,7 +357,7 @@ export function bindContent(
               }),
             };
           })();
-      return { ...base, radial };
+      return { radial };
     }
 
     case 'summary_conclusion': {
@@ -185,41 +368,78 @@ export function bindContent(
             points: bullets,
             actions: [] as string[],
           };
-      return { ...base, summary };
+      return { summary };
     }
 
     case 'cards_grid':
     default:
-      return base;
+      return {};
   }
+}
+
+/**
+ * 只保留契约声明消费的槽位
+ * ---------------------------------------------------------------------------
+ * `bullets` 永远保留 —— 它是降级链的源头，任何版式都从它出发。
+ */
+function pickConsumedSlots(
+  content: SlideContent,
+  consumed: ContentSlotKey[]
+): SlideContent {
+  const out: SlideContent = { bullets: content.bullets ?? [] };
+  for (const slot of consumed) {
+    switch (slot) {
+      case 'bullets':
+        break; // 已保留
+      case 'title':
+        if (content.title !== undefined) out.title = content.title;
+        break;
+      case 'subtitle':
+        if (content.subtitle !== undefined) out.subtitle = content.subtitle;
+        break;
+      case 'keyMessage':
+        if (content.keyMessage !== undefined) out.keyMessage = content.keyMessage;
+        break;
+      case 'columns':
+        if (content.columns !== undefined) out.columns = content.columns;
+        break;
+      case 'layers':
+        if (content.layers !== undefined) out.layers = content.layers;
+        break;
+      case 'phases':
+        if (content.phases !== undefined) out.phases = content.phases;
+        break;
+      case 'metrics':
+        if (content.metrics !== undefined) out.metrics = content.metrics;
+        break;
+      case 'radial':
+        if (content.radial !== undefined) out.radial = content.radial;
+        break;
+      case 'summary':
+        if (content.summary !== undefined) out.summary = content.summary;
+        break;
+      case 'meta':
+        if (content.meta !== undefined) out.meta = content.meta;
+        break;
+      default:
+        break;
+    }
+  }
+  return out;
 }
 
 /**
  * 版式是否与槽位自洽（§6.4 评估项「版式匹配率」）
  * ---------------------------------------------------------------------------
- * `architecture_diagram` 必须有 layers，`stats_kpi` 必须有 metrics，依此类推。
+ * 波 2 ③ 之后，这一问由契约表回答 —— 校验器是唯一裁判。
  */
 export function isLayoutContentConsistent(
   layout: SlideLayoutType,
   content: SlideContent | undefined
 ): boolean {
-  if (!content) return false;
-  switch (layout) {
-    case 'architecture_diagram':
-      return (content.layers?.length ?? 0) > 0;
-    case 'problem_solution':
-      return (content.columns?.length ?? 0) >= 2;
-    case 'timeline_roadmap':
-      return (content.phases?.length ?? 0) > 0;
-    case 'stats_kpi':
-      return (content.metrics?.length ?? 0) > 0;
-    case 'radial_center':
-      return !!content.radial && content.radial.satellites.length > 0;
-    case 'summary_conclusion':
-      return !!content.summary;
-    case 'title_cover':
-    case 'cards_grid':
-    default:
-      return true;
-  }
+  return validateContentForLayout(layout, content).ok;
 }
+
+/** 契约表（供外部查询与测试引用） */
+export { slotContractOf };
+export type { ContentSlotKey, LayoutSlotContract, SlotRequirement } from '../data/layoutIntents';

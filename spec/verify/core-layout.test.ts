@@ -119,10 +119,11 @@ describe('SPEC-CORE-005 版式引擎是纯函数', () => {
 describe('SPEC-CORE-006 封面页不渲染母版元素', () => {
   test('cover-page-has-no-master-elements', () => {
     const slide = makeSlide('title_cover', { slideId: 'cover1' });
-    const masterIds = slide.elements
-      .map((e) => e.id)
-      .filter((id) => /^(header_|pagenum_|footernote_)/.test(id));
-    expect(masterIds).toEqual([]);
+    // 按 variant 认母版槽位，不按 ID 前缀（ADR-018：语义住在字段里）
+    const masterVariants = slide.elements
+      .map((e) => e.variant)
+      .filter((v) => v === 'header' || v === 'pagenum' || v === 'footernote');
+    expect(masterVariants).toEqual([]);
     expect(slide.elements.length).toBeGreaterThan(0);
   });
 });
@@ -130,7 +131,7 @@ describe('SPEC-CORE-006 封面页不渲染母版元素', () => {
 describe('SPEC-CORE-007 页码格式为 NN / TT', () => {
   test('page-number-format', () => {
     const slide = makeSlide('cards_grid', { slideId: 'num1', order: 3, total: 12 });
-    const pageNum = slide.elements.find((e) => e.id.startsWith('pagenum_'));
+    const pageNum = slide.elements.find((e) => e.variant === 'pagenum');
     expect(pageNum).toBeDefined();
     expect(pageNum!.content).toBe('03 / 12');
   });

@@ -9,7 +9,7 @@
 
 import { and, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 
-import { BUILT_IN_TEMPLATES, type SlideOutlineItem, type TemplateIR } from '@ppt/core';
+import { BUILT_IN_TEMPLATES, withVariants, type SlideIR, type SlideOutlineItem, type TemplateIR } from '@ppt/core';
 
 import { ApiError } from '../errors';
 import { projects, slides, slideVersions, type ProjectRow } from '../db/schema';
@@ -223,7 +223,9 @@ export async function importProject(
       projectId: created.id,
       slideId: s.slideId,
       orderIndex: s.orderIndex,
-      ir: s.ir as never,
+      // 导入的是别人给的 bundle —— 元素可能没有 variant 字段。
+      // 落库前补齐，读出来的那条链路才不必再猜 ID（ADR-018）。
+      ir: withVariants(s.ir as SlideIR) as never,
       versionId: crypto.randomUUID(),
     });
   }
@@ -231,13 +233,19 @@ export async function importProject(
   return created;
 }
 
-/** 项目内的幻灯片列表 */
+/**
+ * 项目内的幻灯片列表
+ * ---------------------------------------------------------------------------
+ * 读出来的 IR 统一过一次 `withVariants()` —— 旧库里存的页没有 `variant` 字段，
+ * 补齐之后下游（渲染 / 主题重映射 / 质量修复）都读字段，不再猜 ID（ADR-018）。
+ */
 export async function listSlides(db: DbHandle, projectId: string) {
-  return db.db
+  const rows = await db.db
     .select()
     .from(slides)
     .where(eq(slides.projectId, projectId))
     .orderBy(slides.orderIndex);
+  return rows.map((row) => ({ ...row, ir: withVariants(row.ir as SlideIR) }));
 }
 
 /** 版本列表 */

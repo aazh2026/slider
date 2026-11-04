@@ -67,6 +67,7 @@ import { BUILT_IN_TEMPLATES } from '@ppt/core';
 import { defaultVisualIntent } from '@ppt/core';
 import { QualityEngine } from '@ppt/core';
 import { LayoutEngine } from '@ppt/core';
+import { remapSlidesToTheme } from '@ppt/core';
 
 interface WorkbenchProps {
   project: PresentationProject;
@@ -373,6 +374,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
     pushUndoSnapshot();
     const newEl: SlideElement = {
       id: `text_${Date.now()}`,
+      variant: 'annotation',
       type: 'text',
       role: 'annotation',
       content: '点击双击输入自定义说明文本...',
@@ -394,6 +396,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
     pushUndoSnapshot();
     const newEl: SlideElement = {
       id: `card_${Date.now()}`,
+      variant: 'card',
       type: 'card',
       role: 'card',
       content: {
@@ -421,6 +424,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
     pushUndoSnapshot();
     const newEl: SlideElement = {
       id: `metric_${Date.now()}`,
+      variant: 'metric',
       type: 'card',
       role: 'metric',
       content: {
@@ -448,6 +452,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
     pushUndoSnapshot();
     const newEl: SlideElement = {
       id: `badge_${Date.now()}`,
+      variant: 'badge',
       type: 'text',
       role: 'badge',
       content: 'CORE HIGHLIGHT',
@@ -474,6 +479,7 @@ export const Workbench: React.FC<WorkbenchProps> = ({
     pushUndoSnapshot();
     const newEl: SlideElement = {
       id: `divider_${Date.now()}`,
+      variant: 'divider',
       type: 'shape',
       role: 'divider',
       content: '',
@@ -662,55 +668,9 @@ export const Workbench: React.FC<WorkbenchProps> = ({
   // Switch Theme Template (Deep remapping of all elements for light/dark)
   const handleApplyTheme = (t: TemplateIR) => {
     pushUndoSnapshot();
-    const updatedSlides = project.slides.map((s) => {
-      const newElements = s.elements.map((el) => {
-        if (el.role === 'background') {
-          return { ...el, style: { ...el.style, backgroundColor: t.theme.backgroundColor } };
-        }
-        if (el.id.startsWith('header_')) {
-          return { ...el, style: { ...el.style, color: t.theme.accentColor } };
-        }
-        if (el.role === 'title') {
-          return { ...el, style: { ...el.style, color: t.theme.textPrimary } };
-        }
-        if (el.role === 'subtitle' || el.role === 'footer') {
-          return { ...el, style: { ...el.style, color: t.theme.textSecondary } };
-        }
-        if (el.role === 'card' || el.role === 'layer' || el.role === 'metric') {
-          return {
-            ...el,
-            style: {
-              ...el.style,
-              backgroundColor: t.theme.surfaceColor,
-              borderColor: t.theme.surfaceBorder,
-              color: t.theme.textPrimary,
-            },
-          };
-        }
-        if (el.role === 'badge') {
-          return {
-            ...el,
-            style: {
-              ...el.style,
-              color: t.theme.accentColor,
-              backgroundColor: t.theme.isDark ? `${t.theme.accentColor}20` : `${t.theme.accentColor}15`,
-              borderColor: t.theme.accentColor,
-            },
-          };
-        }
-        if (el.role === 'divider') {
-          return {
-            ...el,
-            style: {
-              ...el.style,
-              backgroundColor: el.id.includes('accent') ? t.theme.accentColor : t.theme.surfaceBorder,
-            },
-          };
-        }
-        return el;
-      });
-      return { ...s, elements: newElements };
-    });
+    // 主题重映射只有一份实现（packages/core/src/engine/themeRemap.ts）——
+    // 语义判断读 `variant` 字段，不猜 ID 字符串（ADR-018）。
+    const updatedSlides = remapSlidesToTheme(project.slides, t.theme);
 
     onUpdateProject({
       ...project,

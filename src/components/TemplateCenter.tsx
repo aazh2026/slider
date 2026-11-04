@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { Palette, Upload, CheckCircle2, Sparkles, Sliders, ArrowRight, Layers, FileCode, Sun, Moon } from 'lucide-react';
 import { TemplateIR, PresentationProject } from '@ppt/core';
 import { BUILT_IN_TEMPLATES } from '@ppt/core';
+import { remapSlidesToTheme } from '@ppt/core';
 
 interface TemplateCenterProps {
   currentTemplate: TemplateIR;
@@ -67,56 +68,9 @@ export const TemplateCenter: React.FC<TemplateCenterProps> = ({
     const applied = await onApplyTemplate(t);
     if (!applied) return;
 
-    // Deep remap all slide elements for light/dark palette consistency
-    const updatedSlides = project.slides.map((s) => {
-      const newElements = s.elements.map((el) => {
-        if (el.role === 'background') {
-          return { ...el, style: { ...el.style, backgroundColor: t.theme.backgroundColor } };
-        }
-        if (el.id.startsWith('header_')) {
-          return { ...el, style: { ...el.style, color: t.theme.accentColor } };
-        }
-        if (el.role === 'title') {
-          return { ...el, style: { ...el.style, color: t.theme.textPrimary } };
-        }
-        if (el.role === 'subtitle' || el.role === 'footer') {
-          return { ...el, style: { ...el.style, color: t.theme.textSecondary } };
-        }
-        if (el.role === 'card' || el.role === 'layer' || el.role === 'metric') {
-          return {
-            ...el,
-            style: {
-              ...el.style,
-              backgroundColor: t.theme.surfaceColor,
-              borderColor: t.theme.surfaceBorder,
-              color: t.theme.textPrimary,
-            },
-          };
-        }
-        if (el.role === 'badge') {
-          return {
-            ...el,
-            style: {
-              ...el.style,
-              color: t.theme.accentColor,
-              backgroundColor: t.theme.isDark ? `${t.theme.accentColor}20` : `${t.theme.accentColor}15`,
-              borderColor: t.theme.accentColor,
-            },
-          };
-        }
-        if (el.role === 'divider') {
-          return {
-            ...el,
-            style: {
-              ...el.style,
-              backgroundColor: el.id.includes('accent') ? t.theme.accentColor : t.theme.surfaceBorder,
-            },
-          };
-        }
-        return el;
-      });
-      return { ...s, elements: newElements };
-    });
+    // 主题重映射只有一份实现（packages/core/src/engine/themeRemap.ts）——
+    // 语义判断读 `variant` 字段，不猜 ID 字符串（ADR-018）。
+    const updatedSlides = remapSlidesToTheme(project.slides, t.theme);
 
     onUpdateProject({
       ...project,

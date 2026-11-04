@@ -40,6 +40,65 @@ export type ElementType =
   | 'shape'
   | 'group';
 
+/**
+ * 元素的版式槽位（variant）
+ * ---------------------------------------------------------------------------
+ * **语义住在字段里，不住在 ID 字符串里**（ADR-018）。
+ *
+ * 过去语义只能从 ID 猜：`el.id.startsWith('header_')` 决定它走 SVG 的哪一层、
+ * `el.id.includes('accent')` 决定它的颜色跟不跟主题 accent 色、ID 修复时从
+ * ID 里抠出语义前缀。这三处都是「字符串即语义」—— 任何一次重命名都是事故
+ * （波 0 的 ADR-014 就是被它坑的：修复把 `header_s1` 洗成 `text_s1_1`，元素
+ * 当场掉出模板层）。
+ *
+ * `role` 回答「这是什么东西」（标题 / 卡片 / 徽标），`variant` 回答
+ * 「**它是哪个版式槽位**」（页眉 / 页码 / 时间轴节点 / 架构层盒）。
+ * 两者正交：一个 `role: 'card'` 的元素可能是 `grid_card` 也可能是 `kpi_card`，
+ * 而这个区别决定了它怎么被重映射配色。
+ *
+ * 通用桶（`card` / `metric` / `badge` / `divider` …）是**兜底**：用户手插的
+ * 元素、旧数据迁移不出来的元素落在这里。
+ */
+export type ElementVariant =
+  // ---- 通用桶（版式无关）----
+  | 'background'
+  | 'title'
+  | 'subtitle'
+  | 'footer'
+  | 'card'
+  | 'metric'
+  | 'badge'
+  | 'divider'
+  | 'layer'
+  | 'connector'
+  | 'chart'
+  | 'icon'
+  | 'annotation'
+  // ---- 母版槽位（非封面页）----
+  | 'header'
+  | 'keymsg'
+  | 'pagenum'
+  | 'footernote'
+  // ---- 封面槽位----
+  | 'kicker'
+  | 'maintitle'
+  | 'accent_line'
+  | 'metacard'
+  // ---- 版式专属槽位----
+  | 'layer_box'
+  | 'layer_title'
+  | 'layer_body'
+  | 'grid_card'
+  | 'problem_box'
+  | 'solution_box'
+  | 'timeline_bar'
+  | 'timeline_node'
+  | 'timeline_card'
+  | 'kpi_card'
+  | 'radial_center_node'
+  | 'radial_sat'
+  | 'summary_main_card';
+
 export interface Geometry {
   x: number;
   y: number;
@@ -74,6 +133,13 @@ export interface SlideElement {
   id: string;
   type: ElementType;
   role: ElementRole;
+  /**
+   * 版式槽位（ADR-018）
+   * ---------------------------------------------------------------------------
+   * **可选**是为了兼容已存的旧 IR（它们没有这个字段）；版式引擎生成的元素
+   * **一定**带它。缺字段时读 `variantOf()` —— 它会走唯一的 legacy 回退。
+   */
+  variant?: ElementVariant;
   content: string | any; // Text string or structured data
   geometry: Geometry;
   style: ElementStyle;

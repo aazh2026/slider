@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { PresentationProject, QualityReport, QualityIssue, SlideIR, SlideElement } from '../types/slide';
+import { PresentationProject, QualityReport, QualityIssue, SlideIR, SlideElement, Geometry } from '../types/slide';
+import { idPrefixOf, variantOf } from './elementVariant';
 
 /** 设计画布尺寸 —— 判定「越界」用的是画布边界 */
 const CANVAS_WIDTH = 1920;
@@ -13,8 +14,8 @@ const CANVAS_HEIGHT = 1080;
  * 内容安全区（画布内四周留白）—— 内容元素应当落在这一圈里
  * ---------------------------------------------------------------------------
  * 注意它与画布边界不是一回事：母版页码（右下角）与页脚（左下角）**故意**贴着
- * 画布下沿，它们在画布内、只是不在内容安全区内。把它们也钳进安全区，
- * 等于把版式里设计好的元素挪走。
+ * 画布下沿，它们在画布内、只是不在内容安全区内，版式就是这么设计的。
+ * 把它们也钳进安全区，等于把版式里设计好的元素挪走。
  */
 const SAFE_LEFT = 100;
 const SAFE_TOP = 60;
@@ -24,28 +25,17 @@ const SAFE_BOTTOM = 1020;
 /**
  * 元素 ID 的语义前缀
  * ---------------------------------------------------------------------------
- * 元素 ID 在本项目里**承载语义**，不只是标识：
- *   · `header_`  —— 决定 kicker 走哪个渲染层（svgRenderer），也决定换模板时
- *                   它是否跟随 accent 色（App / Workbench / TemplateCenter）
- *   · `accent`   —— 决定卡片底色用 accent 还是 surfaceBorder
- *   · `pagenum_` / `footernote_` / `layer_box_` —— 人类可读的语义标签
- * 所以 ID 重排**只能改后半截，绝不能把前缀洗成元素类型**。
+ * **不再从 ID 字符串里抠语义**（ADR-018）—— 语义住在 `variant` 字段里，
+ * ID 只是它的**派生结果**：`{variant 的 idPrefix}_{slideId}_{序号}`。
  *
- * 例：`layer_box_s1_0` → 语义 `layer_box`；`header_s1` → 语义 `header`。
+ * 过去这里是 `semanticPrefix(id, slideId, elementType)`：从 ID 里剥掉页号段
+ * 与序号段，剩下的当语义前缀。它把「字符串即语义」固化成了引擎契约，于是
+ * 一次重命名就是一次事故 —— 波 0 的 ADR-014 修的正是这个。
+ *
+ * 现在语义只有一处真源：`ELEMENT_VARIANTS` 表（engine/elementVariant.ts）。
+ * 旧数据没有 `variant` 字段时，`variantOf()` 会走**唯一**的 legacy 回退
+ * （按 ID 前缀猜，猜不到按 role 兜底）—— 那是兼容层，不是语义依赖。
  */
-function semanticPrefix(id: string, slideId: string, elementType: string): string {
-  let rest = id;
-  if (slideId && rest.endsWith(`_${slideId}`)) {
-    rest = rest.slice(0, -(slideId.length + 1));
-  }
-  rest = rest.replace(/_\d+$/, '');
-  if (slideId && rest.endsWith(`_${slideId}`)) {
-    rest = rest.slice(0, -(slideId.length + 1));
-  }
-  rest = rest.replace(/_\d+$/, '');
-  if (!rest || rest === slideId) return elementType;
-  return rest;
-}
 
 /** 这个元素真的越出画布了吗 —— 越界的才算「坏了」 */
 function isOutOfCanvas(el: SlideElement): boolean {
@@ -259,14 +249,14 @@ export class QualityEngine {
    *      的。旧实现把它们钳进安全区，等于每点一次「一键修复」，每一页的页码
    *      和页脚就上移 95px、左移 140px。
    *   2. **ID**：旧实现把 ID 洗成 `{元素类型}_{slideId}_{序号}`，抹掉了
-   *      `header_` / `accent` 这类语义前缀。而渲染分层（svgRenderer 靠
-   *      `header_` 决定 kicker 走哪个层）与前端主题重映射（靠 `header_` /
-   *      `accent` 决定配色）都靠前缀识别元素 —— 修完 kicker 会掉出
-   *      template-layer，换模板时也不再跟随 accent 色。
+   *      `header_` / `accent` 这类语义前缀。而渲染分层与前端主题重映射都靠
+   *      前缀识别元素 —— 修完 kicker 会掉出 template-layer，换模板时也不再
+   *      跟随 accent 色。
    *
    * 现在的规则：
    *   · **只动被判定为有问题的元素** —— 没坏的元素一个坐标都不改；
-   *   · **ID 重排保留语义前缀** —— 只改后半截；
+   *   · **ID 重排保留语义前缀** —— 前缀取自 `variant` 字段（ADR-018），
+   *     不是从旧 ID 里抠出来的；顺手把 `variant` 补齐，语义从此住在字段里；
    *   · **修复后任一维度分数不得下降** —— 修坏了就整体退回，宁可不修也不能修坏。
    */
   static autoFixProject(project: PresentationProject): PresentationProject {
@@ -279,11 +269,13 @@ export class QualityEngine {
       slide.order = sIdx + 1;
     });
 
-    // ---- 2. ID 规范化：保留语义前缀，只改后半截 ----
+    // ---- 2. ID 规范化：语义来自 variant，ID 只是派生结果 ----
     updated.slides.forEach((slide) => {
       slide.elements.forEach((el, idx) => {
-        const semantic = semanticPrefix(el.id, slide.slideId, el.type);
-        el.id = `${semantic}_${slide.slideId}_${idx}`;
+        // 先把语义**落进字段**：旧数据没有 variant 的，在这里补齐。
+        // 补齐之后整条链路都不再需要从 ID 里猜语义（ADR-018）。
+        el.variant = variantOf(el);
+        el.id = `${idPrefixOf(el)}_${slide.slideId}_${idx}`;
       });
     });
     // 规范化后仍可能撞 ID（同一页里两个元素语义前缀相同且 slideId 相同）——

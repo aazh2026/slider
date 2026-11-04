@@ -16,6 +16,7 @@
   "elements": [
     {
       "id": "bg_s1",
+      "variant": "background",
       "type": "shape",
       "role": "background",
       "content": "",
@@ -33,6 +34,7 @@
     },
     {
       "id": "header_s1",
+      "variant": "header",
       "type": "text",
       "role": "subtitle",
       "content": "GOLDEN SNAPSHOT VISUAL INTENT",
@@ -53,6 +55,7 @@
     },
     {
       "id": "title_s1",
+      "variant": "title",
       "type": "text",
       "role": "title",
       "content": "黄金快照夹具标题",
@@ -73,6 +76,7 @@
     },
     {
       "id": "keymsg_s1",
+      "variant": "keymsg",
       "type": "text",
       "role": "subtitle",
       "content": "核心结论：黄金快照夹具核心结论",
@@ -92,6 +96,7 @@
     },
     {
       "id": "pagenum_s1",
+      "variant": "pagenum",
       "type": "text",
       "role": "footer",
       "content": "01 / 12",
@@ -112,6 +117,7 @@
     },
     {
       "id": "footernote_s1",
+      "variant": "footernote",
       "type": "text",
       "role": "footer",
       "content": "黄金快照夹具目的",
@@ -132,6 +138,7 @@
     },
     {
       "id": "summary_main_card_s1",
+      "variant": "summary_main_card",
       "type": "card",
       "role": "card",
       "content": {
