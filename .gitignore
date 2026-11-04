@@ -18,6 +18,10 @@ spec/evidence/e2e-media/
 spec/evidence/junit-e2e-partial-*.xml
 spec/evidence/junit-e2e-partial-*-output.txt
 
+# 注入检查跑**子集**时写出的局部报告 —— 同理，只是调一条判据时的中间产物。
+# 全量报告只有一个权威文件：spec/evidence/mutation-report.json
+spec/evidence/mutation-report-partial.json
+
 # Claude Code 调度器的运行时锁 —— 每个工作目录一份、随进程生命周期变化，
 # 入库只会带来无意义的冲突
 .claude/scheduled_tasks.lock
