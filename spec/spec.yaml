@@ -1156,9 +1156,9 @@ clauses:
       - id: AC-RND-005
         criterion: "渲染一页 SVG，断言恰好存在 id 为 background-layer / template-layer / content-layer / decoration-layer 的四个 <g>，且四个层 id 在输出中各出现一次"
         oracle:
-          tier: self-derived
-          source: "src/engine/svgRenderer.ts 的四层实现（对应 docs/architecture.md §9.3 分层渲染）"
-          confidence: medium
+          tier: authoritative
+          source: "docs/test-cases.md §TC-CORE-146 —— 元素分层为 4 层：background-layer / template-layer / content-layer / decoration-layer，顺序固定"
+          confidence: high
         verification:
           kind: test
           target: "spec/verify/render-svg.test.ts::svg-has-four-layers"

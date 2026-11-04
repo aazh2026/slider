@@ -379,7 +379,7 @@ test('TC-CORE-061 中途失败的 patch 不得留下部分改动', () => {
 | TC-CORE-144 | `renderInlineSvg` 输出 | **无** prolog，含 `width="100%"` 与 `preserveAspectRatio` |
 | TC-CORE-145 | `renderInlineSvg` 的 style | 含 `overflow:hidden` 与 `pointer-events:none` |
 | TC-CORE-146 | 元素分层 | **4 层**：`background-layer` / `template-layer` / `content-layer` / `decoration-layer`，顺序固定 |
-| TC-CORE-147 | 分层归属 | `role==='footer'` 或 `id` 以 `header_` 开头的 subtitle → template 层；其余非背景 → content 层 |
+| TC-CORE-147 | 分层归属 | 按 `SlideElement.variant` 查 `ELEMENT_VARIANTS` 表：`background` → background 层；`footer` / `header` / `pagenum` / `footernote` → template 层；其余 → content 层（ADR-018：语义住在字段里，不猜 ID 前缀） |
 | TC-CORE-148 | `data-slide-id` 属性 | 等于 slideId |
 | TC-CORE-149 | 同一输入渲染两次 | 逐字节一致 |
 
@@ -416,7 +416,7 @@ test('TC-CORE-155b 自动修复后 problem_box 仍被识别为问题栏', () => 
 });
 ```
 
-> 目标实现应把"问题栏 / 方案栏"的语义从 **ID 字符串**改为**显式字段**（如 `role: 'problem' | 'solution'` 或 `metadata.variant`），TC-CORE-155b 即是驱动该改动的用例。
+> 目标实现应把"问题栏 / 方案栏"的语义从 **ID 字符串**改为**显式字段**（如 `role: 'problem' | 'solution'` 或 `SlideElement.variant`），TC-CORE-155b 即是驱动该改动的用例。（已落地：见 `docs/architecture.md` §12 ADR-018。）
 
 ---
 

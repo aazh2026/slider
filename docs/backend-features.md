@@ -181,7 +181,7 @@
 |---|---|---|---|---|
 | QLT-01 | 四维评分引擎 | P0 | S1 | `Q = 0.3·Qs + 0.3·Qv + 0.2·Qc + 0.2·Qg`；与前端 `qualityEngine` 同源码 |
 | QLT-02 | 结构校验 | P0 | S1 | 画布尺寸、元素 ID 全局唯一、几何越界 |
-| QLT-03 | 视觉校验 | P0 | S1 | 卡片/层 AABB 碰撞检测（10px 缓冲） |
+| QLT-03 | 视觉校验 | P0 | S1 | 卡片/层 AABB 碰撞检测（10px 安全距 —— 间距不足 10px 即判碰撞，恰好 10px 判不碰撞；见 [`quality-rules.md`](./quality-rules.md) §`vis_collide`） |
 | QLT-04 | 内容校验 | P0 | S1 | 标题缺失、核心结论缺失 |
 | QLT-05 | 全局一致性校验 | P0 | S1 | 页数过少、缺封面页 |
 | QLT-06 | 自动修复 | P0 | S1 | 几何钳制回安全区、ID 重排、补齐缺失元素；修复后复评 |
@@ -201,7 +201,7 @@
 | EXP-03 | JPG 导出 | P1 | S3 | 质量参数 0.95 |
 | EXP-04 | PDF 导出（位图方案） | P0 | S3 | resvg 光栅化 → `pdf-lib` 嵌入；**中文不依赖阅读器字体** |
 | EXP-05 | PDF 导出（矢量方案） | P2 | S5 | `svg-to-pdfkit`，文本可选中、体积更小 |
-| EXP-06 | PPTX 导出（原生可编辑） | P0 | S3 | `pptxgenjs` 将 IR 映射为 Office 原生形状与文本框；字体名 fallback 链保证中英混排 |
+| EXP-06 | PPTX 导出（原生可编辑） | P0 | S3 | `pptxgenjs` 将 IR 映射为 Office 原生形状与文本框；字体名 fallback 链保证中英混排 —— 链的内容见 [`architecture.md` §12 ADR-016](./architecture.md)：SVG 侧是 CSS 字体栈（主题拉丁字体 → 显式 CJK 族 → generic），PPTX 侧是单名 `'Microsoft YaHei'` |
 | EXP-07 | 导出任务与进度 | P0 | S3 | 整本导出走异步任务 + SSE 进度（当前前端是主线程阻塞） |
 | EXP-08 | 产物存储与预签名 URL | P0 | S3 | 对象存储 + 限时预签名下载地址 |
 | EXP-09 | 产物 TTL 清理 | P1 | S3 | 默认 7 天过期，定时任务清理对象与 DB 记录 |
