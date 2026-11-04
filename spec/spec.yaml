@@ -90,6 +90,22 @@ clauses:
           command: "bun test ./spec/verify/core-layout.test.ts"
           pass_when: "退出码 0，且该用例未被 skip"
         maturity: automated
+      # 画布"是 1920×1080"这件事，光看 IR 不够 —— IR 是 1920×1080，
+      # 渲染到屏幕上时也可能被挤成别的比例（2026-11-04 实测：flex-shrink 把
+      # 画布压成 480×1080 的竖条，幻灯片被缩成中间一条，上下大片空白）。
+      # 这一条守的是**屏幕上的实际盒子**。
+      - id: AC-CORE-011
+        criterion: "在真实浏览器里打开工作台，断言 `[data-testid=slide-canvas]` 元素盒的宽高比等于 16:9（误差 ≤ 2%）、SVG 的 viewBox 比例等于 16:9（误差 ≤ 2%），且幻灯片那层整幅背景（SVG 里覆盖 0,0,1920,1080 的 rect）的屏幕包围盒与画布盒重合（宽高各 ≥ 98% 且 ≤ 102%，左上角偏差 ≤ 2px）—— 即幻灯片铺满画布，不存在信箱边"
+        oracle:
+          tier: formal
+          source: "docs/backend-design.md §7.2 —— 每页 1920×1080 ⇒ 16:9；viewBox 比例与元素盒比例一致时，preserveAspectRatio=\"xMidYMid meet\" 必然铺满整个盒子（形式化推论，非新增业务规则）"
+          confidence: high
+        verification:
+          kind: test
+          target: "e2e/workbench.e2e.ts::AC-CORE-011 工作台画布在屏幕上保持 16:9，不出现信箱边"
+          command: "bun test ./e2e/workbench.e2e.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
 
   # ---- SPEC-CORE-002 元素不越界 ----
   - id: SPEC-CORE-002
@@ -327,6 +343,56 @@ clauses:
           pass_when: "退出码 0，且该用例未被 skip"
         maturity: automated
 
+  # ---- SPEC-CORE-009 工作台画布必须完整可见且完整可达 ----
+  - id: SPEC-CORE-009
+    title: 工作台画布必须完整可见、完整可达
+    type: business
+    risk: high
+    status: active
+    maturity: automated
+    statement: "工作台主画布上的幻灯片必须**完整落在可视区内**，且当用户放大到超出可视区时，超出部分必须**两个方向都滚得到**（不得出现滚不到、看不见、点不着的裁切）"
+    source:
+      doc: "docs/backend-features.md"
+      section: "§F 幻灯片编辑与版本（SLD）· SLD-02 / SLD-04"
+      quote: "| SLD-02 | 元素几何更新 | P0 | S1 | 拖拽、方向键微调（步长 1 / Shift 10）持久化 |　| SLD-04 | 元素内容编辑 | P0 | S1 | 文本内容双击编辑后保存；结构化 content（卡片 title/desc）分字段更新 |"
+    inference: "SLD-02/SLD-04 要求用户能选中并编辑**任意**元素；元素几何分布在整张 1920×1080 上，因此画布的可见/可达范围必须覆盖整页 —— 否则位于不可达区域的元素既选不中也拖不动，该要求在浏览器上就不成立"
+    behaviors:
+      - when: "用户在适配缩放档位下查看画布"
+        then: "整页幻灯片完整落在可视内容区内，不被裁掉"
+      - when: "用户把缩放放大到超出适配档位"
+        then: "画布溢出可视区的部分可以滚动到；起始边（左侧/顶部）不被裁掉，末端边（右侧/底部）滚得到"
+      - when: "画布容器的尺寸发生变化（窗口缩放、左右面板收起/展开）"
+        then: "适配缩放档位重新计算，画布仍完整落在新的可视区内"
+    boundaries:
+      - "本条只管**浏览器里看得见、够得着**；画布的 IR 尺寸由 SPEC-CORE-001 管"
+      - "「放大」本身是用户的主动操作，不要求默认档位下有滚动条"
+    acceptance:
+      - id: AC-CORE-012
+        criterion: "在真实浏览器里打开工作台并把缩放放大到超出适配档位（实测 73%，画布 1402px 宽 > 可视内容区 480px），断言：①滚到最左/最上时画布的左边缘与上边缘落在可视内容区内（偏差 ≤ 1px，即起始边没被裁掉）；②滚到最右/最下时画布的右边缘与下边缘贴住可视内容区的右/下边界（偏差 ≤ 2px）；③滚动行程 scrollWidth-clientWidth ≥ 画布宽-内容区宽-2px（整段溢出都可滚，而不是只有一半）"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-features.md §F SLD-02 / SLD-04 —— 元素几何更新与内容编辑要求任意元素可选中、可编辑；元素分布在整页 1920×1080 上，故整页必须可见可达"
+          confidence: high
+        verification:
+          kind: test
+          target: "e2e/workbench.e2e.ts::AC-CORE-012 画布放大超出可视区后，左右上下都滚得到，不被裁掉"
+          command: "bun test ./e2e/workbench.e2e.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+      - id: AC-CORE-013
+        criterion: "在真实浏览器里打开工作台，把窗口宽度从 1280 改成 1600（画布容器随之变宽），断言：①容器可视内容区宽度确实变大；②画布的屏幕尺寸等于按新内容区算出的适配尺寸 min(contentW/1920, contentH/1080) 换算出的 1920×1080 矩形（宽高各误差 ≤ 20px，20px = 适配缩放向下取整到 1% 的最大偏差 19.2px）；③画布宽高都不超过新的可视内容区；④画布左上角落在可视内容区内"
+        oracle:
+          tier: formal
+          source: "「适配缩放」的定义（把整页装进可视区）＋ 滚动容器语义：内容不得被裁到不可达的位置（形式化推论，非新增业务规则）"
+          confidence: high
+        verification:
+          kind: test
+          target: "e2e/workbench.e2e.ts::AC-CORE-013 容器尺寸变化后缩放档位自动重新适配，画布不被裁掉"
+          command: "bun test ./e2e/workbench.e2e.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
 # ===========================================================================
 # B. 质量引擎
 # ===========================================================================
@@ -559,27 +625,29 @@ clauses:
           pass_when: "退出码 0，且该用例未被 skip"
         maturity: automated
 
-  # ---- SPEC-QLT-009 自动修复 ----
+  # ---- SPEC-QLT-009 自动修复只挪真越界的元素 ----
   - id: SPEC-QLT-009
-    title: 自动修复把几何钳回安全区并保持 ID 唯一
+    title: 自动修复只把真越出画布的元素挪回内容安全区
     type: technical
     risk: high
     status: active
     maturity: automated
-    statement: "autoFixProject 必须把所有元素几何钳制回安全区（左≥100、上≥60、右≤1820、下≤1020，最小宽 200、最小高 100），且修复后元素 ID 仍两两唯一"
+    statement: "autoFixProject 必须把**真正越出画布**（x<0 / y<0 / x+width>1920 / y+height>1080）的元素挪回内容安全区（左≥100、上≥60、右≤1820、下≤1020）；**修复前没有越界的元素，一个坐标都不许动** —— 母版页码与页脚本来就贴着画布下沿，它们在画布内、只是不在内容安全区内，版式就是这么设计的"
     source:
       doc: "docs/backend-features.md"
       section: "§I 质量评估（QLT）· QLT-06"
       quote: "几何钳制回安全区、ID 重排、补齐缺失元素；修复后复评"
     boundaries:
-      - "钳制后 width = max(200, 1820 - x)，height = max(100, 1020 - y)"
-      - "当 1820 - x < 200 或 1020 - y < 100 时，最小尺寸下限与右/下边界互相矛盾，本条按『边界优先』判定"
+      - "越界的判据是画布边界（1920×1080），不是内容安全区 —— 按安全区判定会误伤母版元素"
+      - "越界元素挪回安全区时**优先保持原尺寸**，只有元素本身比安全区还大时才收尺寸（缩窄不解除重叠，平移至少把它放回能看见的地方）"
+      - "背景元素（role=background）铺满画布是设计如此，不参与越界判定"
+      - "元素 ID 重排的约束由 SPEC-QLT-010 单独承载，本条只管几何"
     acceptance:
       - id: AC-QLT-009
-        criterion: "构造一份含越界元素与重复 ID 的演示文稿，调用 autoFixProject 后断言：所有元素满足 x≥100 且 y≥60 且 x+width≤1820 且 y+height≤1020"
+        criterion: "构造一份含越界元素与重复 ID 的演示文稿，调用 autoFixProject 后断言：① 越界元素满足 x≥100 且 y≥60 且 x+width≤1820 且 y+height≤1020；② **每一个修复前没有越界的元素，其 geometry 与修复前逐字节相同**"
         oracle:
           tier: authoritative
-          source: "docs/backend-features.md §E LAY-05（内容区 100px 边距、底部 1020px）＋ §I QLT-06（几何钳制回安全区）"
+          source: "docs/backend-features.md §E LAY-05（内容区 100px 边距、底部 1020px）＋ §I QLT-06（几何钳制回安全区）＋ docs/architecture.md §12 ADR-014（越界判据取画布边界，母版元素不得被挪动）"
           confidence: high
         verification:
           kind: test
@@ -587,15 +655,103 @@ clauses:
           command: "bun test ./spec/verify/quality-engine.test.ts"
           pass_when: "退出码 0，且该用例未被 skip"
         maturity: automated
-      - id: AC-QLT-010
-        criterion: "构造一份含重复元素 ID 的演示文稿，调用 autoFixProject 后断言：全部元素 ID 两两不同，且每个 ID 形如 {elementType}_{slideId}_{indexWithinSlide}"
+      - id: AC-QLT-011
+        criterion: "构造一份含真越界元素与母版元素（pagenum/footernote/header/kicker）的演示文稿，调用 autoFixProject 后断言：所有母版元素的 geometry 与修复前逐字节相同"
         oracle:
-          tier: self-derived
-          source: "src/engine/qualityEngine.ts 的 ID 重排规则（经 docs/backend-features.md §I QLT-06『ID 重排』追认）"
-          confidence: medium
+          tier: authoritative
+          source: "docs/architecture.md §12 ADR-014 —— 母版元素贴着画布边缘是版式设计，修复不得挪动它们"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/quality-engine.test.ts::autofix-leaves-master-elements-alone"
+          command: "bun test ./spec/verify/quality-engine.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-QLT-010 自动修复重排 ID ----
+  - id: SPEC-QLT-010
+    title: 自动修复重排 ID：保留语义前缀且全局唯一
+    type: technical
+    risk: high
+    status: active
+    maturity: automated
+    statement: "autoFixProject 重排元素 ID 后，全部 ID 必须两两唯一，且每个 ID 形如 {语义前缀}_{slideId}_{页内序号} —— **语义前缀必须原样保留**，不得洗成元素类型"
+    source:
+      doc: "docs/architecture.md"
+      section: "§12 ADR-012"
+      quote: "**决策**：`@ppt/core` 生成的所有元素 ID 形如 `{role}_{slideId}_{localIndex}`，全局唯一是**契约**而非巧合。"
+    boundaries:
+      - "『语义前缀』指去掉末尾 `_{slideId}` 与可选 `_{序号}` 后的部分：`header_s1` → `header`、`grid_card_s1_0` → `grid_card`"
+      - "前缀承载语义：渲染分层靠 `header_` 决定 kicker 走哪个层，前端主题重映射靠 `header_` / `accent` 决定配色 —— 洗掉前缀等于让元素掉出模板层、换模板时不再跟随 accent 色"
+      - "ADR-012 与 LAY-08 对前缀用 role 还是 type 有分歧（见 CONF-001）；本条只锁定『前缀不被洗掉』，不裁决 role/type 之争"
+    acceptance:
+      - id: AC-QLT-010
+        criterion: "构造一份含重复元素 ID 的演示文稿，调用 autoFixProject 后断言：① 全部元素 ID 两两不同；② 每个 ID 以 `_{slideId}_{页内序号}` 结尾；③ 每个 ID 的语义前缀落在已知前缀白名单内；④ 修复前后的语义前缀集合完全一致（没有元素的语义身份被洗掉）"
+        oracle:
+          tier: authoritative
+          source: "docs/architecture.md §12 ADR-012（ID 形如 {role}_{slideId}_{localIndex}，全局唯一是契约）＋ §12 ADR-014（重排只改后半截，前缀必须保留）"
+          confidence: high
         verification:
           kind: test
           target: "spec/verify/quality-engine.test.ts::autofix-restores-id-uniqueness"
+          command: "bun test ./spec/verify/quality-engine.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-QLT-011 修复不得让文稿更糟 ----
+  - id: SPEC-QLT-011
+    title: 自动修复不得让文稿变得更糟
+    type: quality
+    risk: high
+    status: active
+    maturity: automated
+    statement: "autoFixProject 修复后必须复评四维分；**修复后的综合分不得低于修复前** —— 修坏了就整体退回，宁可不修也不能修坏"
+    source:
+      doc: "docs/backend-features.md"
+      section: "§G 智能编辑 Agent（EDT）· EDT-06"
+      quote: "编辑后复评四维分；分数下降超阈值自动回滚并以更严格提示重试一次"
+    boundaries:
+      - "本条约束的是**自动修复**这条路径；AI 编辑的闸门阈值仍未定（见 AMB-001 / SPEC-GOV-003）"
+      - "退回时返回的是未修改的文稿（仅刷新体检报告），不得返回半修半坏的状态"
+    acceptance:
+      - id: AC-QLT-012
+        criterion: "构造一份含画布比例错、重复 ID、元素越界三类缺陷的演示文稿，调用 autoFixProject 后断言：① 修复后的综合分 ≥ 修复前；② 结构分严格上升；③ 视觉分不低于修复前；④ 修复后不再有 `vis_bounds_*` 与 `struct_id_*` 诊断"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-features.md §G EDT-06 —— 分数下降即回滚；docs/architecture.md §12 ADR-014 —— 修复后复评、不更差才生效"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/quality-engine.test.ts::autofix-never-lowers-score"
+          command: "bun test ./spec/verify/quality-engine.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-QLT-012 诊断必须声明可否自动修复 ----
+  - id: SPEC-QLT-012
+    title: 每条诊断必须声明可否自动修复
+    type: quality
+    risk: medium
+    status: active
+    maturity: automated
+    statement: "QualityEngine 产出的每一条诊断都必须显式声明 `fixable`（能否被「一键修复」自动处理）；`fixAction` 是**给人看的建议**，不是「点一下就能修」的承诺"
+    source:
+      doc: "docs/architecture.md"
+      section: "§12 ADR-014"
+      quote: "**决策**：诊断与修复能力必须分开声明 —— 只有真做了自动修复的规则才置 `fixable: true`"
+    boundaries:
+      - "「建议人工调整」这类 fixAction 允许存在，但必须配 `fixable: false`"
+      - "本条只约束**声明**；具体哪些规则可自动修复由实现决定，逐条列在 ADR-014 里"
+    acceptance:
+      - id: AC-QLT-013
+        criterion: "构造一份含可修缺陷（元素越界）与不可修缺陷（标题过短）的演示文稿，调用 evaluatePresentation 后断言：① 每一条诊断的 `fixable` 都是布尔值（不得缺省）；② 越界诊断 `fixable === true`；③ 标题缺失诊断 `fixable === false`"
+        oracle:
+          tier: authoritative
+          source: "docs/architecture.md §12 ADR-014 —— 诊断与修复能力必须分开声明"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/quality-engine.test.ts::issues-declare-fixability"
           command: "bun test ./spec/verify/quality-engine.test.ts"
           pass_when: "退出码 0，且该用例未被 skip"
         maturity: automated
@@ -743,6 +899,35 @@ clauses:
           pass_when: "退出码 0，且该用例未被 skip"
         maturity: automated
 
+  # ---- SPEC-RND-006 装不下的文字必须截断 ----
+  - id: SPEC-RND-006
+    title: 装不下的文字必须截断并补省略号
+    type: technical
+    risk: high
+    status: active
+    maturity: automated
+    statement: "排版盒装不下的文字必须按盒高截断并补省略号，**不得整段原样溢出**；截断后可见的文本必须仍是原文的前缀"
+    source:
+      doc: "docs/architecture.md"
+      section: "§12 ADR-011"
+      quote: "**决策**：`@ppt/core` 的渲染器改为原生 SVG 文本排版（`<text>` + `<tspan>`），文本换行与截断由渲染层自研；浏览器内联与服务端共用同一份实现。"
+    boundaries:
+      - "本条只管**单行装不下**的情况；整块装不下（盒高不足以放下任何一行）按『整块丢弃』处理"
+      - "折行本身不受本条约束 —— 只要最终行数放得下，多行排版是合法的"
+    acceptance:
+      - id: AC-RND-006
+        criterion: "渲染一个排版盒只放得下 1 行、而原文折成 2 行的文本元素，断言：① 整段原文不以原样形式出现在 SVG 里（截断没被绕过）；② SVG 中出现省略号『…』；③ 可见文本是原文的前缀加省略号"
+        oracle:
+          tier: authoritative
+          source: "docs/architecture.md §12 ADR-011 —— 换行与截断由渲染层自研；docs/backend-design.md §A —— 需自研文本换行与截断"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/render-svg.test.ts::long-text-is-truncated-with-ellipsis"
+          command: "bun test ./spec/verify/render-svg.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
 # ===========================================================================
 # D. 导出
 # ===========================================================================
@@ -852,6 +1037,53 @@ clauses:
           kind: test
           target: "spec/verify/export-pptx.test.ts::export-filename-sanitized"
           command: "bun test ./spec/verify/export-pptx.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-EXP-005 导入端必须校验 bundle 形状 ----
+  - id: SPEC-EXP-005
+    title: 导入端必须校验它认的那份 bundle 形状
+    type: technical
+    risk: high
+    status: active
+    maturity: automated
+    statement: "POST /api/projects/import 必须校验 slides 的每一项 —— slideId 为非空字符串、orderIndex 为 ≥1 的整数、ir 为对象，且 orderIndex 与 slideId 在 bundle 内各自唯一；slides 字段本身必填。非法载荷一律返回 400 VALIDATION_FAILED，不得落库、不得返回 5xx"
+    source:
+      doc: "docs/backend-features.md"
+      section: "§C 项目管理（PRJ）· PRJ-07"
+      quote: "| PRJ-07 | 导入 Slide IR JSON | P0 | S1 | 校验 `slides`/`name` 字段合法性；非法文件返回明确错误而非崩溃 |"
+    behaviors:
+      - when: "导入的 bundle 里 orderIndex 重复"
+        then: "返回 400 VALIDATION_FAILED，且不产生项目 —— 排序键重复会让页序由数据库决定（静默的数据损坏）"
+      - when: "导入的 bundle 缺 slides / 缺 slideId / 缺 orderIndex / 缺 ir"
+        then: "返回 400 VALIDATION_FAILED —— 入参问题不得表现为服务端错误（500）"
+      - when: "导入服务端自己导出的 bundle"
+        then: "返回 201，且导入后的页序与源项目逐页一致（导出去能再导回来，中间不丢东西）"
+    inference: "五份文档从未直接写出 orderIndex 的取值范围与唯一性要求，但 PRJ-07 要求『校验 slides 字段合法性』，TC-CONTRACT-034~036 要求『400 缺 slides 字段』；orderIndex 的下界锚在领域内核的形式化契约 packages/core/src/contracts/outline.ts（order: z.number().int().min(1)）与 docs/backend-features.md PRJ-10/SLD-08（`order` 与 `slides.orderIndex` 同步更新）—— 两者同基线，故 orderIndex ≥ 1。详见 DEC-007。"
+    acceptance:
+      - id: AC-EXP-005
+        criterion: "取服务端导出的真实 bundle 导入，断言 201 且导入后读回的 slideId 序列与源项目逐项相等；再分别构造 orderIndex 重复 / orderIndex 为 0 / orderIndex 为负数 / orderIndex 非整数 / 缺 orderIndex / 缺 slideId / slideId 重复 / 缺 ir / slides 非数组 / 缺 slides 字段 十种坏形状，断言每一种都返回 400 且 error.code = 'VALIDATION_FAILED'（不得出现 5xx、不得静默成功）"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-features.md §C PRJ-07 —— 校验 slides/name 字段合法性；非法文件返回明确错误而非崩溃（并见 docs/test-cases.md TC-CONTRACT-034~036、TC-EXP-023）"
+          confidence: high
+        verification:
+          kind: test
+          target: "apps/api/tests/integration/import-bundle.test.ts::exported-bundle-round-trips-with-page-order-intact"
+          command: "bun test ./apps/api/tests/integration/import-bundle.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+      - id: AC-EXP-006
+        criterion: "断言导入端对十种坏形状**全部**返回 400 VALIDATION_FAILED：orderIndex 重复 / orderIndex 为 0 / orderIndex 为负数 / orderIndex 非整数 / 缺 orderIndex / 缺 slideId / slideId 重复 / 缺 ir / slides 非数组 / 缺 slides 字段"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-features.md §C PRJ-07 + docs/test-cases.md TC-CONTRACT-034~036 —— 非法文件返回明确错误（400）而非崩溃"
+          confidence: high
+        verification:
+          kind: test
+          target: "apps/api/tests/integration/import-bundle.test.ts::duplicate-order-index-is-rejected"
+          command: "bun test ./apps/api/tests/integration/import-bundle.test.ts"
           pass_when: "退出码 0，且该用例未被 skip"
         maturity: automated
 
@@ -1248,8 +1480,8 @@ clauses:
           confidence: high
         verification:
           kind: test
-          target: "e2e/integration.e2e.ts::1. 注册 → 服务端签发 HttpOnly 会话，前端据此进入工作台"
-          command: "bun test ./e2e/integration.e2e.ts"
+          target: "e2e/auth.e2e.ts::AC-E2E-001 注册 → 服务端签发 HttpOnly 会话，前端据此进入工作台"
+          command: "bun test ./e2e/auth.e2e.ts"
           pass_when: "退出码 0，且该用例未被 skip"
         maturity: automated
 
@@ -1261,8 +1493,8 @@ clauses:
           confidence: high
         verification:
           kind: test
-          target: "e2e/integration.e2e.ts::2. 新建项目 → 服务端库里真的有这条项目"
-          command: "bun test ./e2e/integration.e2e.ts"
+          target: "e2e/projects.e2e.ts::AC-E2E-002 新建项目 → 服务端库里真的有这条项目，且归属当前用户"
+          command: "bun test ./e2e/projects.e2e.ts"
           pass_when: "退出码 0，且该用例未被 skip"
         maturity: automated
 
@@ -1287,8 +1519,8 @@ clauses:
           confidence: high
         verification:
           kind: test
-          target: "e2e/integration.e2e.ts::3. 生成大纲 → 服务端按主题动态生成（不是写死的固定文案）"
-          command: "bun test ./e2e/integration.e2e.ts"
+          target: "e2e/workbench.e2e.ts::AC-E2E-003 生成大纲 → 页数、主题、服务端与 UI 一致"
+          command: "bun test ./e2e/workbench.e2e.ts"
           pass_when: "退出码 0，且该用例未被 skip"
         maturity: automated
 
@@ -1300,8 +1532,8 @@ clauses:
           confidence: high
         verification:
           kind: test
-          target: "e2e/integration.e2e.ts::3b. 编辑大纲标题 → 服务端存的是前端改的那份"
-          command: "bun test ./e2e/integration.e2e.ts"
+          target: "e2e/workbench.e2e.ts::AC-E2E-004 改大纲标题 → 服务端存新标题，UI 也显示新标题"
+          command: "bun test ./e2e/workbench.e2e.ts"
           pass_when: "退出码 0，且该用例未被 skip"
         maturity: automated
 
@@ -1313,8 +1545,8 @@ clauses:
           confidence: high
         verification:
           kind: test
-          target: "e2e/integration.e2e.ts::4. 编译 → 工作台渲染的是服务端生成的 Slide IR"
-          command: "bun test ./e2e/integration.e2e.ts"
+          target: "e2e/workbench.e2e.ts::AC-E2E-005 确认大纲并编译 → 画布渲染的正是服务端那份 IR"
+          command: "bun test ./e2e/workbench.e2e.ts"
           pass_when: "退出码 0，且该用例未被 skip"
         maturity: automated
 
@@ -1339,8 +1571,8 @@ clauses:
           confidence: high
         verification:
           kind: test
-          target: "e2e/integration.e2e.ts::5. 编辑文本 → 防抖同步写回服务端（乐观锁生成新版本）"
-          command: "bun test ./e2e/integration.e2e.ts"
+          target: "e2e/workbench.e2e.ts::AC-E2E-006 就地改文本 → 防抖写回服务端，并产生新版本号"
+          command: "bun test ./e2e/workbench.e2e.ts"
           pass_when: "退出码 0，且该用例未被 skip"
         maturity: automated
 
@@ -1352,8 +1584,8 @@ clauses:
           confidence: high
         verification:
           kind: test
-          target: "e2e/integration.e2e.ts::6. 陈旧 baseVersionId → 409 冲突，且不覆盖服务端内容"
-          command: "bun test ./e2e/integration.e2e.ts"
+          target: "e2e/workbench.e2e.ts::AC-E2E-007 两个会话改同一页 → 后者收到 409，前端提示且没覆盖服务端"
+          command: "bun test ./e2e/workbench.e2e.ts"
           pass_when: "退出码 0，且该用例未被 skip"
         maturity: automated
 
@@ -1378,8 +1610,8 @@ clauses:
           confidence: high
         verification:
           kind: test
-          target: "e2e/integration.e2e.ts::7. AI 编辑 → 服务端施加 IRPatch，前端采纳服务端返回的 IR"
-          command: "bun test ./e2e/integration.e2e.ts"
+          target: "e2e/workbench.e2e.ts::AC-E2E-008 AI 编辑 → 服务端施加补丁，画布跟着重绘"
+          command: "bun test ./e2e/workbench.e2e.ts"
           pass_when: "退出码 0，且该用例未被 skip"
         maturity: automated
 
@@ -1404,8 +1636,8 @@ clauses:
           confidence: high
         verification:
           kind: test
-          target: "e2e/integration.e2e.ts::8. 导出 → 服务端任务产出真实 PPTX 产物"
-          command: "bun test ./e2e/integration.e2e.ts"
+          target: "e2e/exports.e2e.ts::AC-E2E-009 PPTX 导出 → 产物是真正的 OOXML，而且里面是这份文稿"
+          command: "bun test ./e2e/exports.e2e.ts"
           pass_when: "退出码 0，且该用例未被 skip"
         maturity: automated
 
@@ -1417,8 +1649,8 @@ clauses:
           confidence: high
         verification:
           kind: test
-          target: "e2e/integration.e2e.ts::11. 导出 PDF → 产物是真正的 PDF（%PDF 魔数）"
-          command: "bun test ./e2e/integration.e2e.ts"
+          target: "e2e/exports.e2e.ts::AC-E2E-010 PDF 导出 → 产物是真正的 PDF（%PDF 魔数）"
+          command: "bun test ./e2e/exports.e2e.ts"
           pass_when: "退出码 0，且该用例未被 skip"
         maturity: automated
 
@@ -1469,8 +1701,8 @@ clauses:
           confidence: high
         verification:
           kind: test
-          target: "e2e/integration.e2e.ts::9. 跨租户隔离 → 别人的项目拿不到（404 而不是 403）"
-          command: "bun test ./e2e/integration.e2e.ts"
+          target: "e2e/projects.e2e.ts::AC-E2E-011 跨租户隔离 → 别人的项目拿不到（404 而不是 403）"
+          command: "bun test ./e2e/projects.e2e.ts"
           pass_when: "退出码 0，且该用例未被 skip"
         maturity: automated
 
@@ -1495,8 +1727,8 @@ clauses:
           confidence: high
         verification:
           kind: test
-          target: "e2e/integration.e2e.ts::10. 重命名项目 → 服务端存的是新名字"
-          command: "bun test ./e2e/integration.e2e.ts"
+          target: "e2e/projects.e2e.ts::AC-E2E-012 重命名项目 → 服务端存的是新名字"
+          command: "bun test ./e2e/projects.e2e.ts"
           pass_when: "退出码 0，且该用例未被 skip"
         maturity: automated
 
@@ -1508,26 +1740,130 @@ clauses:
           confidence: high
         verification:
           kind: test
-          target: "e2e/integration.e2e.ts::12. 删除项目 → 服务端真的删掉了（且列表里也没有）"
-          command: "bun test ./e2e/integration.e2e.ts"
+          target: "e2e/projects.e2e.ts::AC-E2E-013 删除项目 → 服务端真的删掉了（且列表里也没有）"
+          command: "bun test ./e2e/projects.e2e.ts"
           pass_when: "退出码 0，且该用例未被 skip"
         maturity: automated
 
-  # ---- SPEC-E2E-013 放映的起点是当前页，而不是恒从第一页 ----
-  - id: SPEC-E2E-013
-    title: 浏览器链路上，演示模式从当前页开始，而不是恒从第一页开始
+  # ---- SPEC-E2E-008 模板应用由服务端落库 ----
+  - id: SPEC-E2E-008
+    title: 浏览器链路上，应用模板必须落到服务端且刷新后仍然生效
     type: business
     risk: medium
     status: active
     maturity: automated
-    statement: "工作台停在第 N 页时点放映，演示模式必须从第 N 页开始 —— 放映画的就是当前页，放映的起点也必须是当前页"
+    statement: "浏览器里应用模板时，服务端必须权威地应用该模板并落库（前端只发意图，不发样式）；刷新页面后项目用的仍然是新模板"
     source:
       doc: "docs/backend-design.md"
-      section: "§3 Presentation Mode —— 全屏放映 + 缩略图"
-      quote: "Presentation Mode —— 全屏放映 + 缩略图"
-    derived_from: SPEC-E2E-002
-    inference: "导出范围与放映起点都必须由「当前页」推导 —— 导出已经按当前页取范围（见 SPEC-E2E-005），放映若恒从第一页开始，同一份文稿在工作台、导出、放映三处呈现的就不是同一页"
+      section: "§API 路由表"
+      quote: "POST   /api/templates/:id/apply     应用模板并重映射元素样式（服务端权威）"
     acceptance:
+      - id: AC-E2E-014
+        criterion: "在真实浏览器中应用另一个模板，断言服务端项目存的模板 id 换成了新模板；刷新页面后项目用的仍然是它"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-design.md §API 路由表 + docs/backend-features.md TPL-03「模板应用 + 元素样式重映射 …… 服务端权威执行」"
+          confidence: high
+        verification:
+          kind: test
+          target: "e2e/templates.e2e.ts::应用模板 → 服务端存的是新模板，刷新后仍然是它"
+          command: "bun test ./e2e/templates.e2e.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+      - id: AC-E2E-020
+        criterion: "在真实浏览器中应用一个**不存在的**模板 id，断言：服务端以 404 拒绝；界面出现「模板更新失败」提示并写明原因；服务端项目的模板 id **没有**被改动；界面上「当前使用」的标记仍然指向旧模板（不制造假成功）"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-design.md §5.3「服务端返回错误信封时，前端必须把这次操作显示为失败并说明原因；绝不能显示成成功」+ 同节错误码枚举中的 NOT_FOUND（不存在的资源按 404 处理 —— 由该节『项目不存在』示例推广到模板）+ docs/backend-features.md TPL-03「服务端权威执行」"
+          confidence: high
+        verification:
+          kind: test
+          target: "e2e/templates.e2e.ts::应用不存在的模板 → 界面如实报错，服务端模板不被改动"
+          command: "bun test ./e2e/templates.e2e.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-E2E-009 质量中心显示的是服务端的权威评分 ----
+  - id: SPEC-E2E-009
+    title: 浏览器链路上，质量中心显示的评分与服务端权威评分一致
+    type: business
+    risk: high
+    status: active
+    maturity: automated
+    statement: "浏览器里的质量中心必须显示服务端算出来的评分（而不是浏览器自己再算一遍）；一键修复必须真的写回服务端"
+    source:
+      doc: "docs/backend-design.md"
+      section: "§17 附录：现状 → 目标 一览"
+      quote: "| 质量检查 | 纯前端计算 | 服务端权威 + 生成后自动闸门 |"
+    acceptance:
+      - id: AC-E2E-015
+        criterion: "在真实浏览器中打开质量中心，断言界面上的四个分数与 POST /api/quality/evaluate 返回的权威评分逐项相等"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-design.md §17 —— 质量检查由「纯前端计算」改为「服务端权威」"
+          confidence: high
+        verification:
+          kind: test
+          target: "e2e/quality.e2e.ts::质量报告 → 界面分数与服务端权威评分逐项对得上"
+          command: "bun test ./e2e/quality.e2e.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+      - id: AC-E2E-016
+        criterion: "在真实浏览器中点一键修复，断言服务端那一页的 IR 真的被改写（元素 id 变化、versionId 前进），且修复后的评分不低于修复前"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-design.md §17 —— 服务端权威 + 生成后自动闸门（闸门在服务端执行，修复也必须落库）"
+          confidence: high
+        verification:
+          kind: test
+          target: "e2e/quality.e2e.ts::一键修复 → 服务端的 IR 真的被改写，版本号前进"
+          command: "bun test ./e2e/quality.e2e.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+  # ---- SPEC-E2E-010 演示模式画的是服务端那份 IR ----
+  - id: SPEC-E2E-010
+    title: 浏览器链路上，演示模式画的是服务端那份 IR
+    type: business
+    risk: medium
+    status: active
+    maturity: automated
+    statement: "进入演示模式后，放映画布上画的那一页必须与服务端存的那一页是同一份（同一 slideId、同一文字），翻页翻的是服务端的后一页"
+    source:
+      doc: "docs/backend-design.md"
+      section: "§17 附录：现状 → 目标 一览"
+      quote: "| 页面生成 | 前端 `layoutEngine`，7/8 版式硬编码 | `@ppt/core` 共享引擎，槽位驱动，前后端一致 |"
+    derived_from: SPEC-E2E-002
+    inference: "工作台、导出、放映三处消费的是同一份服务端 IR；演示模式若画的是本地另存的一份，三处就不一致 —— 而『前后端一致』正是这一行的目标"
+    acceptance:
+      - id: AC-E2E-017
+        criterion: "在真实浏览器中进入演示模式，断言放映画布上的 slideId 与文字与服务端那一页的 IR 一致，且翻页翻到的是服务端的后一页"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-design.md §17「前后端一致」+ docs/architecture.md §4 体验层页签含「演示模式」"
+          confidence: high
+        verification:
+          kind: test
+          target: "e2e/presentation.e2e.ts::放映画面上的文字 == 服务端 IR 里的文字"
+          command: "bun test ./e2e/presentation.e2e.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+      - id: AC-E2E-018
+        criterion: "在真实浏览器中进入演示模式并翻页，断言页码与画布上的 slideId 跟着服务端那一页走；退出演放后回到工作台"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-design.md §3「Presentation Mode —— 全屏放映 + 缩略图」+ docs/architecture.md §4 体验层页签含「演示模式」"
+          confidence: high
+        verification:
+          kind: test
+          target: "e2e/presentation.e2e.ts::翻页 → 换到服务端的后一页，退回后回到第一页"
+          command: "bun test ./e2e/presentation.e2e.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
       - id: AC-E2E-025
         criterion: "在真实浏览器中把工作台停在第 2 页并进入演示模式，断言放映画布从第 2 页开始（页码显示 02 / N，标题与服务端第 2 页的 IR 一致）"
         oracle:
@@ -1541,35 +1877,81 @@ clauses:
           pass_when: "退出码 0，且该用例未被 skip"
         maturity: automated
 
-  # ---- SPEC-E2E-014 模板提取失败必须显示为失败 ----
-  #
-  # 这条挂着一条 known_gaps：提取失败目前**界面上一声不吭** ——
-  # TemplateCenter 的 handleSimulateExtract 的 catch 只 console.warn，
-  # 用户看到的是「点了没反应」。判据已定义，验证器尚未建成。
-  - id: SPEC-E2E-014
-    title: 浏览器链路上，模板提取失败必须显示为失败
+  # ---- SPEC-E2E-011 失败路径必须可见，且不得假装成功 ----
+  - id: SPEC-E2E-011
+    title: 浏览器链路上，服务端失败必须显示为失败
     type: technical
-    risk: medium
+    risk: high
     status: active
-    maturity: planned
-    statement: "浏览器里上传模板让服务端提取时，若提取失败，界面必须明说失败并说明原因 —— 不能只 console.warn 然后让用户以为「点了没反应」"
+    maturity: automated
+    statement: "服务端返回错误信封时，前端必须把这次操作显示为失败并说明原因；绝不能显示成成功；失败之后界面仍可继续操作"
     source:
       doc: "docs/backend-design.md"
       section: "§5.3 统一响应与错误规范"
-      quote: "服务端返回错误信封时，前端必须把这次操作显示为失败并说明原因；绝不能显示成成功"
+      quote: "统一响应信封：成功 `{ data, traceId }`，失败 `{ error: { code, message, details? }, traceId }`"
+    derived_from: SPEC-API-001
+    inference: "服务端用统一信封明确区分成功与失败，前端据此必须把失败显示成失败 —— 「失败时显示成功」会让用户以为文稿存好了而实际没存"
     acceptance:
-      - id: AC-E2E-026
-        criterion: "在真实浏览器中让服务端的模板提取失败，断言界面明确显示失败（而不是「点了没反应」），且服务端的模板集未被改动"
+      - id: AC-E2E-019
+        criterion: "在真实浏览器中让导出链路失败（提交被拒 / 任务报错），断言界面显示「导出失败」且不出现「导出成功」；后端连不上时界面必须明说连不上且登录入口仍可用"
         oracle:
-          tier: expert
-          source: "docs/backend-design.md §5.3 —— 失败必须显示为失败；「点了没反应」是最糟的实现"
+          tier: formal
+          source: "由 SPEC-API-001 推导 —— 统一信封在协议层把成功与失败区分开（形式化约束）；推导依据见本条的 inference"
           confidence: medium
         verification:
           kind: test
-          target: "e2e/template-extract.e2e.ts::模板提取失败 → 界面明说失败，服务端模板集未被改动"
-          command: "bun test ./e2e/template-extract.e2e.ts"
+          target: "e2e/errors.e2e.ts::导出提交失败 → 界面显示\"导出失败\"，绝不显示\"导出成功\""
+          command: "bun test ./e2e/errors.e2e.ts"
           pass_when: "退出码 0，且该用例未被 skip"
-        maturity: none
+        maturity: automated
+
+  # ---- SPEC-E2E-012 外部资源不可达时应用仍能启动 ----
+  #
+  # 这条是被一次**真实事故**逼出来的：应用把 Google Fonts 的样式表挂在
+  # <head> 里当渲染阻塞资源。渲染阻塞样式表一旦 pending，会连带**阻塞脚本执行** ——
+  # 外部 CDN 不可达时 <script type="module"> 永远不跑，React 挂不上，整页白屏。
+  #
+  # 后果在测试里特别难看：不是"某条用例失败"，是**每条用例都卡在 page.goto 上**，
+  # 最后以 180s 超时收场 —— 分不清是实现的锅还是外网的锅，判据直接失效。
+  - id: SPEC-E2E-012
+    title: 外部资源不可达时，应用外壳仍然起得来
+    type: technical
+    risk: high
+    status: active
+    maturity: automated
+    statement: "浏览器端应用不得依赖外部网络才能启动：外部字体 CDN 之类的资源不可达时，应用外壳（登录表单）必须渲染出来，且 HTML 里不得存在会阻塞渲染的外部样式表"
+    source:
+      doc: "docs/backend-features.md"
+      section: "§N 字体与渲染 TPL-12 / EXP-12"
+      quote: "| TPL-12 | 字体资源托管 | P0 | S3 | Manrope / Plus Jakarta Sans / JetBrains Mono / Noto Sans SC 本地化，服务端渲染不依赖外网 |"
+    derived_from: SPEC-RND-003
+    inference: "文档要求的是**服务端渲染**不依赖外网（字体 vendored 进仓库，ADR-009）；本条把同一要求推到**浏览器端**：同一个产品，字体 CDN 不可达就白屏，等于把可用性押在一个自己控制不了的第三方上。推导的**边界**说清楚 —— docs/backend-features.md §N 明确「离线/内网部署版 …… 当前为云端 SaaS 假设」，所以本条**不**主张「完全离线部署」，只主张「外部资源不可达时应用仍能启动」这一条底线。判据的**可判定依据**是浏览器平台的形式化行为（HTML 规范：未完成的渲染阻塞样式表会延迟脚本执行），不是我们自己的口味。"
+    acceptance:
+      - id: AC-E2E-021
+        criterion: "断言应用返回的 HTML 里，每一张**外部**样式表都不是渲染阻塞的（media 不匹配 screen/all，或 rel=preload 配 onload 切 rel）"
+        oracle:
+          tier: formal
+          source: "HTML 平台的形式化约束 —— 浏览器只把「匹配当前媒体类型」的样式表算作渲染阻塞（docs/test-cases.md TC-EXP-001b 同源：服务端 SVG 产物不得含 fonts.googleapis.com 远程引用，ADR-009 vendored fonts）"
+          confidence: high
+        verification:
+          kind: test
+          target: "e2e/offline.e2e.ts::应用 HTML → 没有会阻塞渲染的外部样式表"
+          command: "bun test ./e2e/offline.e2e.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+      - id: AC-E2E-022
+        criterion: "把应用源以外的所有请求无限期挂起（模拟外网不可达），断言登录表单仍在 8 秒内可见，且确实存在处于挂起状态的外部请求（否则用例空洞）"
+        oracle:
+          tier: formal
+          source: "浏览器平台的形式化行为（脚本执行被渲染阻塞样式表挡住 ⇒ 应用不挂载）＋ 观测判据（外壳是否出现）；**8 秒是工程阈值**（低于外部挂起窗口 20s、低于 page.goto 默认 30s），文档没有给这个数值 —— 它只保证「回归时会快速失败而不是挂死」"
+          confidence: medium
+        verification:
+          kind: test
+          target: "e2e/offline.e2e.ts::外部资源被挂起 → 外壳仍在 8 秒内渲染出来"
+          command: "bun test ./e2e/offline.e2e.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
 
 # ===========================================================================
 # H. 非功能
@@ -1881,7 +2263,7 @@ decisions:
     decided_by: "spec 化执行者"
     decided_at: "2026-11-01"
     rationale: "docs/testing-strategy.md §6.1 明写「默认离线：`bun test` 一律使用回放，不烧 API 额度」，docs/backend-design.md §13 的测试分层把「AI 离线 → 录制响应回放」列为独立一层 —— 直连官方端点**违反**了这两条。实测后果也不是「多烧点额度」而已：官方端点在同一台机器上既有 300ms 返回 400 的常态，也有 TLS 校验失败、整整 20s 连不上的时刻；而 E2E 里「生成大纲」那一步只等 60s，降级链的最坏耗时正好是 3 × 20s = 60s。**测试的等待上限等于被测实现的最坏值**，于是这条用例变成掷硬币 —— 一次失败的判据分不清是实现坏了还是外网抽风，证据就不成立。改走本地替身后模型调用在 0–7ms 内失败（不再是 60,756ms），一轮 E2E 约 10s。替身返回原样的 400 响应体，于是链路仍是「真 HTTP → 真 SDK → 真错误分类（400 不可重试）→ 真降级链 → 真本地生成」，被换掉的只有链路尽头那台机器。**结论的适用范围**：E2E 证明的是「模型不可用时前后端仍然集成正确」，不证明真实模型下的生成质量或延迟 —— 那两项由 apps/api/tests/ai/（FakeModelClient）与 apps/api/tests/perf/ 覆盖，同样不是真实模型；要验证真实模型只能去预发环境单独跑，不能进 `bun test`。"
-    applies_to: [SPEC-E2E-001, SPEC-E2E-002, SPEC-E2E-003, SPEC-E2E-004, SPEC-E2E-005, SPEC-E2E-006, SPEC-E2E-007]
+    applies_to: [SPEC-E2E-001, SPEC-E2E-002, SPEC-E2E-003, SPEC-E2E-004, SPEC-E2E-005, SPEC-E2E-006, SPEC-E2E-007, SPEC-E2E-008, SPEC-E2E-009, SPEC-E2E-010, SPEC-E2E-011]
 
   - id: DEC-011
     question: "E2E 的前端 dev server 要不要开热重载与文件监听？"
@@ -1889,7 +2271,15 @@ decisions:
     decided_by: "spec 化执行者"
     decided_at: "2026-11-01"
     rationale: "vite 的 dev server 监听**整个项目根目录**，而 E2E 跑的时候根目录底下一直在变：PGlite 是文件数据库（每写一行都在改 `.data/e2e-pglite/**`）、导出产物落在 `.data/e2e-artifacts/`、浏览器证据落在 `spec/evidence/`、注入检查还会直接改源码。任何一次改动都可能让 vite 给页面发一次**整页重载**；页面一重载，React 的内存状态就没了，E2E 里「UI 操作 → 服务端存了什么」这条链子就断在中间。实测两次：一次让 AC-E2E-006 的「还原后」那一轮连挂 4 个用例（判为不合格），一次只是碰巧没炸。这个开关本来就是为「agent 改文件时页面乱闪」准备的（见 vite.config.ts 的注释）—— E2E 断言的是**服务端状态**，不测热重载，热重载对它是纯噪声。"
-    applies_to: [SPEC-E2E-001, SPEC-E2E-002, SPEC-E2E-003, SPEC-E2E-004, SPEC-E2E-005, SPEC-E2E-006, SPEC-E2E-007]
+    applies_to: [SPEC-E2E-001, SPEC-E2E-002, SPEC-E2E-003, SPEC-E2E-004, SPEC-E2E-005, SPEC-E2E-006, SPEC-E2E-007, SPEC-E2E-008, SPEC-E2E-009, SPEC-E2E-010, SPEC-E2E-011]
+
+  - id: DEC-012
+    question: "slides.orderIndex 的页序基线从 0 开始还是从 1 开始？五份文档从未写明。"
+    decision: "1-based —— orderIndex ≥ 1，与领域内核的 outline.order 同基线；导入端据此校验（缺该项校验会让重复的 orderIndex 静默落库，页序从此由数据库决定）"
+    decided_by: "spec 化执行者"
+    decided_at: "2026-11-04"
+    rationale: "五份设计文档**从头到尾没有规定页码从几开始** —— 这正是「不可判定就承认」要处理的情况。三条独立的线索指向同一个答案：(1) **形式化契约** —— packages/core/src/contracts/outline.ts 写死 `order: z.number().int().min(1)`，starterProjects 的样例数据也是 order 1..6；(2) **文档把两者绑在一起** —— docs/backend-features.md PRJ-10 / SLD-08「重排后同步更新 `order` 字段与 `slides.orderIndex`」，既然是同步字段，同基线是唯一自洽的读法；(3) **服务端别处的写法** —— slideService / quality 两处写库都是 `idx + 1`。前两条来自被测系统**之外**（领域内核的 Zod 契约 + 源文档），oracle tier 是 formal + authoritative，不是 self-derived。**可观测性说明**：前端从不直接读 orderIndex（页码用的是数组下标 `index + 1`），所以这个基线错了不会立刻在 UI 上暴露 —— 但它会经由导入端变成**静默**的数据损坏（排序键重复 → 页序随机化），所以必须在边界上挡住。"
+    applies_to: [SPEC-EXP-005]
 
 # ===========================================================================
 # 未决与已知限制
@@ -1903,13 +2293,21 @@ known_gaps:
     reason: "验证器**已建成**（apps/api/tests/perf/outline-latency.bench.ts，100 次采样），但本轮只跑了**降级模式**：模型不可用时采样到的是本地确定性实现，模型往返延迟根本没被采样到。真实模型下的 P95 仍未测过 —— 结论为 INCONCLUSIVE，不能用降级模式的通过顶替"
     plan: "在有真实 GEMINI_API_KEY 的评估环境设 BENCH_REAL_MODEL=1 重跑 `bun test ./apps/api/tests/perf/outline-latency.bench.ts`，把结果并入 spec/evidence/junit.xml"
 
+  - clause: SPEC-E2E-008
+    reason: "TPL-03 的**后半段**没实现：docs/backend-features.md 要求「按 role 逐类重映射样式（背景/标题/正文/卡片/徽章/分隔线）」，而 POST /api/templates/:id/apply 目前只把模板**绑定**到项目上，**已经编译好的幻灯片元素样式保持原样** —— 换个模板后画面观感不变。本条款只覆盖「模板绑定落库 + 刷新后仍然生效」（AC-E2E-014 有验证器），元素样式重映射**没有判据、也没有实现**。之所以不直接补：文档没有给出「哪一类 role 映射到哪些具体样式字段」的映射表，layoutEngine 里这些样式是**逐元素内联**写死的（见 packages/core/src/engine/layoutEngine.ts 的 buildXxxLayout），要重映射就得先定出一张映射表 —— 那是替用户定业务规则，违反「不编造业务规则」。"
+    plan: "由领域负责人给出 role → 样式字段的映射表（或确认「重映射」就是「按 layoutEngine 现有 role 样式重算」），再在 core 里实现 remapTemplateStyles(elements, theme) 并由 apply 路由写回 slides；届时补 SPEC-E2E-008 的第二条判据"
+
+  - clause: SPEC-E2E-008
+    reason: "「失败路径」已由 AC-E2E-020 覆盖（应用不存在的模板 → 界面如实报错 + 服务端模板未被改动）。**仍未覆盖**的是「模板不属于当前用户」这一分支 —— 它与前者共用服务端的同一段 404 处理与前端同一段错误渲染，判据的实质已被 AC-E2E-020 覆盖，但没有独立的用例把「另一个用户的模板」这条路径单独走一遍。"
+    plan: "补一条跨租户用例：用户 B 提取一份私有模板，用户 A 在浏览器里尝试应用它，断言 404 + 界面报错 + 服务端模板未被改动"
+
   - clause: SPEC-E2E-003
     reason: "**页级**编辑（加页 / 复制页 / 删页 / 上移下移）不落库。App.tsx 的 syncProject 有两条硬规则：没有 baseVersionId 的新页直接跳过；剩下页的 IR 一个字节没变就不写。于是删掉的页刷新后会回来、新加的页刷新后会丢。这一条已由 AC-E2E-004（元素级编辑落库）覆盖了实质，但**页级**这条路径至今没有判据 —— 现有用例只能断言界面侧（缩略图数、顺序、画布 data-slide-id），不能断言服务端。"
     plan: "补 POST / DELETE /api/projects/:id/slides 端点，并让 syncProject 在页集合变化时写 order；届时把页级用例从「UI 侧断言」升级为「服务端侧断言」并在本条款补一条判据"
 
-  - clause: SPEC-E2E-014
-    reason: "**模板提取**失败没有任何界面提示：TemplateCenter 的 handleSimulateExtract 的 catch 只 console.warn，用户看到的是「点了没反应」。判据已定义（AC-E2E-026），验证器尚未建成。"
-    plan: "给 TemplateCenter 加一条提取失败的可读提示（复用 sync-notice 那条横幅），并补上 e2e/template-extract.e2e.ts 这条链"
+  - clause: SPEC-E2E-008
+    reason: "**模板提取**失败没有任何界面提示：TemplateCenter 的 handleSimulateExtract 的 catch 只 console.warn，用户看到的是「点了没反应」。注意这与「应用模板失败」不同 —— 后者已经有 templateNotice（AC-E2E-020 覆盖）；缺提示的是**提取**这一步（上传模板 → 服务端抽取）。"
+    plan: "给 TemplateCenter 加一条提取失败的可读提示（复用 sync-notice 那条横幅），届时补一条判据：提取失败时界面明说失败，且服务端模板集未被改动"
 
   - clause: SPEC-E2E-007
     reason: "作品库的「备份全库」导出的文件**恢复不回来**：它导的是内存里那份摘要列表（每份作品没有 slides、也没有 orderIndex），而导入端 POST /api/projects/import 只认单份作品的形状 {name, slides:[{slideId, orderIndex, ir}]}。两者对不上 —— 单份作品的导出/导入已经修好（走服务端 bundle），但「一次备份整个库」这条路仍然是个死胡同。之所以不直接补：备份文件的**格式**（单份 bundle 的数组？还是 {projects:[...]}？）决定了导入端要不要改契约，那是产品决定，不该由实现侧替用户定。"

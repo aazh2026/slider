@@ -1,5 +1,5 @@
 /**
- * SPEC-QLT-001 .. SPEC-QLT-010 —— 质量引擎契约
+ * SPEC-QLT-001 .. SPEC-QLT-012 —— 质量引擎契约
  * ---------------------------------------------------------------------------
  * 手法：先造一份「零缺陷」演示文稿作为基线（四个分项都必须是 100），
  * 再每次只注入一种缺陷，断言扣分幅度。基线不干净的话，后面所有扣分断言都不可信。
@@ -228,7 +228,52 @@ describe('SPEC-QLT-008 页数不足与缺封面各扣一致性分', () => {
   });
 });
 
-describe('SPEC-QLT-009 自动修复必须把几何钳回安全区', () => {
+/**
+ * 版式引擎产出的元素 ID 前缀白名单
+ * ---------------------------------------------------------------------------
+ * 这些前缀在本项目里**承载语义**，不只是标识：
+ *   · `header_` —— 决定 kicker 走哪个渲染层（svgRenderer），也决定换模板时
+ *                  它是否跟随 accent 色
+ *   · `accent_` —— 决定卡片底色用 accent 还是 surfaceBorder
+ *   · `pagenum_` / `footernote_` —— 人类可读的语义标签
+ * 所以 ID 重排**只能改后半截**，绝不能把前缀洗成元素类型。
+ */
+const SEMANTIC_PREFIXES = [
+  'bg',
+  'header',
+  'title',
+  'keymsg',
+  'pagenum',
+  'footernote',
+  'grid_card',
+  'kicker',
+  'maintitle',
+  'subtitle',
+  'accent_line',
+  'metacard',
+];
+
+/** 母版元素 —— 它们本来就贴着画布边缘，修复时不得挪动 */
+const MASTER_PREFIXES = ['pagenum_', 'footernote_', 'header_', 'kicker_'];
+
+/**
+ * 元素 ID 的语义部分 —— 去掉末尾的页号段与序号段
+ * ---------------------------------------------------------------------------
+ * 写法刻意与实现不同（按段拆，而不是反复剥后缀）——
+ * 测试若只是把实现抄一遍，实现与测试会一起错。
+ */
+function semanticOf(id: string, slideId: string): string {
+  const segments = id.split('_');
+  const isSlide = (s: string) => s === slideId;
+  const isIndex = (s: string) => /^\d+$/.test(s);
+  if (segments.length > 1 && isSlide(segments[segments.length - 1])) segments.pop();
+  if (segments.length > 1 && isIndex(segments[segments.length - 1])) segments.pop();
+  if (segments.length > 1 && isSlide(segments[segments.length - 1])) segments.pop();
+  if (segments.length > 1 && isIndex(segments[segments.length - 1])) segments.pop();
+  return segments.join('_');
+}
+
+describe('SPEC-QLT-009 自动修复只把真越出画布的元素挪回安全区', () => {
   test('autofix-restores-bounds', () => {
     // 用真实版式引擎的产物做夹具 —— 母版元素（页码/页脚）本来就贴着画布右下角
     const slides: SlideIR[] = [
@@ -245,44 +290,161 @@ describe('SPEC-QLT-009 自动修复必须把几何钳回安全区', () => {
     const project = makeProject(slides);
     const fixed = QualityEngine.autoFixProject(project);
 
-    const violations: string[] = [];
-    for (const slide of fixed.slides) {
-      for (const el of slide.elements) {
-        if (el.role === 'background') continue;
-        const { x, y, width, height } = el.geometry;
-        if (x < 100 || y < 60 || x + width > 1820 || y + height > 1020) {
-          violations.push(
-            `${slide.slideId}/${el.id} → x=${x} y=${y} w=${width} h=${height} ` +
-              `(right=${x + width}, bottom=${y + height})`
+    // 1) 越出画布的元素必须被挪回内容安全区
+    const bad = fixed.slides[0].elements.find((el) => el.id.startsWith('bad_geo'));
+    expect(bad).toBeDefined();
+    const g = bad!.geometry;
+    expect(g.x).toBeGreaterThanOrEqual(100);
+    expect(g.y).toBeGreaterThanOrEqual(60);
+    expect(g.x + g.width).toBeLessThanOrEqual(1820);
+    expect(g.y + g.height).toBeLessThanOrEqual(1020);
+
+    // 2) **没越界的元素一个坐标都不许动** —— 旧实现会把母版页码/页脚
+    //    也钳进安全区，每点一次「一键修复」它们就上移一次
+    const moved: string[] = [];
+    project.slides.forEach((slide, sIdx) => {
+      slide.elements.forEach((el, elIdx) => {
+        const before = el.geometry;
+        const after = fixed.slides[sIdx].elements[elIdx].geometry;
+        const outOfCanvas =
+          before.x < 0 ||
+          before.y < 0 ||
+          before.x + before.width > 1920 ||
+          before.y + before.height > 1080;
+        if (!outOfCanvas && JSON.stringify(before) !== JSON.stringify(after)) {
+          moved.push(
+            `${slide.slideId}/${el.id} ${JSON.stringify(before)} → ${JSON.stringify(after)}`
           );
         }
-      }
-    }
-    expect(violations).toEqual([]);
+      });
+    });
+    expect(moved).toEqual([]);
   });
 });
 
-describe('SPEC-QLT-010 自动修复必须重排 ID 使其全局唯一', () => {
+describe('SPEC-QLT-010 自动修复重排 ID：保留语义前缀且全局唯一', () => {
   test('autofix-restores-id-uniqueness', () => {
-    const slides: SlideIR[] = [
+    const project = makeProject([
       makeSlide('cards_grid', { slideId: 'fx1', order: 1 }),
-      makeSlide('cards_grid', { slideId: 'fx2', order: 2 }),
-    ];
-    slides[1].elements[0].id = slides[0].elements[0].id;
+      makeSlide('title_cover', { slideId: 'fx2', order: 2 }),
+    ]);
+    // 注入一个与本页已有元素同 ID 的元素（制造重复）
+    project.slides[1].elements.push(
+      makeElement('title_fx2', { role: 'footer', geometry: { x: 100, y: 400, width: 200, height: 60 } })
+    );
 
-    const fixed = QualityEngine.autoFixProject(makeProject(slides));
+    const fixed = QualityEngine.autoFixProject(project);
 
-    const ids: string[] = [];
-    const malformed: string[] = [];
-    for (const slide of fixed.slides) {
+    // 1) 全局唯一
+    const ids = fixed.slides.flatMap((s) => s.elements.map((e) => e.id));
+    expect(new Set(ids).size).toBe(ids.length);
+
+    // 2) 每个 ID 都带本页页号与本页内序号
+    const badShape: string[] = [];
+    fixed.slides.forEach((slide) => {
       slide.elements.forEach((el, idx) => {
-        ids.push(el.id);
-        if (el.id !== `${el.type}_${slide.slideId}_${idx}`) {
-          malformed.push(`${slide.slideId}/${el.id} 期望 ${el.type}_${slide.slideId}_${idx}`);
+        if (!el.id.endsWith(`_${slide.slideId}_${idx}`)) {
+          badShape.push(`${slide.slideId}/${el.id} 期望以 _${slide.slideId}_${idx} 结尾`);
         }
       });
-    }
-    expect(malformed).toEqual([]);
-    expect(new Set(ids).size).toBe(ids.length);
+    });
+    expect(badShape).toEqual([]);
+
+    // 3) 语义前缀原样保留 —— 白名单锚定，不靠实现自证
+    const afterPrefixes = new Set<string>();
+    fixed.slides.forEach((slide) => {
+      slide.elements.forEach((el) => afterPrefixes.add(semanticOf(el.id, slide.slideId)));
+    });
+    const unknown = [...afterPrefixes].filter((p) => !SEMANTIC_PREFIXES.includes(p));
+    expect(unknown).toEqual([]);
+
+    // 4) 没有任何元素的语义身份被洗掉（修复前后前缀集合一致）
+    const beforePrefixes = new Set<string>();
+    project.slides.forEach((slide) => {
+      slide.elements.forEach((el) => beforePrefixes.add(semanticOf(el.id, slide.slideId)));
+    });
+    expect([...afterPrefixes].sort()).toEqual([...beforePrefixes].sort());
+  });
+});
+
+describe('SPEC-QLT-010 自动修复不得挪动母版元素', () => {
+  test('autofix-leaves-master-elements-alone', () => {
+    const project = makeProject([
+      makeSlide('title_cover', { slideId: 'fx1', order: 1 }),
+      makeSlide('cards_grid', { slideId: 'fx2', order: 2 }),
+    ]);
+    // 注入一个真越界元素 —— 修复确实要动手，母版元素却不能被牵连
+    project.slides[1].elements.push(
+      makeElement('bad_geo', { role: 'footer', geometry: { x: -50, y: 40, width: 1900, height: 900 } })
+    );
+
+    const fixed = QualityEngine.autoFixProject(project);
+
+    const moved: string[] = [];
+    project.slides.forEach((slide, sIdx) => {
+      slide.elements.forEach((el, elIdx) => {
+        if (!MASTER_PREFIXES.some((p) => el.id.startsWith(p))) return;
+        const after = fixed.slides[sIdx].elements[elIdx].geometry;
+        if (JSON.stringify(el.geometry) !== JSON.stringify(after)) {
+          moved.push(
+            `${slide.slideId}/${el.id} ${JSON.stringify(el.geometry)} → ${JSON.stringify(after)}`
+          );
+        }
+      });
+    });
+    expect(moved).toEqual([]);
+  });
+});
+
+describe('SPEC-QLT-011 自动修复不得让文稿变得更糟', () => {
+  test('autofix-never-lowers-score', () => {
+    const project = makeProject([
+      makeSlide('title_cover', { slideId: 'fx1', order: 1 }),
+      makeSlide('cards_grid', { slideId: 'fx2', order: 2 }),
+      makeSlide('cards_grid', { slideId: 'fx3', order: 3 }),
+    ]);
+    // 三种可修缺陷：画布比例错、ID 重复、元素越界
+    project.slides[1].canvas = { width: 1600, height: 900 };
+    project.slides[2].elements[1].id = project.slides[2].elements[0].id;
+    project.slides[0].elements.push(
+      makeElement('bad_geo', { role: 'footer', geometry: { x: 1700, y: 1000, width: 400, height: 200 } })
+    );
+
+    const before = QualityEngine.evaluatePresentation(project);
+    const fixed = QualityEngine.autoFixProject(project);
+    const after = fixed.qualityReport!;
+
+    expect(after.overallScore).toBeGreaterThanOrEqual(before.overallScore);
+    // 结构分必须真的涨了 —— 缺陷确实被修掉了
+    expect(after.structureScore).toBeGreaterThan(before.structureScore);
+    // 视觉分不得下降
+    expect(after.visualScore).toBeGreaterThanOrEqual(before.visualScore);
+    // 越界与重复 ID 都不得再出现
+    expect(after.issues.filter((i) => i.id.startsWith('vis_bounds_'))).toEqual([]);
+    expect(after.issues.filter((i) => i.id.startsWith('struct_id_'))).toEqual([]);
+  });
+});
+
+describe('SPEC-QLT-012 每条诊断必须声明可否自动修复', () => {
+  test('issues-declare-fixability', () => {
+    const project = makeCleanProject();
+    // 注入可修缺陷（越界）与不可修缺陷（标题过短）
+    project.slides[1].elements.push(
+      makeElement('oob', { role: 'footer', geometry: { x: 1800, y: 100, width: 200, height: 100 } })
+    );
+    project.slides[1].title = 'ab';
+
+    const report = QualityEngine.evaluatePresentation(project);
+    expect(report.issues.length).toBeGreaterThan(0);
+
+    // 每一条都必须显式声明 —— 不声明就没法在前端区分「能一键修」与「只能看建议」
+    const undeclared = report.issues.filter((i) => typeof i.fixable !== 'boolean').map((i) => i.id);
+    expect(undeclared).toEqual([]);
+
+    // 越界能自动修；标题缺失不能自动修（要人来写）
+    const bounds = report.issues.find((i) => i.id.startsWith('vis_bounds_'));
+    expect(bounds?.fixable).toBe(true);
+    const title = report.issues.find((i) => i.id.startsWith('content_title_'));
+    expect(title?.fixable).toBe(false);
   });
 });

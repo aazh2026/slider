@@ -41,10 +41,12 @@ MUTATION_CHECK_ONLY=AC-E2E-011 bun run spec/verify/mutation-check.ts   # 只跑�
 
 | 文件 | 作用 | 性质 |
 |---|---|---|
-| `spec.yaml` | 条款 / 判据的机器可读契约（当前 49 条条款 / 64 条判据） | **手写** —— 唯一的事实来源 |
+| `spec.yaml` | 条款 / 判据的机器可读契约（当前 60 条条款 / 85 条判据） | **手写** —— 唯一的事实来源 |
 | `spec.schema.json` | Spec 自身的结构约束（JSON Schema 2020-12） | 手写 |
 | `verify/spec-schema.py` | 结构校验器 | 手写 |
 | `verify/spec-structure.test.ts` | 引用完整性（悬空 ID、判据与验证器对不上、成熟度自洽） | 手写 |
+| `verify/junit.ts` | junit 解析的**纯函数**（含 XML 实体解码）—— 抽出来是为了能给它写测试 | 手写 |
+| `verify/junit.test.ts` | junit 解析的**缺陷回放**（曾把真跑过的用例判成「验证未执行」） | 手写 |
 | `verify/helpers.ts` | 夹具与取文本的公共工具 —— 只搭台子，判定逻辑一律写在各自的 test 里 | 手写 |
 | `verify/core-layout.test.ts` | 版式引擎契约（画布、越界、ID 唯一、纯函数、母版） | 手写 |
 | `verify/core-content.test.ts` | 内容绑定契约（版式是否真的消费 outline） | 手写 |
@@ -52,6 +54,11 @@ MUTATION_CHECK_ONLY=AC-E2E-011 bun run spec/verify/mutation-check.ts   # 只跑�
 | `verify/render-svg.test.ts` | SVG 渲染契约（转义、foreignObject、外链字体、元素 ID、四层结构） | 手写 |
 | `verify/export-pptx.test.ts` | 导出契约（PPTX 文本保真、演讲者备注、PNG 倍率、文件名清洗） | 手写 |
 | `verify/servers.ts` | 为 E2E 拉起后端 + 前端的编排（**每轮换端口**，绝不静默复用旧进程） | 手写 |
+| `verify/run-e2e.ts` | E2E 链的编排 —— **一条链一个进程**（九条链塞进一个进程会挂死，理由见文件头） | 手写 |
+| `verify/evidence-target.test.ts` | 证据落盘位置的**缺陷回放**（曾把全量 E2E 证据冲成一条链的结果） | 手写 |
+| `verify/chain-isolation.test.ts` | 跑批之间**不许互踩浏览器**的缺陷回放（曾把别人的浏览器杀掉，症状伪装成页面炸了） | 手写 |
+| `verify/testid-contract.test.ts` | E2E 与前端之间的 `data-testid` **静态对账**（前端改名后 E2E 会一直等一个不存在的元素） | 手写 |
+| `verify/e2e-only.ts` | 只跑 E2E 的入口（与流水线跑的是同一套东西，证据可直接被追溯矩阵消费） | 手写 |
 | `verify/model-stub.ts` | 模型端点替身的启动器（**独立进程** —— 见下方「为什么替身不能同进程」） | 手写 |
 | `verify/model-stub-server.ts` | 模型端点替身本体（独立进程，返回官方端点在占位 key 下的原样 400） | 手写 |
 | `verify/repro-flake.ts` | E2E 抖动的复现循环（每轮重起服务，抓服务端日志与浏览器日志） | 手写 |
@@ -61,10 +68,14 @@ MUTATION_CHECK_ONLY=AC-E2E-011 bun run spec/verify/mutation-check.ts   # 只跑�
 | `traceability.md` | 追溯矩阵 + 验证报告 | **生成** —— 不要手改 |
 | `evidence/junit.xml` | 单元 / 集成判据执行的原始证据 | 生成 |
 | `evidence/junit-e2e.xml` | 前后端集成 E2E 的原始证据 | 生成 |
+| `evidence/junit-output.txt` | 判据执行那一步的 stderr —— **失败原因在这里**（Bun 的 junit 不写错误信息，见 `all.ts`） | 生成 |
+| `evidence/junit-e2e-output.txt` | E2E 各链的 stderr —— 同上 | 生成 |
+| `evidence/step-*.txt` | 其余各步的 stderr（结构校验 / 类型检查 / 注入检查 / 追溯矩阵） | 生成 |
 | `evidence/mutation-report.json` | 注入检查的原始证据 | 生成 |
 | `evidence/coverage.json` | 领域内核覆盖率的原始证据 | 生成 |
 | `evidence/e2e-browser.log` | E2E 浏览器侧证据（console / 请求失败 / 4xx+ 响应） | 生成 |
 | `evidence/e2e-browser-<判据>-<轮次>.log` | 注入检查每轮的浏览器侧证据（每轮单独一份，不互相覆盖） | 生成 |
+| `evidence/e2e-media/<链>/` | **可视化产物**：录像 `.webm` / 截图 `.png` / trace `.zip`（不进版本库，见 `.gitignore`） | 生成 |
 | `evidence/flake-repro.log` | E2E 抖动复现的每轮输出 | 生成 |
 
 Spec 目录之外，判据的验证器还包括：
@@ -74,8 +85,48 @@ Spec 目录之外，判据的验证器还包括：
 | `packages/core/tests/` | 领域内核（`@ppt/core`）的版式快照与补丁应用测试 |
 | `apps/api/tests/` | 后端的契约 / 集成 / 安全 / AI / 混沌 / 性能测试 |
 | `src/services/projectMerge.test.ts` | 前端唯一的单元测试 —— 摘要/全量合并的回归锁（`bun test` 默认规则会扫到） |
-| `e2e/integration.e2e.ts` | 前后端集成 —— Playwright 驱动真实 Chromium + 真实服务端 |
+| `e2e/*.e2e.ts` | 前后端集成的**独立链**（auth / projects / workbench / exports / quality / templates / presentation / errors）—— Playwright 驱动真实 Chromium + 真实服务端 |
 | `scripts/check-coverage.check.ts` | 覆盖率门禁的可执行判据（SPEC-GOV-001） |
+
+---
+
+## 看见浏览器在干什么
+
+默认的 E2E 是**无头**的 —— 流水线里没有显示器，无头是唯一能跑的选择。
+但"无头跑过了"和"人眼看过它跑过"是两件事：
+前者只证明断言成立，后者才排除「页面其实白屏、断言恰好没查那里」这类假绿。
+
+所以 E2E 入口带一组**只影响跑法、不影响任何断言**的可视化开关：
+
+```bash
+bun run spec/verify/e2e-only.ts --visible --video --shots --slowmo=120 --hold=500
+# 或
+bun run test:e2e:visible
+```
+
+| 开关 | 效果 |
+|---|---|
+| `--visible` | 弹**真窗口**（`E2E_HEADFUL=1`）—— 人眼直接看浏览器被驱动 |
+| `--video` | 每个会话录一段 `.webm`（`E2E_VIDEO=1`）—— 事后逐帧回看 |
+| `--shots` | 每个会话结束时留一张整页截图（`E2E_SHOTS=1`） |
+| `--trace` | Playwright trace（`E2E_TRACE=1`）—— `bunx playwright show-trace` 可交互回放 |
+| `--slowmo=N` | 每个动作之间放慢 N 毫秒（`E2E_SLOWMO=N`）—— 看清动作序列 |
+| `--hold=N` | 每个会话的页面在屏幕上多留 N 毫秒（`E2E_HOLD_MS=N`） |
+
+产物落在 `spec/evidence/e2e-media/<链>/`，按链分子目录、文件名可读
+（`video-01.webm` / `shot-01.png` / `trace-01.zip`）。
+
+两条实现上的坑，踩过才知道：
+
+- **有头模式下浏览器的可执行文件不叫 `Chromium`** —— macOS 上是
+  `ms-playwright/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/…`。
+  清理残留进程时按 `Chromium` 匹配会**一个都匹配不到**，
+  于是有头模式跑完窗口全留着没人管。现在统一按**安装目录**
+  `ms-playwright/chromium` 匹配，无头（`chromium_headless_shell`）与有头都命中，
+  而用户自己开的 Chrome 不命中。
+- **截图要在上下文关闭之前拍，录像要在关闭之后取** —— 页面一关
+  `page.screenshot()` 直接抛 "Target page, context or browser has been closed"；
+  录像则是 Playwright 随上下文关闭才写完的，关闭之前 `saveAs` 拿到的是半截文件。
 
 ---
 
@@ -206,6 +257,84 @@ Spec 目录之外，判据的验证器还包括：
   `src/services/projectMerge.test.ts`（断言用可辨识标记，不靠「不等于空」）。
 - **4 处源文档段落未纳入**，理由见 `spec/traceability.md` §1.4。
   遗漏必须显式说明 —— 静默丢弃的段落是「覆盖率 100%」假象的主要来源。
+- **只跑部分链时，证据不写进全量文件** ——
+  `junit-e2e.xml` 是追溯矩阵**唯一**的 E2E 证据来源。
+  调试时只跑一条链（`e2e-only.ts auth`）却把它覆盖成那一条链的结果，
+  下一轮追溯矩阵就会把**所有** E2E 判据判成 INCONCLUSIVE ——
+  明明跑过，只是证据被冲掉了，而且**没人会来查**（报告看起来只是"很保守"）。
+  现在子集跑写到 `junit-e2e-partial-<链>.xml`（已 gitignore），
+  全量证据一个字节都不动；判定逻辑在 `spec/verify/run-e2e.ts` 的
+  `isFullChainRun()` / `evidenceFileNames()`，
+  缺陷回放见 `spec/verify/evidence-target.test.ts`。
+- **两个跑批同时跑时不许互踩浏览器** ——
+  编排器原先按「这条链启动前系统里已有的浏览器 pid」做差集来收残留，
+  这**默认了「这个世界上只有我在跑」**。同时有第二个跑批时，
+  两边各杀对方的浏览器（"多出来的都杀掉"），症状伪装成
+  `newContext: Target page, context or browser has been closed`，
+  栈顶落在 `e2e/helpers.ts` 建上下文那一行 —— 看着像**页面逻辑**炸了。
+  现在改成**按进程树认领**：浏览器是本链 `bun test` 进程的子进程，
+  顺着 ppid 走回本链才算自己的；别人的跑批的浏览器碰不到。
+  缺陷回放见 `spec/verify/chain-isolation.test.ts`。
+- **导入端现在真的校验 bundle 形状了**（原先一个字段都不校验）——
+  `POST /api/projects/import` 的 `slides` 原本是 `z.array(z.unknown()).optional()`，
+  于是重复的 `orderIndex` 能静默落库（排序键重复 → 页序由数据库决定，
+  **没有任何报错**），缺字段的文件则把 NOT NULL 约束炸成 **500**，
+  缺整个 `slides` 的文件被当成**空项目**导进去。
+  这不是实现细节的自由发挥 —— `docs/backend-features.md` PRJ-07
+  明写「校验 `slides`/`name` 字段合法性；非法文件返回明确错误而非崩溃」，
+  `docs/test-cases.md` TC-CONTRACT-034~036 也把「400 缺 slides 字段」列为用例；
+  **文档早就要求校验，实现一直没做**。现在按 PRJ-07 补齐，
+  验证器在 `apps/api/tests/integration/import-bundle.test.ts`，
+  注入检查有 4 条（AC-EXP-005 / AC-EXP-006）。
+- **E2E 与前端之间的 `data-testid` 现在有静态对账** ——
+  2026-11-04 00:51 前端把创作中心的滑块从 `page-count` 改名成 `cc-page-count`，
+  E2E 的 helper 还写着旧名字。而 Playwright 的 `getByTestId` 是**全等匹配**，
+  不是子串匹配 —— 它不会「匹配到别的元素」，只会**永远等不到**：
+  每条用例卡满 15 秒超时，16 条一模一样的 `TimeoutError`，
+  栈顶落在 `helpers.ts` 的一行上，看着像"页面没加载出来"。
+  发现成本极高：单元测试全绿（前端改名不影响任何单测），
+  全量 E2E 要跑十几分钟才撞上，还得先想到"改名"和"超时"有关，再回头去 diff 前端。
+  现在 `spec/verify/testid-contract.test.ts` 把前端提供的 testid 与 E2E 用到的 testid
+  **各解析一遍逐一比对** —— 秒级跑完，不开浏览器、不起服务，
+  判据本身也带了这次改名的缺陷回放。
+- **工作台画布曾经被压成竖条，现在有判据守着** ——
+  2026-11-04 可见跑批时用眼睛看出来的：主画布是一张**竖着的**白纸，
+  幻灯片被缩成中间一条，上下大片空白；而左侧缩略图是正常的 16:9。
+  根因是画布那层是 flex 项，`width: 1920` 被 `flex-shrink` 压成了容器宽度
+  （实测 528px 的视口里被压成 480px，**高度仍是 1080px**），
+  于是 1920×1080 的 SVG 被塞进 480×1080 的竖条，
+  `preserveAspectRatio="xMidYMid meet"` 只能把幻灯片缩成中间一条。
+  **这个缺陷 IR 层完全看不出来** —— IR 里的 `canvas` 仍然是 `{1920, 1080}`，
+  所有内容类断言（文字在不在、是不是服务端那份）照样全绿。
+  修法：画布拆成两层 —— 外层是不可压缩的占位盒（尺寸 = 缩放后的视觉尺寸），
+  内层才是 1920×1080 的真画布，靠 `transform: scale()` + `transform-origin: top left` 缩放。
+  判据 `AC-CORE-011`（`e2e/workbench.e2e.ts`）守的是**屏幕上的实际盒子**：
+  宽高比必须 16:9、viewBox 比例必须 16:9、整幅背景必须铺满画布盒，
+  注入检查里也有一条对应的注入（把画布宽度改成跟着容器走 → 判据必须失败）。
+- **画布放大后，左边那一块曾经永远滚不到（2026-11-05）** ——
+  还是用眼睛看出来的：可见跑批的 `presentation/shot-04.png` 里，
+  幻灯片被切掉了左半边，标题从中间开始。
+  根因是滚动容器写的是 `justify-content: center`：
+  放大到超过适配档位后画布比可视区宽，**center 把溢出量平均分到两侧**，
+  而滚动容器只能往右滚 —— 左边那一半落在负坐标上，`scrollLeft` 归零了也看不到。
+  实测 73% 缩放下左侧 **460px** 被裁掉且不可达（整段溢出 922px，只能滚 461px）。
+  这跟 SLD-02/SLD-04 直接冲突：位于左侧的元素既选不中也拖不动，
+  而**所有内容类断言照样全绿**（元素都在 DOM 里，只是屏幕上看不见）。
+  修法两处：
+  ①对齐改成 `safe center`（放得下就居中，放不下就贴左/贴上，溢出全甩到可滚的一侧）；
+  ②适配缩放改用 `ResizeObserver` 跟踪容器尺寸 —— 原来只监听 `window.resize`，
+  容器因面板收起/展开而变宽时缩放档位会**停在旧值上**，画布就比可视区宽。
+  判据 `AC-CORE-012`（放大后两侧都滚得到）与 `AC-CORE-013`（容器变了自动重新适配）守着，
+  注入检查里配了三条注入（`safe center` 改回 `center` × 水平/垂直、不再观察容器变化）。
+- **页序基线是 1-based，写在 `DEC-012` 里** ——
+  五份设计文档**从未规定**页码从几开始；
+  能定住它的是领域内核的形式化契约
+  （`packages/core/src/contracts/outline.ts`：`order: z.number().int().min(1)`）
+  加上 `docs/backend-features.md` PRJ-10 / SLD-08
+  「`order` 与 `slides.orderIndex` 同步更新」——
+  既然同步，就同基线。
+  注意前端**从不直接读** `orderIndex`（页码用的是数组下标），
+  所以这个基线错了不会在 UI 上立刻暴露，只会经由导入端变成**静默**的数据损坏。
 
 ---
 

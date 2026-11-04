@@ -1,5 +1,5 @@
 /**
- * SPEC-RND-001 .. SPEC-RND-005 —— SVG 渲染契约
+ * SPEC-RND-001 .. SPEC-RND-006 —— SVG 渲染契约
  * ---------------------------------------------------------------------------
  * 渲染器没有导出 escapeXml，所以转义用例通过「注入 payload → 取回 <text> 内的实际文本」
  * 来间接验证，而不是去 import 内部函数。
@@ -161,5 +161,32 @@ describe('SPEC-RND-005 SVG 按四层渲染', () => {
       const layerGroups = [...svg.matchAll(/<g id="([^"]*-layer)"/g)].map((m) => m[1]);
       expect({ layout, layerGroups }).toEqual({ layout, layerGroups: layers });
     }
+  });
+});
+
+describe('SPEC-RND-006 装不下的文字必须截断并补省略号', () => {
+  test('long-text-is-truncated-with-ellipsis', () => {
+    // 盒高 40px、字号 16px（行高 22px）→ 只放得下 1 行；
+    // 原文按 800px 宽折成 2 行 —— 第 2 行必须被截掉
+    const LONG = '很长的标题'.repeat(20);
+    const slide = payloadSlide(LONG);
+    slide.elements[0].geometry = { x: 100, y: 100, width: 800, height: 40 };
+
+    const svg = SVGRenderer.renderToString(slide, ALL_THEMES[0]);
+
+    // 整段原文不得原样出现在 SVG 里 —— 那意味着截断被绕过了
+    expect(svg.includes(LONG)).toBe(false);
+    // 截断必须留下省略号
+    expect(svg.includes('…')).toBe(true);
+
+    // 可见文本必须是原文的**前缀**加省略号（不能打乱顺序，也不能凭空多字）
+    const match = svg.match(/<text\b[^>]*>([\s\S]*?)<\/text>/);
+    expect(match).not.toBeNull();
+    const visible = (match![1] ?? '').trim();
+    expect(visible.endsWith('…')).toBe(true);
+    const body = visible.slice(0, -1);
+    expect(LONG.startsWith(body)).toBe(true);
+    expect(body.length).toBeGreaterThan(0);
+    expect(body.length).toBeLessThan(LONG.length);
   });
 });
