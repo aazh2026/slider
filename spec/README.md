@@ -66,7 +66,8 @@ MUTATION_CHECK_ONLY=AC-E2E-011 bun run spec/verify/mutation-check.ts   # 只跑�
 | `verify/core-content.test.ts` | 内容绑定契约（版式是否真的消费 outline） | 手写 |
 | `verify/quality-engine.test.ts` | 质量评分契约（公式权重与各项扣分） | 手写 |
 | `verify/render-svg.test.ts` | SVG 渲染契约（转义、foreignObject、外链字体、元素 ID、四层结构） | 手写 |
-| `verify/export-pptx.test.ts` | 导出契约（PPTX 文本保真、演讲者备注、PNG 倍率、文件名清洗） | 手写 |
+| `verify/export-pptx.test.ts` | 导出契约（PPTX 文本保真、演讲者备注、核心库浏览器路径的 PNG 倍率、文件名清洗） | 手写 |
+| `verify/export-png-resolution.test.ts` | PNG 光栅化倍率 —— 验**产品真正走的那条路**（服务端 resvg），回读 PNG 文件头 | 手写 |
 | `verify/servers.ts` | 为 E2E 拉起后端 + 前端的编排（**每轮换端口**，绝不静默复用旧进程） | 手写 |
 | `verify/run-e2e.ts` | E2E 链的编排 —— **一条链一个进程**（九条链塞进一个进程会挂死，理由见文件头） | 手写 |
 | `verify/evidence-target.test.ts` | 证据落盘位置的**缺陷回放**（曾把全量 E2E 证据冲成一条链的结果） | 手写 |
@@ -246,6 +247,25 @@ bun run test:e2e:visible
   任何两行不得拼在同一运行里）。判据的权威来源（EXP-15 / EXP-17「回读产物校验关键文本存在」）未动。
   **这不是降标准换绿 —— 唯一被放宽的是那个格式上不可能的『一个字符串一个运行』，
   同时被收紧的是反串行能力。**
+- **1 条判据验错了实现路径 —— `AC-EXP-003`，记录在 `spec.yaml` DEC-015。**
+  判据写的是「PNG 光栅化必须是 3840×2160（= slide.canvas 的两倍）」，
+  权威来源是 `docs/backend-features.md §J EXP-02`：「`@resvg/resvg-js` 3840×2160，**无需浏览器**」。
+  原文指的从来是**服务端 resvg** 那条路，可判据验的是 `ExportEngine.exportSlideAsPng` ——
+  核心库里那条**浏览器 canvas** 路径，全仓库除验证器外**没有任何调用者**
+  （前端导出走 `POST /api/exports` → `exportService.renderExport` → resvg）。
+  于是判据是绿的、产品是错的：服务端写的是 `svgToPng(svg, 1920)` —— 与画布同宽的 **1 倍**，
+  而界面上的按钮写着「2x 超清光栅化图片」「3840×2160」，用户拿到的是一半分辨率。
+  **缺陷回放**：把服务端改回 1920 → 旧验证器 **4 条全绿**（对产品缺陷完全失明，
+  因为它测的是另一条路），新验证器当场报红（1920×1080 ≠ 3840×2160）。
+  判据已改挂产品路径（`spec/verify/export-png-resolution.test.ts` ——
+  **回读 PNG 文件头 IHDR 里的宽高**，不装假 DOM），实现也补齐到 2 倍
+  （`PNG_RASTER_WIDTH = 3840`），E2E 层也加上了像素尺寸断言。
+  **这不是降标准换绿** —— 判据的权威来源一个字未动，改的只是「验哪条实现路径」；
+  原来验的那条根本不是产品路径，而一个装在假 DOM 上的 3840×2160
+  证明不了任何用户会拿到的东西。
+  PDF 路径维持 1 倍（PDF 页面本身就是 1920×1080，位图 1:1 嵌入才是像素对齐，
+  EXP-02 的「2 倍」只约束 PNG 导出）；核心库那条浏览器路径仍是对外 API，
+  它的用例与注入用例都保留，只是不再由它代表本判据。
 - **1 条条款无判据**（SPEC-GOV-003）—— 质量闸门分数线在五份文档中从未给出，判据无法成立（AMB-001）。
 - **AC-NFR-001 是 INCONCLUSIVE** —— 验证器已建成，但本轮只跑了降级模式（`.env` 里的
   `GEMINI_API_KEY` 是占位符），真实模型下的 P95 从未被采样到。

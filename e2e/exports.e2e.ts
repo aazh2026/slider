@@ -193,6 +193,20 @@ describe('导出链（真实浏览器 + 真实服务端）', () => {
       // IEND 结尾 —— 说明文件是完整的，不是被截断的
       expect(Buffer.from(artifact.bytes.slice(-8, -4)).toString('latin1')).toBe('IEND');
 
+      // 像素尺寸 —— PNG 的 IHDR 在第 16~23 字节（宽高各 4 字节大端）。
+      // EXP-02 要求 3840×2160（1920×1080 的 2 倍），界面上的按钮也这么写着。
+      // 这一条以前没人验：判据 AC-EXP-003 验的是核心库里那条**没人走**的
+      // 浏览器 canvas 路径，服务端这条真路一直是 1 倍（1920×1080）而没人发现。
+      const pngView = new DataView(
+        artifact.bytes.buffer,
+        artifact.bytes.byteOffset,
+        artifact.bytes.byteLength
+      );
+      expect({ width: pngView.getUint32(16), height: pngView.getUint32(20) }).toEqual({
+        width: 3840,
+        height: 2160,
+      });
+
       await closeExport(session);
     } finally {
       await session.close();

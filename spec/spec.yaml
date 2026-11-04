@@ -1269,15 +1269,15 @@ clauses:
       quote: "`@resvg/resvg-js` 3840×2160，无需浏览器"
     acceptance:
       - id: AC-EXP-003
-        criterion: "断言光栅化目标画布尺寸为 3840×2160，且等于 slide.canvas 的两倍"
+        criterion: "断言**产品路径**（服务端 resvg，apps/api/src/services/exportService.ts）产出的 PNG 的实际像素为 3840×2160，且等于 slide.canvas 的两倍 —— 必须回读 PNG 文件头（IHDR）里的宽高，不信导出函数的返回值。原判据验的是核心库里那条没人走的浏览器 canvas 路径（产品不走那条路），故按 DEC-015 改验产品路径。"
         oracle:
           tier: authoritative
-          source: "docs/backend-features.md §J EXP-02 —— 3840×2160"
+          source: "docs/backend-features.md §J EXP-02 —— 3840×2160（原文指的就是 resvg，无需浏览器）"
           confidence: high
         verification:
           kind: test
-          target: "spec/verify/export-pptx.test.ts::png-export-is-2x"
-          command: "bun test ./spec/verify/export-pptx.test.ts"
+          target: "spec/verify/export-png-resolution.test.ts::server-png-export-is-2x"
+          command: "bun test ./spec/verify/export-png-resolution.test.ts"
           pass_when: "退出码 0，且该用例未被 skip"
         maturity: automated
 
@@ -2656,6 +2656,14 @@ decisions:
     decided_at: "2026-11-05"
     rationale: "两种读法的结论只在 0~10px 的重叠带与 0~10px 的间隙带上相反，而这两条带正是**这条规则存在的理由**。容差读法（重叠 ≤ 10px 放过、间隙一律放过）意味着：两张卡之间只留 5px —— 视觉上已经糊成一块 —— 却被判为『没碰撞』，那这条规则只能抓「大面积糊在一起」，抓不住「挤在一起」这种更常见的失误。反过来安全距读法把「重叠 5px」也判为碰撞，这是对的：5px 的重叠在卡片带描边、带阴影的视觉语言里就是**压字**。**代价评估**：改判要确认不会误伤既有版式 —— 实测 8 种版式 × 8 套主题的真实输出，最小间距是 20px 且零重叠，所以安全距语义对既有输出零误报。这个读法还让 `separation` 的定义变得自洽：负值即重叠，0 即相接，正值即间隙，一个数覆盖三种关系，不需要为『相接』单开分支。"
     applies_to: [SPEC-QLT-005]
+
+  - id: DEC-015
+    question: "AC-EXP-003 该验哪条实现路径 —— 核心库里的浏览器 canvas（ExportEngine.exportSlideAsPng），还是产品真正走的服务端 resvg（exportService.renderExport）？"
+    decision: "改验产品路径：回读服务端产出的 PNG 文件头，断言实际像素为 3840×2160；同时把服务端实现从 1 倍补齐到 2 倍（PNG_RASTER_WIDTH = 3840）。核心库那条浏览器路径的用例与注入用例保留"
+    decided_by: "spec 化执行者"
+    decided_at: "2026-11-05"
+    rationale: "判据自己的权威原文写的是「`@resvg/resvg-js` 3840×2160，**无需浏览器**」—— 指的从来是服务端 resvg 路线；判据却验了 `ExportEngine.exportSlideAsPng`，即核心库里那条浏览器 canvas 路径。那条路径在整个仓库里除验证器外**没有任何调用者**，前端导出走的是 `POST /api/exports` → `exportService.renderExport` → resvg。于是判据是绿的、产品是错的：服务端写的是 `svgToPng(svg, 1920)`，与画布同宽，是 **1 倍**；而界面上的按钮写着「2x 超清光栅化图片」「3840×2160」，用户拿到的是一半分辨率。**缺陷回放可证**：把服务端改回 1920 后，旧验证器 4 条用例**全绿**（对产品缺陷完全失明，因为它测的是另一条路），新验证器当场报红（1920×1080 ≠ 3840×2160）。**这不是降低标准换绿**：判据的权威来源（EXP-02 的 3840×2160）一个字未动，改的只是「验哪条实现路径」——原先验的那条根本不是产品路径，而一个装在假 DOM 上的 3840×2160 证明不了任何用户会拿到的东西。补齐实现才是这轮的重点：判据说得对，实现也得做得对。**未波及的部分**：PDF 路径维持 1 倍 —— PDF 页面本身就是 1920×1080（`format: [1920, 1080]`），位图 1:1 嵌入才是像素对齐，EXP-02 的「2 倍」只约束 PNG 导出；核心库那条浏览器路径仍是一个对外 API，保留其用例与注入用例，只是不再由它代表本判据。"
+    applies_to: [SPEC-EXP-003]
 
 # ===========================================================================
 # 未决与已知限制

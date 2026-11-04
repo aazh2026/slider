@@ -143,7 +143,20 @@ describe('SPEC-EXP-002 PPTX 写入演讲者备注', () => {
   });
 });
 
-describe('SPEC-EXP-003 PNG 导出为 2 倍分辨率', () => {
+/**
+ * SPEC-EXP-003 PNG 导出为 2 倍分辨率 —— **核心库的浏览器 canvas 实现**
+ * ---------------------------------------------------------------------------
+ * 这个用例验的是 `ExportEngine.exportSlideAsPng`（浏览器里用 canvas 光栅化）。
+ *
+ * ⚠️ 它**不是**产品走的路：产品导出走 `POST /api/exports` →
+ * `exportService.renderExport` → resvg（服务端），那条路的 2× 由
+ * `spec/verify/export-png-resolution.test.ts` 验。
+ *
+ * 以前判据 AC-EXP-003 挂的是**这个**用例 —— 于是判据是绿的、产品是错的
+ * （服务端当时是 1 倍，而界面写着「3840×2160」）。判据已于 DEC-015 改挂产品路径；
+ * 这个用例保留下来，因为它验的仍是一个对外 API 的契约。
+ */
+describe('SPEC-EXP-003 PNG 导出为 2 倍分辨率（核心库浏览器 canvas 路径）', () => {
   test('png-export-is-2x', async () => {
     const shim = installDomShim();
     try {

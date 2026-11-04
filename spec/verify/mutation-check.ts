@@ -485,9 +485,23 @@ export const MUTATIONS: Mutation[] = [
     testName: 'pptx-includes-speaker-notes',
   },
   // ---- SPEC-EXP-003 PNG 2 倍 ----
+  //
+  // 同一要求的**两条实现**，各配一条注入用例：
+  //   · 产品路径（服务端 resvg）—— 判据 AC-EXP-003 现在验的就是它（见 DEC-015）
+  //   · 核心库的浏览器 canvas 路径 —— 产品不走它，但它仍是对外 API，
+  //     保留注入用例是为了证明**它自己的**验证器还抓得住错
   {
     criterion: 'AC-EXP-003',
-    description: 'PNG 光栅化改成 1 倍分辨率',
+    description: '服务端 PNG 光栅化改成 1 倍分辨率',
+    file: 'apps/api/src/services/exportService.ts',
+    find: 'const PNG_RASTER_WIDTH = 3840;',
+    replace: 'const PNG_RASTER_WIDTH = 1920;',
+    testFile: 'spec/verify/export-png-resolution.test.ts',
+    testName: 'server-png-export-is-2x',
+  },
+  {
+    criterion: 'AC-EXP-003',
+    description: '核心库浏览器 canvas 路径的光栅化改成 1 倍分辨率',
     file: 'packages/core/src/engine/exportEngine.ts',
     find: 'canvas.width = 1920 * 2; // 2x retina',
     replace: 'canvas.width = 1920;',

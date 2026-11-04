@@ -63,6 +63,27 @@ function selectSlides(project: PresentationProject, scope?: ExportScope): SlideI
   return project.slides.filter((s) => wanted.has(s.slideId));
 }
 
+/**
+ * PNG 光栅化宽度 —— **2 倍**。
+ * ---------------------------------------------------------------------------
+ * docs/backend-features.md §J EXP-02 原文：「`@resvg/resvg-js` 3840×2160，无需浏览器」。
+ * 画布是 1920×1080，导出要的是它的两倍。
+ *
+ * 这里以前写的是 1920 —— 与画布同宽，于是产品导出的 PNG 是 **1 倍**，
+ * 而界面上那个按钮明明写着「2x 超清光栅化图片」「3840×2160」
+ * （src/components/ExportModal.tsx）。规格一直没抓到这件事，
+ * 因为当时验的是核心库里那条**产品不走**的浏览器 canvas 路径 —— 见 spec.yaml DEC-015。
+ */
+const PNG_RASTER_WIDTH = 3840;
+
+/**
+ * PDF 位图宽度 —— **1 倍**。
+ * ---------------------------------------------------------------------------
+ * PDF 页面本身就是 1920×1080（`format: [1920, 1080]`），位图按 1:1 嵌入即像素对齐；
+ * EXP-02 的「2 倍」只约束 PNG 导出，不牵连 PDF。
+ */
+const PDF_RASTER_WIDTH = 1920;
+
 /** SVG → PNG 位图 */
 function svgToPng(svg: string, width: number): Uint8Array {
   const resvg = new Resvg(svg, {
@@ -116,7 +137,7 @@ export async function renderExport(
       for (const [i, slide] of slides.entries()) {
         if (i > 0) pdf.addPage([1920, 1080], 'landscape');
         const svg = SVGRenderer.renderToString(slide, project.template.theme);
-        const png = svgToPng(svg, 1920);
+        const png = svgToPng(svg, PDF_RASTER_WIDTH);
         pdf.addImage(png, 'PNG', 0, 0, 1920, 1080);
       }
       const out = pdf.output('arraybuffer');
@@ -148,7 +169,7 @@ export async function renderExport(
         const svg = SVGRenderer.renderToString(s, project.template.theme);
         return {
           name: `${String(s.order).padStart(2, '0')}_${safeName(s.slideId)}.png`,
-          bytes: svgToPng(svg, 1920),
+          bytes: svgToPng(svg, PNG_RASTER_WIDTH),
         };
       });
       if (files.length === 1) {
