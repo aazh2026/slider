@@ -25,7 +25,7 @@
  */
 
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -1517,7 +1517,16 @@ async function runChecks(): Promise<number> {
 
     // 读原文 + 校验所有锚点
     const originals = new Map<string, string>();
-    for (const f of files) originals.set(f, readFileSync(resolve(ROOT, f), 'utf-8'));
+    // 注入前的修改时间 —— 还原时一并还原回去。
+    //
+    // 不还原的话，注入检查每还原一个文件就把它的 mtime 推到「证据之后」，
+    // 追溯矩阵的新鲜度判定（看 mtime）会把**所有**结论判成过期 ——
+    // 而内容一个字节都没变。详见 spec/verify/mutationRestore.ts 的文件头。
+    const originalMtimes = new Map<string, number>();
+    for (const f of files) {
+      originals.set(f, readFileSync(resolve(ROOT, f), 'utf-8'));
+      originalMtimes.set(f, statSync(resolve(ROOT, f)).mtimeMs);
+    }
 
     // 跑批时这一版源码的指纹 —— 结论是对它成立的，报告里必须留凭据。
     // 取的是**注入前**的原文（见 results 的 sourceSha256 说明）。
@@ -1672,6 +1681,7 @@ async function runChecks(): Promise<number> {
         root: ROOT,
         files,
         originals,
+        originalMtimes,
         injected,
         edits,
         backupDir: 'spec/evidence/.mutation-conflicts',

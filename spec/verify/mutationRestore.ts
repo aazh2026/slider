@@ -36,9 +36,34 @@
  *
  * 纯逻辑与文件读写都**显式传路径**（与 `spec/verify/mutationLock.ts` 同款），
  * 于是这一整套策略可以在临时目录里被完整测一遍。
+ *
+ * ---------------------------------------------------------------------------
+ * 还原还得把**修改时间**还原回去（2026-11-05 加）
+ * ---------------------------------------------------------------------------
+ * 还原这一步以前只管内容，不管时间戳。于是：
+ *
+ *   注入检查把源文件改坏 → 跑验证器 → 还原（内容回来了，时间戳是新的）
+ *     ↓
+ *   追溯矩阵的新鲜度判定看的是「依赖的文件在证据之后有没有被动过」
+ *     ↓
+ *   源文件被动过（其实是我们自己动的，内容一个字节没变）
+ *     ↓
+ *   **矩阵说：这 98 条结论对当前代码全部过期**
+ *
+ * 而流水线刚刚跑完这 98 条判据、全绿。矩阵在同一份文件里既说「判据全过」
+ * 又说「没有一条结论对当前代码成立」—— 自相矛盾。
+ *
+ * 更糟的是它**每次都这样**：这一行永远写着「全过期」，读者看久了就不看了，
+ * 于是某次**真的**过期（有人在跑批之后改了源文件）也一起被忽略。
+ * 「宁可多报过期」这个原则是对的，但**自己造成的假过期不算多报** ——
+ * 那是把自己的工具的副作用算到了别人头上。
+ *
+ * 所以：**内容还原成逐字节相同，时间戳也还原回去**。
+ * 只有内容真的变了（反向打补丁那条路，保住了别人的改动）才不还原时间戳 ——
+ * 那时候文件确实变了，把「有人在跑批期间动过它」藏起来才是危险的。
  */
 
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, statSync, utimesSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
 /** 一次替换 —— 注入时把 `find` 换成 `replace` */
@@ -154,6 +179,12 @@ export interface RestoreFileArgs {
    * 所以调用方应当总是给一个路径。
    */
   backupPath?: string | null;
+  /**
+   * 注入前这个文件的修改时间（毫秒）—— 还原时一并还原回去。
+   *
+   * 给 null / 不给 → 只还原内容，时间戳保持新的。
+   */
+  originalMtime?: number | null;
 }
 
 export interface RestoreFileResult {
@@ -163,6 +194,34 @@ export interface RestoreFileResult {
   written: string | null;
   /** 冲突时写下的备份路径 */
   backupPath: string | null;
+}
+
+/**
+ * 把修改时间还原回注入前的值。
+ *
+ * **只在「写回去的内容与快照逐字节相同」时才做** ——
+ * 内容变了（反向打补丁那条路，保住了别人的改动），文件就**真的**变了，
+ * 时间戳必须是新的：把「有人在跑批期间改过这个文件」藏起来，
+ * 会让追溯矩阵的过期判定漏报 —— 那比多报一条要坏得多。
+ *
+ * 还原不了时间戳**不算失败**：内容已经还原了，
+ * 顶多让新鲜度判定保守一点（多报过期），不会漏报。
+ */
+function restoreMtime(
+  path: string,
+  original: string,
+  written: string,
+  originalMtime: number | null | undefined
+): void {
+  if (originalMtime === null || originalMtime === undefined) return;
+  if (written !== original) return;
+
+  try {
+    const atime = statSync(path).atimeMs;
+    utimesSync(path, atime / 1000, originalMtime / 1000);
+  } catch {
+    /* 时间戳还原不了 —— 内容已经还原了，不算失败 */
+  }
 }
 
 /**
@@ -184,6 +243,7 @@ export function restoreFile(args: RestoreFileArgs): RestoreFileResult {
   }
 
   writeFileSync(args.path, plan.content, 'utf-8');
+  restoreMtime(args.path, args.original, plan.content, args.originalMtime);
   return { plan, written: plan.content, backupPath: null };
 }
 
@@ -200,6 +260,13 @@ export interface RestoreFilesArgs {
   files: readonly string[];
   /** 注入前的原文 */
   originals: ReadonlyMap<string, string>;
+  /**
+   * 注入前各文件的修改时间（毫秒）—— 还原时一并还原回去。
+   *
+   * 不给就只还原内容 —— 时间戳会停在「还原那一刻」，
+   * 于是追溯矩阵的新鲜度判定会把注入检查自己造成的假改动当成真改动。
+   */
+  originalMtimes?: ReadonlyMap<string, number>;
   /** 我们写进去的内容 —— 只有写过的文件才该被还原 */
   injected: ReadonlyMap<string, string>;
   /** 本轮所有替换 */
@@ -275,6 +342,7 @@ export function restoreFiles(args: RestoreFilesArgs): RestoreFilesResult {
       current,
       edits: args.edits.filter((e) => e.file === file),
       backupPath,
+      originalMtime: args.originalMtimes?.get(file),
     });
 
     result.files.push({

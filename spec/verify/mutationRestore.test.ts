@@ -22,11 +22,12 @@
  */
 
 import { describe, expect, test } from 'bun:test';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { planRestore, restoreFile, restoreFiles } from './mutationRestore';
+import { assessVerdict } from './verdictFreshness';
 
 /** 被注入的那一段（原文） */
 const FIND = '  const visible = lines.slice(0, maxLines);\n';
@@ -290,6 +291,246 @@ describe('整批还原（跑批收尾走的就是这条路）', () => {
       expect(res.foreignEdits).toEqual([]);
       expect(res.conflicts).toEqual([]);
       expect(readFileSync(path, 'utf-8')).toBe(foreign);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 还原还得把**修改时间**还原回去
+// ---------------------------------------------------------------------------
+//
+// 缺陷回放（2026-11-05）：
+//
+//   注入检查把源文件改坏 → 跑验证器 → 还原（内容回来了，时间戳是新的）
+//     ↓
+//   追溯矩阵的新鲜度判定看的是「依赖的文件在证据之后有没有被动过」
+//     ↓
+//   源文件被动过（其实是我们自己动的，内容一个字节没变）
+//     ↓
+//   **矩阵说：这 98 条结论对当前代码全部过期** —— 而流水线刚跑完全绿。
+//
+// 而且它**每次都这样**：这一行永远写「全过期」，读者看久了就不看了，
+// 于是某次**真的**过期也跟着被忽略。
+//
+// 修法：内容还原成逐字节相同，时间戳也还原回去。
+// 但**内容真的变了的时候不许还原**（反向打补丁那条路）——
+// 那时候文件确实变了，把「有人在跑批期间动过它」藏起来才是危险的。
+
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+describe('还原的时间戳', () => {
+  test('**缺陷回放**：内容还原成原样 → 修改时间也必须还原回去', () => {
+    const root = mkdtempSync(join(tmpdir(), 'mutation-restore-mtime-'));
+    try {
+      const path = join(root, 'sample.ts');
+      writeFileSync(path, ORIGINAL, 'utf-8');
+      const originalMtime = statSync(path).mtimeMs;
+
+      // 注入
+      writeFileSync(path, INJECTED, 'utf-8');
+      const res = restoreFile({
+        path,
+        original: ORIGINAL,
+        injected: INJECTED,
+        current: INJECTED,
+        edits: EDITS,
+        originalMtime,
+      });
+
+      expect(res.plan.action).toBe('restore-original');
+      expect(readFileSync(path, 'utf-8')).toBe(ORIGINAL);
+      // 内容回到原样了 —— 时间戳也必须回到原样
+      expect(Math.abs(statSync(path).mtimeMs - originalMtime)).toBeLessThan(2);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('内容真的变了（反向打补丁）→ 时间戳必须留在新的那一边', () => {
+    // 对方在注入期间改了同一个文件 —— 还原之后文件**确实**变了。
+    // 这时候把时间戳还原回去，就等于把「有人在跑批期间动过它」藏起来 ——
+    // 追溯矩阵的过期判定会漏报，而漏报比多报危险得多。
+    const root = mkdtempSync(join(tmpdir(), 'mutation-restore-mtime-'));
+    try {
+      const path = join(root, 'sample.ts');
+      writeFileSync(path, ORIGINAL, 'utf-8');
+      const originalMtime = statSync(path).mtimeMs;
+
+      const foreign = `// 对方的改动\n${INJECTED}`;
+      writeFileSync(path, foreign, 'utf-8');
+
+      const res = restoreFile({
+        path,
+        original: ORIGINAL,
+        injected: INJECTED,
+        current: foreign,
+        edits: EDITS,
+        originalMtime,
+      });
+
+      expect(res.plan.action).toBe('inverse-patch');
+      expect(readFileSync(path, 'utf-8')).toContain('// 对方的改动');
+      // 内容变了 → 时间戳必须是新的
+      expect(statSync(path).mtimeMs).toBeGreaterThan(originalMtime);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('没给原始时间戳 → 只还原内容，不动时间戳（老调用方不受影响）', () => {
+    const root = mkdtempSync(join(tmpdir(), 'mutation-restore-mtime-'));
+    try {
+      const path = join(root, 'sample.ts');
+      writeFileSync(path, ORIGINAL, 'utf-8');
+      const before = statSync(path).mtimeMs;
+
+      writeFileSync(path, INJECTED, 'utf-8');
+      restoreFile({
+        path,
+        original: ORIGINAL,
+        injected: INJECTED,
+        current: INJECTED,
+        edits: EDITS,
+      });
+
+      expect(readFileSync(path, 'utf-8')).toBe(ORIGINAL);
+      expect(statSync(path).mtimeMs).toBeGreaterThanOrEqual(before);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('**端到端**：还原之后，追溯矩阵的新鲜度判定仍然说「结论成立」', async () => {
+    // 这一条才是要害：前面几条钉的是行为，这条钉的是**后果**。
+    // 复刻真实的流水线顺序：判据执行（证据落地）→ 注入检查（改坏 → 还原）→ 判定新鲜度。
+    const root = mkdtempSync(join(tmpdir(), 'mutation-restore-freshness-'));
+    try {
+      mkdirSync(join(root, 'src'), { recursive: true });
+      mkdirSync(join(root, 'verify'), { recursive: true });
+      mkdirSync(join(root, 'spec/evidence'), { recursive: true });
+
+      const srcPath = join(root, 'src/engine.ts');
+      writeFileSync(srcPath, ORIGINAL, 'utf-8');
+      writeFileSync(
+        join(root, 'verify/engine.test.ts'),
+        "import { render } from '../src/engine';\n",
+        'utf-8'
+      );
+
+      // 判据执行 → 证据落地。证据的 mtime 就是「跑批那一刻」。
+      await sleep(30);
+      const evidencePath = join(root, 'spec/evidence/junit.xml');
+      writeFileSync(evidencePath, '<testsuite/>', 'utf-8');
+      const evidenceAtMs = statSync(evidencePath).mtimeMs;
+
+      // 注入检查：改坏 → 还原
+      await sleep(30);
+      const originalMtime = statSync(srcPath).mtimeMs;
+      writeFileSync(srcPath, INJECTED, 'utf-8');
+      restoreFiles({
+        root,
+        files: ['src/engine.ts'],
+        originals: new Map([['src/engine.ts', ORIGINAL]]),
+        originalMtimes: new Map([['src/engine.ts', originalMtime]]),
+        injected: new Map([['src/engine.ts', INJECTED]]),
+        edits: [{ file: 'src/engine.ts', find: FIND, replace: REPLACE }],
+      });
+
+      // 追溯矩阵的新鲜度判定（就是它给矩阵写「对当前代码仍然成立 N 条」）
+      const read = (rel: string): string | null => {
+        try {
+          return readFileSync(join(root, rel), 'utf-8');
+        } catch {
+          return null;
+        }
+      };
+      const mtime = (rel: string): number | null => {
+        try {
+          return statSync(join(root, rel)).mtimeMs;
+        } catch {
+          return null;
+        }
+      };
+      const exists = (rel: string): boolean => {
+        try {
+          statSync(join(root, rel));
+          return true;
+        } catch {
+          return false;
+        }
+      };
+
+      const verdict = assessVerdict('verify/engine.test.ts', evidenceAtMs, read, mtime, exists);
+      // 内容一个字节没变 → 结论对当前代码仍然成立
+      expect(verdict.status).toBe('fresh');
+      expect(verdict.reason).toContain('都没有被改过');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('**对照**：不还原时间戳的话，同一条结论会被判成「过期」', async () => {
+    // 反面用例 —— 把时间戳还原去掉，判定必须翻脸。
+    // 少了这一条，上面的端到端用例就可能只是「碰巧绿」。
+    const root = mkdtempSync(join(tmpdir(), 'mutation-restore-freshness-'));
+    try {
+      mkdirSync(join(root, 'src'), { recursive: true });
+      mkdirSync(join(root, 'verify'), { recursive: true });
+      mkdirSync(join(root, 'spec/evidence'), { recursive: true });
+
+      const srcPath = join(root, 'src/engine.ts');
+      writeFileSync(srcPath, ORIGINAL, 'utf-8');
+      writeFileSync(
+        join(root, 'verify/engine.test.ts'),
+        "import { render } from '../src/engine';\n",
+        'utf-8'
+      );
+
+      await sleep(30);
+      const evidencePath = join(root, 'spec/evidence/junit.xml');
+      writeFileSync(evidencePath, '<testsuite/>', 'utf-8');
+      const evidenceAtMs = statSync(evidencePath).mtimeMs;
+
+      await sleep(30);
+      // 注入 → 还原，但**不传** originalMtimes（老行为）
+      writeFileSync(srcPath, INJECTED, 'utf-8');
+      restoreFiles({
+        root,
+        files: ['src/engine.ts'],
+        originals: new Map([['src/engine.ts', ORIGINAL]]),
+        injected: new Map([['src/engine.ts', INJECTED]]),
+        edits: [{ file: 'src/engine.ts', find: FIND, replace: REPLACE }],
+      });
+
+      const read = (rel: string): string | null => {
+        try {
+          return readFileSync(join(root, rel), 'utf-8');
+        } catch {
+          return null;
+        }
+      };
+      const mtime = (rel: string): number | null => {
+        try {
+          return statSync(join(root, rel)).mtimeMs;
+        } catch {
+          return null;
+        }
+      };
+      const exists = (rel: string): boolean => {
+        try {
+          statSync(join(root, rel));
+          return true;
+        } catch {
+          return false;
+        }
+      };
+
+      const verdict = assessVerdict('verify/engine.test.ts', evidenceAtMs, read, mtime, exists);
+      // 内容一模一样，判定却是「过期」—— 这就是注入检查自己造出来的假信号
+      expect(readFileSync(srcPath, 'utf-8')).toBe(ORIGINAL);
+      expect(verdict.status).toBe('stale');
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
