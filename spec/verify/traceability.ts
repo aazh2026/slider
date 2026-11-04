@@ -31,6 +31,11 @@ import {
 } from './evidenceFreshness.ts';
 import { reconcile, reconciliationQualifier, renderReconciliationSection } from './anchorHealth.ts';
 import {
+  buildEvidenceLedger,
+  renderLedgerSummary,
+  renderUnmappedFailures,
+} from './evidenceLedger.ts';
+import {
   assessVerdict,
   dependencyClosure,
   groupStale,
@@ -480,6 +485,16 @@ function main(): void {
   const junit = readJunit();
   const mutation = readMutation();
 
+  // --- 证据集对账 ---
+  //
+  // 判据点名的验证目标只覆盖证据集的一部分（实测 98/337）。
+  // 没挂上判据的用例要是挂了，旧口径下 §2.2 照常写「（无）」，
+  // 而「是哪个用例挂了」全报告没有第二处提。这里把整个证据集摊开对账。
+  const ledger = buildEvidenceLedger(
+    junit,
+    spec.clauses.flatMap((c) => c.acceptance).map((a) => a.verification.target)
+  );
+
   // --- 注入结论的新鲜度 ---
   //
   // 「验证器抓得住这个错」不是一句永远成立的话：它是**某一版**验证器与
@@ -874,6 +889,7 @@ function main(): void {
   P(
     `> 「未覆盖（无判据）」的 ${uncoveredClauses} 条（${noAcceptance.join(', ') || '—'}）连判据都不存在，既不是 PASS 也不是 FAIL —— 见 §2.5。`
   );
+  for (const line of renderLedgerSummary(ledger, failCrit)) P(line);
   P();
 
   // ---- 2.1.1 这批结论对应的是哪一版代码 ----
@@ -903,6 +919,8 @@ function main(): void {
   // ---- 2.2 失败明细 ----
   P('### 2.2 失败明细');
   P();
+  P('#### 挂了判据的失败');
+  P();
   const failedRows = rows.filter((r) => r.verdict === 'FAIL');
   if (failedRows.length === 0) {
     P('（无）');
@@ -924,6 +942,10 @@ function main(): void {
         'Bun 的 junit 报告只写失败类型、不写错误信息，那两份 stderr 就是失败原因的第一手材料。'
     );
   }
+  P();
+  P('#### 未挂判据的失败');
+  P();
+  for (const line of renderUnmappedFailures(ledger)) P(line);
   P();
 
   // ---- 2.3 证据清单 ----
@@ -1152,6 +1174,13 @@ function main(): void {
       (e2eAssessed.length > 0 && e2eChangedScope.length > 0
         ? ` —— 其中 ${e2eAssessed.length} 条结论**已过期**（证据之后整条链被动过，见 §2.1.1）`
         : '')
+  );
+  P(
+    `- 证据集对账：两层证据共 **${ledger.total} 个用例**，其中 **${ledger.mapped} 个挂了判据**、${ledger.unmapped} 个没挂；` +
+      `没挂判据的用例里 **${ledger.unmappedFailures.length} 个失败**` +
+      (ledger.unmappedFailures.length > 0
+        ? ` —— 逐条点名见 §2.2「未挂判据的失败」`
+        : ` —— 「失败明细」里那个「（无）」不是漏报`)
   );
   P(
     `- 真的跑了 \`python3 spec/verify/spec-schema.py\`：Spec 结构校验通过（${spec.clauses.length} 条条款 / ${totalCriteria} 条判据引用完整）`
