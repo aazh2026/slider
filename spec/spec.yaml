@@ -1354,6 +1354,51 @@ clauses:
           pass_when: "退出码 0，且该用例未被 skip"
         maturity: automated
 
+  # ---- SPEC-EXP-006 字体 fallback 链 ----
+  - id: SPEC-EXP-006
+    title: 字体 fallback 链必须显式覆盖中英混排
+    type: technical
+    risk: medium
+    status: active
+    maturity: automated
+    statement: "SVG 渲染的字体栈必须显式包含四个 CJK 字体族（'Microsoft YaHei' / 'PingFang SC' / 'Noto Sans CJK SC' / 'Source Han Sans SC'），且这四个族必须排在第一个 CSS 通用族（sans-serif 等）**之前**，主题的拉丁字体仍排在最前；PPTX 导出的每个文本运行的拉丁字形（<a:latin>）与东亚字形（<a:ea>）都必须指向同一个同时覆盖中英的字体名 'Microsoft YaHei'"
+    source:
+      doc: "docs/backend-features.md"
+      section: "§J 渲染与导出（EXP）· EXP-06"
+      quote: "`pptxgenjs` 将 IR 映射为 Office 原生形状与文本框；字体名 fallback 链保证中英混排"
+    behaviors:
+      - when: "在机器 A 上渲染同一份 SVG"
+        then: "中文字形落到同一个显式命名的 CJK 族上 —— 不依赖操作系统挑字体，换机器字形不变"
+      - when: "把同一份 IR 导成 PPTX 并在 Office 里打开"
+        then: "中英文都显示为 'Microsoft YaHei'，不得出现『字体未找到』的替换字形"
+    inference: "EXP-06 只写了「字体名 fallback 链保证中英混排」，**没有给出链的内容**（AMB-003）。链的具体内容由 DEC-013 裁决：SVG 侧是 CSS 字体栈（可以有多项），PPTX 侧是单一字体名（DrawingML 的 <a:latin>/<a:ea>/<a:cs> 分列记三种字形，没有『链』这个概念）。本条把裁决结果固化为可机械判定的判据。"
+    acceptance:
+      - id: AC-EXP-007
+        criterion: "对 8 种版式 × 8 套主题共 64 组渲染 SVG，解析 <style> 块里真正写出来的 font-family 声明：断言正文字体栈与标题字体栈都**同时**包含 'Microsoft YaHei' / 'PingFang SC' / 'Noto Sans CJK SC' / 'Source Han Sans SC' 四个族；断言每个 CJK 族都排在第一个 CSS 通用族（system-ui / sans-serif / serif / monospace 等）之前；断言主题拉丁字体仍是字体栈的第一个族"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-features.md §J EXP-06 —— 字体名 fallback 链保证中英混排（链的内容见 DEC-013：CJK 族必须排在 generic 之前）"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/font-fallback.test.ts::svg-font-stack-has-cjk-fallback"
+          command: "bun test ./spec/verify/font-fallback.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+      - id: AC-EXP-008
+        criterion: "导出一页 PPTX 并解包 ppt/slides/slide1.xml：断言存在 <a:latin typeface=\"Microsoft YaHei\" 且存在 <a:ea typeface=\"Microsoft YaHei\"（拉丁字形与东亚字形指向同一个同时覆盖中英的字体名）；断言 XML 中不出现 typeface=\"Arial\"（那是『主题字体栈直接透传』的旧写法）"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-features.md §J EXP-06 —— 字体名 fallback 链保证中英混排（PPTX 侧只能单名，见 DEC-013）"
+          confidence: high
+        verification:
+          kind: test
+          target: "spec/verify/font-fallback.test.ts::pptx-uses-cjk-capable-font"
+          command: "bun test ./spec/verify/font-fallback.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
 # ===========================================================================
 # E. IRPatch 协议（已实现 · 判据已可执行）
 # ===========================================================================
@@ -2410,12 +2455,12 @@ ambiguities:
 
   - id: AMB-003
     topic: PPTX 字体名 fallback 链的具体内容未定义
-    clause_ref: SPEC-EXP-001
+    clause_ref: SPEC-EXP-006
     question: "EXP-06 要求「字体名 fallback 链保证中英混排」，但没有给出链的具体顺序。当前实现硬编码为单一 'Arial'。"
     impact: usability
     blocks: []
-    proposed_default: "不阻塞：文本是否存在（EXP-01/EXP-15/EXP-17）与字体名无关。字体链单独作为后续条款处理。"
-    status: OPEN
+    proposed_default: "裁决为 DEC-013：**SVG 侧是 CSS 字体栈**（主题拉丁字体 → 显式命名的 CJK 族 → generic 兜底，CJK 族必须排在 generic 之前）；**PPTX 侧是单一字体名** `'Microsoft YaHei'`（DrawingML 没有 fallback 链）。链的单一真相源是 `packages/core/src/engine/typography.ts`，SVG 渲染与 PPTX 导出共用。"
+    status: RESOLVED
 
   - id: AMB-004
     topic: AABB 碰撞的「10px 缓冲」是容差还是安全距
@@ -2547,6 +2592,14 @@ decisions:
     decided_at: "2026-11-04"
     rationale: "五份设计文档**从头到尾没有规定页码从几开始** —— 这正是「不可判定就承认」要处理的情况。三条独立的线索指向同一个答案：(1) **形式化契约** —— packages/core/src/contracts/outline.ts 写死 `order: z.number().int().min(1)`，starterProjects 的样例数据也是 order 1..6；(2) **文档把两者绑在一起** —— docs/backend-features.md PRJ-10 / SLD-08「重排后同步更新 `order` 字段与 `slides.orderIndex`」，既然是同步字段，同基线是唯一自洽的读法；(3) **服务端别处的写法** —— slideService / quality 两处写库都是 `idx + 1`。前两条来自被测系统**之外**（领域内核的 Zod 契约 + 源文档），oracle tier 是 formal + authoritative，不是 self-derived。**可观测性说明**：前端从不直接读 orderIndex（页码用的是数组下标 `index + 1`），所以这个基线错了不会立刻在 UI 上暴露 —— 但它会经由导入端变成**静默**的数据损坏（排序键重复 → 页序随机化），所以必须在边界上挡住。"
     applies_to: [SPEC-EXP-005]
+
+  - id: DEC-013
+    question: AMB-003
+    decision: "字体 fallback 链定为：**SVG 侧是 CSS 字体栈** —— 主题拉丁字体 → 显式命名的 CJK 族（'Microsoft YaHei', 'PingFang SC', 'Noto Sans CJK SC', 'Source Han Sans SC'）→ generic 兜底，**CJK 族必须排在第一个 generic 族之前**；**PPTX 侧是单一字体名** `'Microsoft YaHei'`（DrawingML 的 <a:latin>/<a:ea>/<a:cs> 各写各的，没有 fallback 链可依赖）。链的单一真相源是 packages/core/src/engine/typography.ts 的 `withCjkFallback` / `CJK_FALLBACK_FAMILIES` / `PPTX_FONT_NAME`，SVG 渲染与 PPTX 导出共用"
+    decided_by: "spec 化执行者"
+    decided_at: "2026-11-05"
+    rationale: "内容以中文为主，字体链是**可用性**而非正确性问题，所以判据不能只问『文本在不在』—— 那正是旧实现能蒙混过关的地方。旧实现在 SVG 里写的是主题字体栈（'Manrope, system-ui, sans-serif'），system-ui 之前的具体族都不覆盖中文；真落到 system-ui 时用的是操作系统挑的中文字体，换台机器字形就变，同一份 SVG 在两台机器上不是一张图。显式点名 CJK 族并把它排在 generic 之前，等于把『挑字体』这件事从操作系统收回到产物里。PPTX 侧只能单名：DrawingML 的 <a:rPr> 分别记 latin / ea / cs 三种字形，pptxgenjs 的 fontFace 会同时写三个 typeface，没有『链』这个概念；那就只能选一个**同时覆盖中英**的名字，'Microsoft YaHei' 在 PPTX 的主战场（Windows/Office）上最通用，且覆盖拉丁字母。**为什么不上多字体**：PPTX 里混排多字族需要逐 run 指定字体，而 IR 只有一个 style.fontFamily —— 要多字体就得改 IR 结构，那是另一件事（波 2 的版式契约会碰它），不在本裁决范围内。"
+    applies_to: [SPEC-EXP-006]
 
   - id: DEC-014
     question: AMB-004

@@ -12,6 +12,7 @@ import {
   DESIGN_PX_TO_EMU,
   DESIGN_PX_TO_PT,
   EMU_PER_INCH,
+  PPTX_FONT_NAME,
 } from './typography';
 
 /**
@@ -38,10 +39,12 @@ export function sanitizeFilename(name: string): string {
  * PPTX 只认单一字体名 —— 直接透传会得到一个不存在的字体。
  * 内容以中文为主，选用同时覆盖中英的字体。
  *
- * 注：EXP-06 要求的「字体名 fallback 链」在 spec 中仍是未定义项（AMB-003），
- * 这里按 proposed_default 取单一字体，不阻塞 EXP-001 的文本保真判定。
+ * 「字体名 fallback 链」由 `typography.ts` 的 `withCjkFallback`（SVG 侧）与
+ * `PPTX_FONT_NAME`（PPTX 侧）共同承担 —— 链的内容是
+ * `AMB-003` 裁决的结果（见 spec.yaml 的 DEC-013）：PPTX 没有 fallback 链，
+ * 只能取一个同时覆盖中英的名字。
  */
-const PPTX_FONT = 'Microsoft YaHei';
+const PPTX_FONT = PPTX_FONT_NAME;
 
 /** 一个 PPTX 文本运行 */
 interface TextRun {

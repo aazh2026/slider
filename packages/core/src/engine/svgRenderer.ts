@@ -5,7 +5,7 @@
 
 import { SlideIR, TemplateTheme, SlideElement } from '../types/slide';
 import { wrapText } from './textMetrics';
-import { CONTENT_TYPE_SCALE } from './typography';
+import { CONTENT_TYPE_SCALE, withCjkFallback } from './typography';
 import { layerOf } from './elementVariant';
 
 /**
@@ -357,11 +357,11 @@ export class SVGRenderer {
   <defs>
     <style>
       text {
-        font-family: ${theme.fontFamily};
+        font-family: ${withCjkFallback(theme.fontFamily)};
         user-select: none;
       }
       .font-heading {
-        font-family: ${theme.fontHeading};
+        font-family: ${withCjkFallback(theme.fontHeading)};
       }
       .tabular-nums {
         font-variant-numeric: tabular-nums;
