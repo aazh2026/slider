@@ -20,13 +20,17 @@
  */
 
 import { describe, expect, test } from 'bun:test';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 import {
   assessVerdict,
   dependencyClosure,
+  expandDataDeps,
   groupStale,
   importSpecifiers,
   looksLocal,
+  parseDataDeps,
   renderVerdictFreshnessSection,
   resolveLocalPath,
   summarizeVerdicts,
@@ -250,6 +254,196 @@ describe('一条结论的新鲜度', () => {
     expect(a.status).toBe('unknown');
     expect(a.status).not.toBe('fresh');
     expect(a.missing).toContain('src/没了.ts');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 数据依赖 —— 闭包扫得到代码，扫不到数据
+// ---------------------------------------------------------------------------
+//
+// **缺陷回放**（2026-11-05 实测）：
+//   跑批 → 证据落地 → `gen-layout-snapshots.ts --force` 刷新了 64 个基线 JSON
+//     ↓
+//   那 64 个 JSON 是测试运行时 `readFile` 进来的，**不是 import 进来的**
+//   → 按 import 扫的依赖闭包扫不到它们
+//     ↓
+//   矩阵照旧写「98 条结论全部仍然成立」
+//
+// 这是**漏报**：一条过期的 PASS 被当成当前代码的证明 ——
+// 比多报危险得多（多报只是保守，漏报是撒谎）。
+//
+// 修法：验证器用 `// @verdict-deps:` 显式声明自己还依赖哪些数据文件，
+// 声明写在**读它的那份代码旁边**，不写在别处，就不会忘记更新。
+
+describe('数据依赖的声明与展开', () => {
+  test('声明写在验证器旁边，要能抽出来', () => {
+    const src = [
+      '/**',
+      ' * @verdict-deps: packages/core/tests/__snapshots__',
+      ' */',
+      "import { x } from './helpers';",
+    ].join('\n');
+    expect(parseDataDeps(src)).toEqual(['packages/core/tests/__snapshots__']);
+  });
+
+  test('一行可以声明多个（逗号分隔）', () => {
+    expect(parseDataDeps('// @verdict-deps: a/b.json, c/d.json\n')).toEqual([
+      'a/b.json',
+      'c/d.json',
+    ]);
+  });
+
+  test('没写声明的文件 → 没有数据依赖', () => {
+    expect(parseDataDeps("import { x } from './helpers';\n")).toEqual([]);
+  });
+
+  test('字符串字面量里的声明不算数（免得凭空多出一堆依赖）', () => {
+    // 文档和测试里经常出现这个字符串本身 ——
+    // 宽松匹配会把它们当成声明，于是「假过期」又回来了。
+    const src = [
+      "const example = '// @verdict-deps: packages/core/tests/__snapshots__';",
+      ' * 说明文字里提到 @verdict-deps: 这个词，但不是声明',
+    ].join('\n');
+    expect(parseDataDeps(src)).toEqual([]);
+  });
+
+  test('目录 → 其下所有文件；文件 → 它自己', () => {
+    const tree: Record<string, string[]> = {
+      'packages/core/tests/__snapshots__': [
+        'packages/core/tests/__snapshots__/a.json',
+        'packages/core/tests/__snapshots__/b.json',
+      ],
+    };
+    const out = expandDataDeps(
+      ['packages/core/tests/__snapshots__', 'fixtures/theme.json'],
+      (rel) => rel === 'packages/core/tests/__snapshots__' || rel === 'fixtures/theme.json',
+      (rel) => tree[rel] ?? []
+    );
+    expect(out).toEqual([
+      'fixtures/theme.json',
+      'packages/core/tests/__snapshots__/a.json',
+      'packages/core/tests/__snapshots__/b.json',
+    ]);
+  });
+
+  test('声明的路径在树里不存在 → 原样带出去（让调用方说清「声明了、找不到」）', () => {
+    const out = expandDataDeps(['packages/core/tests/__snapshots__'], () => false, () => []);
+    expect(out).toEqual(['packages/core/tests/__snapshots__']);
+  });
+});
+
+describe('数据依赖进新鲜度判定', () => {
+  const VERIFIER = 'packages/core/tests/layoutEngine.snapshot.test.ts';
+  const SNAP_DIR = 'packages/core/tests/__snapshots__';
+  const BASELINE = `${SNAP_DIR}/cards_grid__tpl_slate_dark.json`;
+
+  /** 快照测试：基线是运行时 readFile 进来的，源码里只有一行 import */
+  const SRC = [
+    "import { makeSnapshot } from './fixtures';",
+    '// @verdict-deps: packages/core/tests/__snapshots__',
+    '',
+  ].join('\n');
+
+  function files(extra: Record<string, string> = {}) {
+    return {
+      [VERIFIER]: SRC,
+      'packages/core/tests/fixtures.ts': 'export const makeSnapshot = 1;\n',
+      [BASELINE]: '{"v":1}\n',
+      ...extra,
+    };
+  }
+
+  /** 这个假文件系统认得目录：目录本身不在表里，但它下面有文件 */
+  function existsInTree(tree: Record<string, string>): (rel: string) => boolean {
+    return (rel: string) =>
+      rel in tree || Object.keys(tree).some((f) => f.startsWith(`${rel}/`));
+  }
+
+  /** 把声明展开成文件清单（目录 → 其下所有文件） */
+  function declaredDeps(tree: Record<string, string>): string[] {
+    const declared = parseDataDeps(tree[VERIFIER] ?? '');
+    return expandDataDeps(
+      declared,
+      existsInTree(tree),
+      (rel) => Object.keys(tree).filter((f) => f.startsWith(`${rel}/`))
+    );
+  }
+
+  test('**缺陷回放**：基线在跑批之后被刷新 → 那条结论必须变成 stale', () => {
+    const tree = files();
+    const a = assessVerdict(
+      VERIFIER,
+      EVIDENCE_AT,
+      reader(tree),
+      mtimeIn({ [BASELINE]: 3000 }),
+      existsInTree(tree),
+      { deps: declaredDeps(tree), basis: '这条结论还依赖验证器声明的数据文件' }
+    );
+    expect(a.status).toBe('stale');
+    expect(a.changed).toContain(BASELINE);
+    expect(a.reason).toContain(BASELINE);
+  });
+
+  test('**对照**：基线没被动过 → 那条结论仍然成立', () => {
+    const tree = files();
+    const a = assessVerdict(
+      VERIFIER,
+      EVIDENCE_AT,
+      reader(tree),
+      mtimeIn({}),
+      existsInTree(tree),
+      { deps: declaredDeps(tree) }
+    );
+    expect(a.status).toBe('fresh');
+  });
+
+  test('**为什么必须声明**：没声明的话，闭包确实扫不到那个基线', () => {
+    // 这一条钉住的是「漏报是怎么发生的」——
+    // 基线被改过，但因为没声明，判定看不见它。
+    const tree = files({ [VERIFIER]: "import { makeSnapshot } from './fixtures';\n" });
+    const a = assessVerdict(
+      VERIFIER,
+      EVIDENCE_AT,
+      reader(tree),
+      mtimeIn({ [BASELINE]: 3000 }),
+      existsInTree(tree)
+    );
+    expect(a.status).toBe('fresh'); // 盲区就在这里 —— 所以才要用声明把它堵上
+    expect(declaredDeps(tree)).toEqual([]); // 没声明 → 没有数据依赖
+  });
+
+  test('声明的路径不在树里了 → 说清不了（不能是 fresh）', () => {
+    // 整个快照目录连同基线都没了 —— 声明还在，但它指向的东西没了。
+    const tree: Record<string, string> = {
+      [VERIFIER]: SRC,
+      'packages/core/tests/fixtures.ts': 'export const makeSnapshot = 1;\n',
+    };
+    const a = assessVerdict(
+      VERIFIER,
+      EVIDENCE_AT,
+      reader(tree),
+      mtimeIn({}),
+      existsInTree(tree),
+      { deps: declaredDeps(tree) }
+    );
+    expect(a.status).toBe('unknown');
+    expect(a.status).not.toBe('fresh');
+  });
+});
+
+describe('仓库里的声明（锚点）', () => {
+  const REPO_ROOT = join(import.meta.dir, '..', '..');
+  const VERIFIER = 'packages/core/tests/layoutEngine.snapshot.test.ts';
+  const SNAP_DIR = join(REPO_ROOT, 'packages/core/tests/__snapshots__');
+
+  test('快照测试必须声明它依赖那 64 个基线', () => {
+    const src = readFileSync(join(REPO_ROOT, VERIFIER), 'utf-8');
+    expect(parseDataDeps(src)).toContain('packages/core/tests/__snapshots__');
+  });
+
+  test('声明的那个目录里确实有基线（别声明了个空目录）', () => {
+    const files = readdirSync(SNAP_DIR).filter((f) => f.endsWith('.json'));
+    expect(files.length).toBe(64);
   });
 });
 

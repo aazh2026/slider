@@ -14,6 +14,13 @@
  *   - 基线文件在 `__snapshots__/` 下，随代码一起提交
  *   - 刷新基线必须人工显式执行 `bun scripts/gen-layout-snapshots.ts --force`
  *   - 序列化前剥离 versionId / lastModified（否则每次运行都不一样）
+ *
+ * @verdict-deps: packages/core/tests/__snapshots__
+ *
+ *   ↑ 这条结论**还依赖** `__snapshots__/` 下那 64 个基线 JSON。
+ *   它们是运行时 `readFile` 读进来的，不是 import 进来的 ——
+ *   依赖闭包只按 import 扫，扫不到它们，于是「基线被刷新了」这件事
+ *   在新鲜度判定里会**漏报**。声明在这里，是因为读它们的就是这份代码。
  */
 
 import { describe, expect, test } from 'bun:test';

@@ -38,8 +38,10 @@ import {
 import {
   assessVerdict,
   dependencyClosure,
+  expandDataDeps,
   groupStale,
   listFiles,
+  parseDataDeps,
   renderVerdictFreshnessSection,
   summarizeVerdicts,
   verdictFreshnessQualifier,
@@ -469,6 +471,65 @@ function walkSources(rel: string, out: string[] = []): string[] {
   return out;
 }
 
+/** 递归列出目录下的**所有**文件（仓库相对路径）—— 数据文件靠它找 */
+function walkFiles(rel: string, out: string[] = []): string[] {
+  let entries: Dirent[];
+  try {
+    entries = readdirSync(resolve(ROOT, rel), { withFileTypes: true });
+  } catch {
+    return out;
+  }
+  for (const e of entries) {
+    if (e.name === 'node_modules' || e.name.startsWith('.')) continue;
+    const child = `${rel}/${e.name}`;
+    if (e.isDirectory()) walkFiles(child, out);
+    else out.push(child);
+  }
+  return out;
+}
+
+/**
+ * 「数据文件」—— 依赖闭包扫不到、却可能影响结论的东西。
+ *
+ * 判据：不是代码（.ts/.tsx）、也不是文档（.md）——
+ * 文档改的是「要求」，代码改的是「实现」，
+ * 数据改的是**这条结论对着的那个东西**（黄金快照基线、样式表、夹具……）。
+ */
+function isDataFile(f: string): boolean {
+  return !/\.(ts|tsx|md)$/i.test(f);
+}
+
+/**
+ * 数据文件的查找范围 —— 结论可能依赖它们的地方。
+ *
+ * 应用源码树（样式表等）+ 测试树（黄金快照基线等）+ 脚本树。
+ * **不含 e2e/**：E2E 的依赖按整条链算，单独有一节说明。
+ */
+const DATA_SCOPE_ROOTS = [
+  ...APP_SCOPE_ROOTS,
+  'packages/core/tests',
+  'apps/api/tests',
+  'scripts',
+];
+
+/**
+ * 一个验证器文件声明了哪些**数据依赖**。
+ *
+ * 依赖闭包是按 import 扫的 —— 代码扫得到，**运行时读的数据文件扫不到**。
+ * 验证器文件用 `// @verdict-deps: <路径>` 显式声明，声明写在读它的那份代码旁边。
+ */
+const dataDepCache = new Map<string, string[]>();
+function dataDepsOf(verifierFile: string): string[] {
+  let deps = dataDepCache.get(verifierFile);
+  if (!deps) {
+    const content = readRepo(verifierFile);
+    const declared = content === null ? [] : parseDataDeps(content);
+    deps = expandDataDeps(declared, existsRepo, (rel) => walkFiles(rel));
+    dataDepCache.set(verifierFile, deps);
+  }
+  return deps;
+}
+
 /** 一条判据对应的那次执行（junit 用例） */
 function junitHitOf(a: Acceptance, junit: JunitCase[]): JunitCase | undefined {
   const [file, caseName] = a.verification.target.split('::');
@@ -602,6 +663,10 @@ function main(): void {
   }
 
   const appScopeFiles = APP_SCOPE_ROOTS.flatMap((r) => walkSources(r));
+  // 数据文件：闭包扫不到、却可能影响结论的东西（黄金快照基线、样式表……）。
+  // 应用树里的数据文件由**浏览器**加载（E2E 看得见）；测试树里的由**测试**读。
+  const appDataFiles = APP_SCOPE_ROOTS.flatMap((r) => walkFiles(r)).filter(isDataFile);
+  const dataScopeFiles = DATA_SCOPE_ROOTS.flatMap((r) => walkFiles(r)).filter(isDataFile);
 
   const assessmentCache = new Map<string, VerdictAssessment>();
   const closureCache = new Map<string, string[]>();
@@ -626,10 +691,17 @@ function main(): void {
       if (!assessment) {
         assessment = isE2e
           ? assessVerdict(hit.file, evidenceAt, readRepo, mtimeRepo, existsRepo, {
-              deps: appScopeFiles,
+              // E2E 走真实浏览器 + 服务端整条链，归因不到文件级；
+              // 数据文件也算进去 —— 浏览器会加载样式表，样式变了 E2E 就该重跑。
+              deps: [...appScopeFiles, ...appDataFiles, ...dataDepsOf(hit.file)],
               basis: 'E2E 走真实浏览器 + 服务端整条链，归因不到文件级',
             })
-          : assessVerdict(hit.file, evidenceAt, readRepo, mtimeRepo, existsRepo);
+          : assessVerdict(hit.file, evidenceAt, readRepo, mtimeRepo, existsRepo, {
+              // 单元/集成结论的依赖闭包只按 import 扫 —— 运行时读的数据文件看不见。
+              // 验证器显式声明的那些（`// @verdict-deps:`）在这里补进来。
+              deps: dataDepsOf(hit.file),
+              basis: '这条结论还依赖验证器声明的数据文件',
+            });
         assessmentCache.set(key, assessment);
       }
       verdictAssessments.push({ criterion: a.id, assessment, isE2e });
@@ -654,13 +726,16 @@ function main(): void {
         closureCache.set(hit.file, files);
       }
       for (const f of files) unitClosureFiles.add(f);
+      // 声明出来的数据依赖也算「被这条结论覆盖」——
+      // 它们会被精确归到那条结论上（stale），不必再在兜底里重复点名。
+      for (const f of dataDepsOf(hit.file)) unitClosureFiles.add(f);
     }
   }
   const unitEvidenceAt = evidenceTimes.get('spec/evidence/junit.xml');
   const uncoveredChanged =
     unitEvidenceAt === undefined
       ? []
-      : appScopeFiles.filter((f) => {
+      : [...appScopeFiles, ...dataScopeFiles].filter((f) => {
           const t = mtimeRepo(f);
           if (t === null || t <= unitEvidenceAt) return false;
           return !unitClosureFiles.has(f);

@@ -36,6 +36,8 @@
  * 闭包扫不干净的时候（本地 import 解析不到对应文件），
  * 判 **unknown** 而不是 fresh —— **说不清依赖，就不能说结论还成立**。
  *
+ * 闭包还有一个盲区：**它只扫得到代码，看不到数据**（见下面「数据依赖」）。
+ *
  * 纯逻辑与文件读写分开：判定只吃「读文件」与「取修改时间」两个函数，
  * 于是整套语义可以在内存里被完整测一遍。
  */
@@ -241,9 +243,94 @@ export function dependencyClosure(
 }
 
 // ---------------------------------------------------------------------------
+// 三又二分之一、数据依赖 —— 闭包扫得到代码，扫不到数据
+// ---------------------------------------------------------------------------
+//
+// import 闭包有一个盲区：**它只看得到被 import 的东西**。
+// 而有些结论依赖的是**运行时从磁盘读的数据文件** ——
+// 最典型的是黄金快照基线（`packages/core/tests/__snapshots__/*.json`）：
+// 那 64 个 JSON 是测试运行时读进来的，不是 import 进来的。
+//
+// 后果（实测 2026-11-05）：
+//   跑批 → 证据落地 → 有人刷新了快照基线（`gen-layout-snapshots.ts --force`）
+//     ↓
+//   闭包里没有那些 JSON，判定看不见它们被动过
+//     ↓
+//   矩阵照旧写「98 条结论全部仍然成立」
+//
+// 这是**漏报**方向 —— 一条过期的 PASS 被当成当前代码的证明，
+// 比多报一条坏得多（多报只是保守，漏报是撒谎）。
+//
+// 所以验证器文件可以**显式声明**自己还依赖哪些数据文件：
+//
+//     // @verdict-deps: packages/core/tests/__snapshots__
+//
+// 路径是**仓库相对路径**，可以是文件，也可以是目录（目录取其下所有文件）。
+// 声明写在**读它的那份代码旁边** —— 不写在别处，就不会忘记更新。
+
+/** 数据依赖的声明前缀 */
+const DATA_DEP_DIRECTIVE = '@verdict-deps:';
+
+/**
+ * 声明行的形状 —— **必须是注释，而且注释在行首**。
+ *
+ * 为什么卡这么严：说明文档、测试用例里经常会出现 `@verdict-deps:` 这个**字符串**。
+ * 宽松匹配会把那些字符串当成声明 —— 于是「这个验证器依赖 64 个基线」凭空冒出来，
+ * 基线一被动过，那条结论就**假过期**。那是刚修掉的那个失败模式，换个方向又犯一遍。
+ */
+const DATA_DEP_LINE = new RegExp(`^\\s*(?:\\/\\/|\\*)\\s*${DATA_DEP_DIRECTIVE}\\s*(.*)$`);
+
+/**
+ * 抽出验证器文件里声明的数据依赖。
+ *
+ * 一行可以写多个（逗号分隔）；行尾可能还挂着块注释的收尾符号。
+ */
+export function parseDataDeps(content: string): string[] {
+  const out: string[] = [];
+  for (const line of content.split('\n')) {
+    const m = DATA_DEP_LINE.exec(line);
+    if (!m) continue;
+    const rest = (m[1] ?? '').replace(/\*\/\s*$/, '');
+    for (const part of rest.split(',')) {
+      const p = part.trim();
+      if (p) out.push(p);
+    }
+  }
+  return out;
+}
+
+/**
+ * 把声明的路径展开成**文件清单**。
+ *
+ * 目录 → 其下所有文件（递归）；文件 → 它自己；
+ * 声明的路径在树里不存在 → 原样带出去 ——
+ * 让调用方能说清「声明了、但找不到」，而不是悄悄少一个依赖。
+ *
+ * @param declared 声明的路径（仓库相对）
+ * @param exists   判断路径在不在树里
+ * @param listDir  列目录下的文件（仓库相对路径）；不是目录就返回空数组
+ */
+export function expandDataDeps(
+  declared: readonly string[],
+  exists: (rel: string) => boolean,
+  listDir: (rel: string) => string[]
+): string[] {
+  const out = new Set<string>();
+  for (const d of declared) {
+    if (!exists(d)) {
+      out.add(d);
+      continue;
+    }
+    const files = listDir(d);
+    if (files.length > 0) for (const f of files) out.add(f);
+    else out.add(d);
+  }
+  return [...out].sort();
+}
+
+// ---------------------------------------------------------------------------
 // 四、判定一条结论的新鲜度
 // ---------------------------------------------------------------------------
-
 export type VerdictStatus = 'fresh' | 'stale' | 'unknown' | 'file-missing';
 
 export interface VerdictAssessment {
@@ -594,8 +681,10 @@ export function renderVerdictFreshnessSection(
   if (otherChanged.length > 0) {
     out.push('');
     out.push(
-      `> **兜底**：另有 ${otherChanged.length} 个源文件在证据之后被改过，` +
-        '但它们不在任何一条结论的 import 闭包里（运行时才读到的夹具、配置之类）—— ' +
+      `> **兜底**：另有 ${otherChanged.length} 个文件（源码或数据）在证据之后被改过，` +
+        '但它们不在任何一条结论的依赖闭包里 —— ' +
+        '有的闭包本来就扫不到（运行时才读到的夹具、样式表、配置之类），' +
+        '有的则是**谁都没声明**（该声明却没声明）。' +
         '上面的逐条归属因此是**保守**的：漏掉的那些，至少在这里露着。'
     );
     out.push('');
