@@ -1179,105 +1179,122 @@ export const Workbench: React.FC<WorkbenchProps> = ({
             backgroundSize: '24px 24px',
           }}
         >
-          {/* Scaled 1920x1080 Presentation Canvas Container */}
+          {/*
+            画布分两层：外层只负责**占位**，尺寸 = 缩放后的实际视觉尺寸；
+            内层才是真正的 1920×1080 画布，靠 transform 缩放。
+
+            为什么必须分两层 —— 这是实测出来的坑（2026-11-04）：
+            原来只有一层，它是 flex 项，`width: 1920` 会被 flex-shrink 压扁
+            （实测 528px 宽的视口里被压成 480px，而高度仍是 1080px）。
+            于是 1920×1080 的 SVG 被塞进 480×1080 的竖条里，
+            preserveAspectRatio="xMidYMid meet" 只能把幻灯片缩成中间一条，
+            上下留大片空白 —— 画布看起来是竖着的，幻灯片只剩四分之一高。
+            外层给 flex 一个 shrink-0 的占位盒，尺寸正好等于缩放后的视觉尺寸，
+            滚动区也不会因为 transform 不改变布局尺寸而出现幽灵滚动条。
+          */}
           <div
-            className="relative shadow-2xl transition-transform duration-100 origin-center border border-slate-300 dark:border-slate-800 rounded-sm overflow-hidden select-none"
-            style={{
-              width: 1920,
-              height: 1080,
-              transform: `scale(${zoomLevel})`,
-              transformOrigin: 'center center',
-              backgroundColor: project.template.theme.backgroundColor,
-            }}
+            className="relative shrink-0 transition-all duration-100"
+            style={{ width: 1920 * zoomLevel, height: 1080 * zoomLevel }}
           >
-            {/* Layer 1: Pixel-Perfect Slide Vector SVG (100% Identical to Left Thumbnail & Presentation Mode) */}
             <div
-              data-testid="slide-canvas"
-              data-slide-id={currentSlide.slideId}
-              data-slide-title={currentSlide.title}
-              className="absolute inset-0 w-full h-full pointer-events-none select-none [&>svg]:w-full [&>svg]:h-full [&>svg]:block"
-              dangerouslySetInnerHTML={{
-                __html: SVGRenderer.renderInlineSvg(currentSlide, project.template.theme),
+              className="absolute left-0 top-0 shadow-2xl transition-transform duration-100 origin-top-left border border-slate-300 dark:border-slate-800 rounded-sm overflow-hidden select-none"
+              style={{
+                width: 1920,
+                height: 1080,
+                transform: `scale(${zoomLevel})`,
+                transformOrigin: 'top left',
+                backgroundColor: project.template.theme.backgroundColor,
               }}
-            />
+            >
+              {/* Layer 1: Pixel-Perfect Slide Vector SVG (100% Identical to Left Thumbnail & Presentation Mode) */}
+              <div
+                data-testid="slide-canvas"
+                data-slide-id={currentSlide.slideId}
+                data-slide-title={currentSlide.title}
+                className="absolute inset-0 w-full h-full pointer-events-none select-none [&>svg]:w-full [&>svg]:h-full [&>svg]:block"
+                dangerouslySetInnerHTML={{
+                  __html: SVGRenderer.renderInlineSvg(currentSlide, project.template.theme),
+                }}
+              />
 
-            {/* Layer 2: Interactive Element Overlays for Selection, Dragging & Direct Inline Editing */}
-            {currentSlide.elements
-              .filter((el) => el.role !== 'background')
-              .map((el) => {
-                const isSelected = selectedElementId === el.id;
-                const isInlineEditing = editingTextElementId === el.id;
-                const { x, y, width, height } = el.geometry;
-                const style = el.style || {};
+              {/* Layer 2: Interactive Element Overlays for Selection, Dragging & Direct Inline Editing */}
+              {currentSlide.elements
+                .filter((el) => el.role !== 'background')
+                .map((el) => {
+                  const isSelected = selectedElementId === el.id;
+                  const isInlineEditing = editingTextElementId === el.id;
+                  const { x, y, width, height } = el.geometry;
+                  const style = el.style || {};
 
-                return (
-                  <div
-                    key={el.id}
-                    onMouseDown={(e) => handleElementMouseDown(e, el)}
-                    onDoubleClick={(e) => {
-                      e.stopPropagation();
-                      handleElementDoubleClick(el);
-                    }}
-                    data-testid="slide-element"
-                    data-element-id={el.id}
-                    data-role={el.role}
-                    data-editable={el.editable ? 'true' : 'false'}
-                    className={`absolute rounded-sm transition-all ${
-                      el.editable ? 'cursor-move' : 'cursor-pointer'
-                    } ${
-                      isSelected
-                        ? 'ring-2 ring-blue-500 bg-blue-500/10 shadow-lg z-40'
-                        : 'hover:ring-1 hover:ring-blue-400/60 hover:bg-blue-400/5 z-20'
-                    }`}
-                    style={{
-                      left: x,
-                      top: y,
-                      width,
-                      height,
-                    }}
-                    title={el.editable ? `点击选中/拖拽移动 (${el.role})，双击直接编辑文本` : `${el.role}`}
-                  >
-                    {/* Transform handles if selected */}
-                    {isSelected && (
-                      <>
-                        <div className="absolute -top-1.5 -left-1.5 w-3.5 h-3.5 bg-blue-500 border-2 border-white rounded-full z-50 pointer-events-none shadow-xs" />
-                        <div className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-blue-500 border-2 border-white rounded-full z-50 pointer-events-none shadow-xs" />
-                        <div className="absolute -bottom-1.5 -left-1.5 w-3.5 h-3.5 bg-blue-500 border-2 border-white rounded-full z-50 pointer-events-none shadow-xs" />
-                        <div className="absolute -bottom-1.5 -right-1.5 w-3.5 h-3.5 bg-blue-500 border-2 border-white rounded-full z-50 pointer-events-none shadow-xs" />
-                        <div className="absolute -top-6 left-0 px-2 py-0.5 bg-blue-600 text-white text-[10px] font-mono font-bold rounded pointer-events-none whitespace-nowrap shadow-sm flex items-center gap-1.5">
-                          <span>{el.role.toUpperCase()}</span>
-                          <span className="opacity-60">|</span>
-                          <span>{Math.round(x)},{Math.round(y)}</span>
-                          <span className="opacity-60">|</span>
-                          <span>{Math.round(width)}×{Math.round(height)}</span>
-                        </div>
-                      </>
-                    )}
+                  return (
+                    <div
+                      key={el.id}
+                      onMouseDown={(e) => handleElementMouseDown(e, el)}
+                      onDoubleClick={(e) => {
+                        e.stopPropagation();
+                        handleElementDoubleClick(el);
+                      }}
+                      data-testid="slide-element"
+                      data-element-id={el.id}
+                      data-role={el.role}
+                      data-editable={el.editable ? 'true' : 'false'}
+                      className={`absolute rounded-sm transition-all ${
+                        el.editable ? 'cursor-move' : 'cursor-pointer'
+                      } ${
+                        isSelected
+                          ? 'ring-2 ring-blue-500 bg-blue-500/10 shadow-lg z-40'
+                          : 'hover:ring-1 hover:ring-blue-400/60 hover:bg-blue-400/5 z-20'
+                      }`}
+                      style={{
+                        left: x,
+                        top: y,
+                        width,
+                        height,
+                      }}
+                      title={el.editable ? `点击选中/拖拽移动 (${el.role})，双击直接编辑文本` : `${el.role}`}
+                    >
+                      {/* Transform handles if selected */}
+                      {isSelected && (
+                        <>
+                          <div className="absolute -top-1.5 -left-1.5 w-3.5 h-3.5 bg-blue-500 border-2 border-white rounded-full z-50 pointer-events-none shadow-xs" />
+                          <div className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-blue-500 border-2 border-white rounded-full z-50 pointer-events-none shadow-xs" />
+                          <div className="absolute -bottom-1.5 -left-1.5 w-3.5 h-3.5 bg-blue-500 border-2 border-white rounded-full z-50 pointer-events-none shadow-xs" />
+                          <div className="absolute -bottom-1.5 -right-1.5 w-3.5 h-3.5 bg-blue-500 border-2 border-white rounded-full z-50 pointer-events-none shadow-xs" />
+                          <div className="absolute -top-6 left-0 px-2 py-0.5 bg-blue-600 text-white text-[10px] font-mono font-bold rounded pointer-events-none whitespace-nowrap shadow-sm flex items-center gap-1.5">
+                            <span>{el.role.toUpperCase()}</span>
+                            <span className="opacity-60">|</span>
+                            <span>{Math.round(x)},{Math.round(y)}</span>
+                            <span className="opacity-60">|</span>
+                            <span>{Math.round(width)}×{Math.round(height)}</span>
+                          </div>
+                        </>
+                      )}
 
-                    {/* Inline text edit overlay */}
-                    {isInlineEditing && (
-                      <textarea
-                        value={inlineTextValue}
-                        onChange={(e) => setInlineTextValue(e.target.value)}
-                        onBlur={handleSaveInlineText}
-                        data-testid="inline-text-editor"
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            handleSaveInlineText();
-                          }
-                        }}
-                        autoFocus
-                        className="w-full h-full p-2.5 bg-white dark:bg-slate-900 text-slate-900 dark:text-white border-2 border-blue-500 rounded-lg shadow-2xl focus:outline-none resize-none font-sans font-semibold leading-relaxed z-50"
-                        style={{
-                          fontSize: style.fontSize || 16,
-                          lineHeight: 1.4,
-                        }}
-                      />
-                    )}
-                  </div>
-                );
-              })}
+                      {/* Inline text edit overlay */}
+                      {isInlineEditing && (
+                        <textarea
+                          value={inlineTextValue}
+                          onChange={(e) => setInlineTextValue(e.target.value)}
+                          onBlur={handleSaveInlineText}
+                          data-testid="inline-text-editor"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              handleSaveInlineText();
+                            }
+                          }}
+                          autoFocus
+                          className="w-full h-full p-2.5 bg-white dark:bg-slate-900 text-slate-900 dark:text-white border-2 border-blue-500 rounded-lg shadow-2xl focus:outline-none resize-none font-sans font-semibold leading-relaxed z-50"
+                          style={{
+                            fontSize: style.fontSize || 16,
+                            lineHeight: 1.4,
+                          }}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+            </div>
           </div>
         </div>
 
