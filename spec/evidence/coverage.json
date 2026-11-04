@@ -1,9 +1,9 @@
 {
   "directory": "packages/core/src/engine",
   "threshold": 90,
-  "found": 1869,
-  "hit": 1735,
-  "percent": 92.83,
+  "found": 1966,
+  "hit": 1814,
+  "percent": 92.27,
   "passed": true,
   "files": [
     {
@@ -14,9 +14,9 @@
     },
     {
       "file": "packages/core/src/engine/exportEngine.ts",
-      "found": 318,
-      "hit": 254,
-      "percent": 79.87
+      "found": 329,
+      "hit": 258,
+      "percent": 78.42
     },
     {
       "file": "packages/core/src/engine/layoutEngine.ts",
@@ -32,21 +32,27 @@
     },
     {
       "file": "packages/core/src/engine/qualityEngine.ts",
-      "found": 171,
-      "hit": 170,
-      "percent": 99.42
+      "found": 216,
+      "hit": 207,
+      "percent": 95.83
     },
     {
       "file": "packages/core/src/engine/svgRenderer.ts",
-      "found": 291,
-      "hit": 255,
-      "percent": 87.63
+      "found": 305,
+      "hit": 260,
+      "percent": 85.25
     },
     {
       "file": "packages/core/src/engine/textMetrics.ts",
       "found": 46,
-      "hit": 37,
-      "percent": 80.43
+      "hit": 43,
+      "percent": 93.48
+    },
+    {
+      "file": "packages/core/src/engine/typography.ts",
+      "found": 27,
+      "hit": 27,
+      "percent": 100
     }
   ]
 }
