@@ -104,7 +104,15 @@ curl -s localhost:5173/api/meta/models   # 经前端代理打后端
 | `bun test` | 全部单元测试 |
 | `bun run test:core` / `test:api` | 按层跑 |
 | `bun run test:e2e` | 前后端集成 E2E（Playwright，需要前后端都起着） |
+| `bun run test:e2e:visible` | **看得见**的 E2E —— 真窗口 + 录像 + 截图（自带服务编排） |
 | `bun run spec` | SPEC 验证 |
+
+### 想看着浏览器跑
+
+`bun run test:e2e:visible` 会弹出**真的 Chromium 窗口**，
+并把每个会话录成 `.webm`、截成 `.png`，落在 `spec/evidence/e2e-media/<链>/`。
+
+更多开关（放慢动作、每步多留一会儿、trace 回放）见 `spec/README.md` 的「看见浏览器在干什么」。
 
 ---
 

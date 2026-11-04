@@ -157,6 +157,7 @@ AI 编辑返回 `IRPatch[]` 而非全量元素，由 `patchApplier` 统一施加
 | `bun test` | 全部单元测试 |
 | `bun run test:core` / `test:api` | 按层跑 |
 | `bun run test:e2e` | 前后端集成 E2E（Playwright，需前后端都起着） |
+| `bun run test:e2e:visible` | **看得见**的 E2E —— 真窗口 + 录像 + 截图（自带服务编排，见 `spec/README.md`） |
 | `bun run coverage` | 覆盖率报告（判据执行 + 领域内核 + 应用层） |
 | `bun run check:coverage` | **质量门禁** —— 领域内核行覆盖率 ≥ 90%，不达标即阻断 |
 | `bun run spec` | **SPEC 全链路验证**（见下） |

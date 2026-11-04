@@ -15,6 +15,7 @@ import {
   TEST_TIMEOUT,
   apiFetch,
   assertServersUp,
+  createProjectViaUi as createProjectViaUiBase,
   launchHarness,
   makeAccount,
   uncaughtErrors,
@@ -49,22 +50,17 @@ async function registerAndEnterApp(session: Session): Promise<Account> {
   return account;
 }
 
-/** 通过 UI 新建一个项目，返回项目 id */
+/**
+ * 通过 UI 新建一个项目，返回项目 id。
+ *
+ * 建完之后切到「作品库」—— 这一链的用例要拿卡片上的 `data-project-id`，
+ * 而卡片只在作品库里渲染（创作中心里没有）。
+ */
 async function createProjectViaUi(session: Session, name: string): Promise<string> {
+  const id = await createProjectViaUiBase(session, name);
   await session.page.getByTestId('nav-projects').click();
-  await session.page.getByTestId('new-project').click();
-  await session.page.getByTestId('new-project-name').fill(name);
-  await session.page.getByTestId('new-project-submit').click();
-
-  // 创建完成后应用会跳到「创作中心」—— 那是创建成功的信号
-  await session.page.getByTestId('topic-prompt').waitFor({ state: 'visible', timeout: 20_000 });
-
-  await session.page.getByTestId('nav-projects').click();
-  const card = session.page.locator(`[data-testid="project-card"][data-project-id]`);
-  const target = card.filter({ hasText: name }).first();
-  await target.waitFor({ state: 'visible', timeout: 20_000 });
-  const id = await target.getAttribute('data-project-id');
-  if (!id) throw new Error(`项目卡片上读不到 data-project-id（name=${name}）`);
+  const card = session.page.locator(`[data-testid="project-card"][data-project-id="${id}"]`);
+  await card.first().waitFor({ state: 'visible', timeout: 20_000 });
   return id;
 }
 
