@@ -4,8 +4,9 @@
 > 重新生成：`bun run spec/verify/traceability.ts`（前置：先跑测试与注入检查，见 `spec/README.md`）。
 
 - Spec 版本：`1.0`
-- 条款总数：**49**　判据总数：**64**
+- 条款总数：**60**　判据总数：**85**
 - 生成时 junit 证据：`spec/evidence/junit.xml`；注入证据：`spec/evidence/mutation-report.json`
+- 失败原因：`spec/evidence/junit-output.txt`（单元 / 集成）与 `spec/evidence/junit-e2e-output.txt`（E2E）—— **Bun 的 junit 报告只写失败类型、不写错误信息**（实测产出的是 `<failure type="AssertionError" />`），失败详情在 stderr 里，所以单独落盘
 
 ---
 
@@ -15,7 +16,7 @@
 
 | 文档章节 | Spec ID | 类型 | 风险 | 验收判据 | 验证器 | Oracle tier | 证据 | 结论 |
 |---|---|---|---|---|---|---|---|---|
-| docs/backend-design.md §7.2 各格式实现 | SPEC-CORE-001 | technical | high | AC-CORE-001 | spec/verify/core-layout.test.ts::canvas-is-always-1920x1080 | authoritative | EVD-CORE-001 | **PASS** |
+| docs/backend-design.md §7.2 各格式实现 | SPEC-CORE-001 | technical | high | AC-CORE-001, AC-CORE-011 | spec/verify/core-layout.test.ts::canvas-is-always-1920x1080<br>e2e/workbench.e2e.ts::AC-CORE-011 工作台画布在屏幕上保持 16:9，不出现信箱边 | authoritative, formal | EVD-CORE-001, EVD-CORE-011 | **PASS** |
 | docs/backend-features.md §E 版式与内容绑定（LAY）· LAY-05 | SPEC-CORE-002 | technical | high | AC-CORE-002 | spec/verify/core-layout.test.ts::no-element-out-of-canvas | authoritative | EVD-CORE-002 | **PASS** |
 | docs/architecture.md §12 ADR-012 · 版式专属元素 ID 统一加 slideId 前缀 | SPEC-CORE-003 | technical | high | AC-CORE-003 | spec/verify/core-layout.test.ts::element-ids-unique-across-slides | formal | EVD-CORE-003 | **PASS** |
 | docs/architecture.md §12 ADR-012 · 版式专属元素 ID 统一加 slideId 前缀 | SPEC-CORE-004 | technical | high | AC-CORE-004 | spec/verify/core-layout.test.ts::layout-element-ids-contain-slide-id | authoritative | EVD-CORE-004 | **PASS** |
@@ -23,6 +24,7 @@
 | docs/backend-features.md §E 版式与内容绑定（LAY）· LAY-07 | SPEC-CORE-006 | technical | medium | AC-CORE-006 | spec/verify/core-layout.test.ts::cover-page-has-no-master-elements | authoritative | EVD-CORE-006 | **PASS** |
 | docs/backend-features.md §E 版式与内容绑定（LAY）· LAY-07 | SPEC-CORE-007 | technical | low | AC-CORE-007 | spec/verify/core-layout.test.ts::page-number-format | authoritative | EVD-CORE-007 | **PASS** |
 | docs/backend-features.md §E 版式与内容绑定（LAY）· LAY-02 | SPEC-CORE-008 | business | high | AC-CORE-008, AC-CORE-009, AC-CORE-010 | spec/verify/core-content.test.ts::bullet-consuming-layouts-use-outline-bullets<br>spec/verify/core-content.test.ts::cover-content-traceable-to-outline<br>spec/verify/core-content.test.ts::render-output-follows-outline-bullets | authoritative | EVD-CORE-008, EVD-CORE-009, EVD-CORE-010 | **PASS** |
+| docs/backend-features.md §F 幻灯片编辑与版本（SLD）· SLD-02 / SLD-04 | SPEC-CORE-009 | business | high | AC-CORE-012, AC-CORE-013 | e2e/workbench.e2e.ts::AC-CORE-012 画布放大超出可视区后，左右上下都滚得到，不被裁掉<br>e2e/workbench.e2e.ts::AC-CORE-013 容器尺寸变化后缩放档位自动重新适配，画布不被裁掉 | authoritative, formal | EVD-CORE-012, EVD-CORE-013 | **PASS** |
 | docs/backend-features.md §I 质量评估（QLT）· QLT-01 | SPEC-QLT-001 | technical | high | AC-QLT-001 | spec/verify/quality-engine.test.ts::quality-formula-weights | authoritative | EVD-QLT-001 | **PASS** |
 | docs/backend-features.md §I 质量评估（QLT）· QLT-02 | SPEC-QLT-002 | technical | medium | AC-QLT-002 | spec/verify/quality-engine.test.ts::canvas-mismatch-penalty | self-derived | EVD-QLT-002 | **PASS** |
 | docs/backend-features.md §I 质量评估（QLT）· QLT-02 | SPEC-QLT-003 | technical | medium | AC-QLT-003 | spec/verify/quality-engine.test.ts::duplicate-id-penalty | self-derived | EVD-QLT-003 | **PASS** |
@@ -31,16 +33,21 @@
 | docs/backend-features.md §I 质量评估（QLT）· QLT-04 | SPEC-QLT-006 | technical | medium | AC-QLT-006 | spec/verify/quality-engine.test.ts::missing-title-penalty | self-derived | EVD-QLT-006 | **PASS** |
 | docs/backend-features.md §I 质量评估（QLT）· QLT-04 | SPEC-QLT-007 | technical | medium | AC-QLT-007 | spec/verify/quality-engine.test.ts::missing-keymessage-penalty | self-derived | EVD-QLT-007 | **PASS** |
 | docs/backend-features.md §I 质量评估（QLT）· QLT-05 | SPEC-QLT-008 | technical | medium | AC-QLT-008 | spec/verify/quality-engine.test.ts::consistency-penalties | self-derived | EVD-QLT-008 | **PASS** |
-| docs/backend-features.md §I 质量评估（QLT）· QLT-06 | SPEC-QLT-009 | technical | high | AC-QLT-009, AC-QLT-010 | spec/verify/quality-engine.test.ts::autofix-restores-bounds<br>spec/verify/quality-engine.test.ts::autofix-restores-id-uniqueness | authoritative, self-derived | EVD-QLT-009, EVD-QLT-010 | **PASS** |
+| docs/backend-features.md §I 质量评估（QLT）· QLT-06 | SPEC-QLT-009 | technical | high | AC-QLT-009, AC-QLT-011 | spec/verify/quality-engine.test.ts::autofix-restores-bounds<br>spec/verify/quality-engine.test.ts::autofix-leaves-master-elements-alone | authoritative | EVD-QLT-009, EVD-QLT-011 | **PASS** |
+| docs/architecture.md §12 ADR-012 | SPEC-QLT-010 | technical | high | AC-QLT-010 | spec/verify/quality-engine.test.ts::autofix-restores-id-uniqueness | authoritative | EVD-QLT-010 | **PASS** |
+| docs/backend-features.md §G 智能编辑 Agent（EDT）· EDT-06 | SPEC-QLT-011 | quality | high | AC-QLT-012 | spec/verify/quality-engine.test.ts::autofix-never-lowers-score | authoritative | EVD-QLT-012 | **PASS** |
+| docs/architecture.md §12 ADR-014 | SPEC-QLT-012 | quality | medium | AC-QLT-013 | spec/verify/quality-engine.test.ts::issues-declare-fixability | authoritative | EVD-QLT-013 | **PASS** |
 | docs/backend-features.md §N 安全（SEC）· SEC-07 | SPEC-RND-001 | technical | high | AC-RND-001 | spec/verify/render-svg.test.ts::user-content-is-xml-escaped | authoritative | EVD-RND-001 | **PASS** |
 | docs/architecture.md §12 ADR-011 · 服务端渲染去 foreignObject 化 | SPEC-RND-002 | technical | high | AC-RND-002 | spec/verify/render-svg.test.ts::svg-contains-no-foreignobject | authoritative | EVD-RND-002 | **PASS** |
 | docs/backend-features.md §J 渲染与导出（EXP）· EXP-01 | SPEC-RND-003 | technical | high | AC-RND-003 | spec/verify/render-svg.test.ts::svg-contains-no-external-font-import | authoritative | EVD-RND-003 | **PASS** |
 | docs/architecture.md §8.1 渲染层次 | SPEC-RND-004 | technical | medium | AC-RND-004 | spec/verify/render-svg.test.ts::svg-preserves-element-ids | authoritative | EVD-RND-004 | **PASS** |
 | docs/architecture.md §9.3 关键设计 | SPEC-RND-005 | technical | low | AC-RND-005 | spec/verify/render-svg.test.ts::svg-has-four-layers | self-derived | EVD-RND-005 | **PASS** |
+| docs/architecture.md §12 ADR-011 | SPEC-RND-006 | technical | high | AC-RND-006 | spec/verify/render-svg.test.ts::long-text-is-truncated-with-ellipsis | authoritative | EVD-RND-006 | **PASS** |
 | docs/backend-features.md §J 渲染与导出（EXP）· EXP-15 / EXP-17 | SPEC-EXP-001 | business | high | AC-EXP-001 | spec/verify/export-pptx.test.ts::pptx-preserves-ir-text-content | authoritative | EVD-EXP-001 | **PASS** |
 | docs/backend-features.md §J 渲染与导出（EXP）· EXP-14 | SPEC-EXP-002 | technical | medium | AC-EXP-002 | spec/verify/export-pptx.test.ts::pptx-includes-speaker-notes | authoritative | EVD-EXP-002 | **PASS** |
 | docs/backend-features.md §J 渲染与导出（EXP）· EXP-02 | SPEC-EXP-003 | technical | medium | AC-EXP-003 | spec/verify/export-pptx.test.ts::png-export-is-2x | authoritative | EVD-EXP-003 | **PASS** |
 | docs/backend-features.md §J 渲染与导出（EXP）· EXP-13 | SPEC-EXP-004 | technical | low | AC-EXP-004 | spec/verify/export-pptx.test.ts::export-filename-sanitized | authoritative | EVD-EXP-004 | **PASS** |
+| docs/backend-features.md §C 项目管理（PRJ）· PRJ-07 | SPEC-EXP-005 | technical | high | AC-EXP-005, AC-EXP-006 | apps/api/tests/integration/import-bundle.test.ts::exported-bundle-round-trips-with-page-order-intact<br>apps/api/tests/integration/import-bundle.test.ts::duplicate-order-index-is-rejected | authoritative | EVD-EXP-005, EVD-EXP-006 | **PASS** |
 | docs/backend-design.md §4.3 IRPatch 协议 | SPEC-IRP-001 | technical | high | AC-IRP-001 | apps/api/tests/ai/edit-slide.test.ts::returns-patches-not-full-elements | authoritative | EVD-IRP-001 | **PASS** |
 | docs/backend-design.md §4.3 IRPatch 协议 | SPEC-IRP-002 | technical | high | AC-IRP-002 | packages/core/tests/patchApplier.test.ts::apply-is-idempotent | authoritative | EVD-IRP-002 | **PASS** |
 | docs/backend-design.md §4.3 IRPatch 协议 | SPEC-IRP-003 | technical | medium | AC-IRP-003 | packages/core/tests/patchApplier.test.ts::remove-missing-element-throws | authoritative | EVD-IRP-003 | **PASS** |
@@ -51,13 +58,18 @@
 | docs/backend-features.md §N 安全（SEC）· SEC-06 | SPEC-API-005 | technical | high | AC-API-005, AC-API-008 | apps/api/tests/security/secret-handling.test.ts::missing-api-key-fails-startup<br>apps/api/tests/security/secret-handling.test.ts::secret-never-leaks-into-responses-or-logs | authoritative | EVD-API-005, EVD-API-008 | **PASS** |
 | docs/backend-design.md §9.1 会话 | SPEC-SEC-001 | technical | high | AC-SEC-001, AC-SEC-003 | apps/api/tests/security/password-hashing.test.ts::password-stored-as-argon2id-hash<br>apps/api/tests/security/password-hashing.test.ts::password-verify-accepts-correct-and-rejects-wrong | authoritative | EVD-SEC-001, EVD-SEC-003 | **PASS** |
 | docs/backend-design.md §9.1 会话 | SPEC-SEC-002 | technical | high | AC-SEC-002, AC-SEC-004, AC-SEC-005 | apps/api/tests/security/session-cookie.test.ts::session-cookie-has-security-attributes<br>apps/api/tests/security/session-cookie.test.ts::session-cookie-secure-in-production<br>apps/api/tests/security/session-cookie.test.ts::session-id-is-32-byte-base64url | authoritative | EVD-SEC-002, EVD-SEC-004, EVD-SEC-005 | **PASS** |
-| docs/architecture.md §4 关键场景端到端时序（场景 A） | SPEC-E2E-001 | technical | high | AC-E2E-001, AC-E2E-002 | e2e/integration.e2e.ts::1. 注册 → 服务端签发 HttpOnly 会话，前端据此进入工作台<br>e2e/integration.e2e.ts::2. 新建项目 → 服务端库里真的有这条项目 | authoritative | EVD-E2E-001, EVD-E2E-002 | **PASS** |
-| docs/architecture.md §4 关键场景端到端时序（场景 A） | SPEC-E2E-002 | business | high | AC-E2E-003, AC-E2E-004, AC-E2E-005 | e2e/integration.e2e.ts::3. 生成大纲 → 服务端按主题动态生成（不是写死的固定文案）<br>e2e/integration.e2e.ts::3b. 编辑大纲标题 → 服务端存的是前端改的那份<br>e2e/integration.e2e.ts::4. 编译 → 工作台渲染的是服务端生成的 Slide IR | authoritative | EVD-E2E-003, EVD-E2E-004, EVD-E2E-005 | **PASS** |
-| docs/backend-design.md §5.3 统一响应与错误规范 | SPEC-E2E-003 | business | high | AC-E2E-006, AC-E2E-007 | e2e/integration.e2e.ts::5. 编辑文本 → 防抖同步写回服务端（乐观锁生成新版本）<br>e2e/integration.e2e.ts::6. 陈旧 baseVersionId → 409 冲突，且不覆盖服务端内容 | authoritative | EVD-E2E-006, EVD-E2E-007 | **PASS** |
-| docs/architecture.md §4 关键场景端到端时序（场景 B：AI 改页） | SPEC-E2E-004 | business | high | AC-E2E-008 | e2e/integration.e2e.ts::7. AI 编辑 → 服务端施加 IRPatch，前端采纳服务端返回的 IR | authoritative | EVD-E2E-008 | **PASS** |
-| docs/architecture.md §4 关键场景端到端时序（场景 C：导出） | SPEC-E2E-005 | business | high | AC-E2E-009, AC-E2E-010 | e2e/integration.e2e.ts::8. 导出 → 服务端任务产出真实 PPTX 产物<br>e2e/integration.e2e.ts::11. 导出 PDF → 产物是真正的 PDF（%PDF 魔数） | authoritative | EVD-E2E-009, EVD-E2E-010 | **PASS** |
-| docs/backend-features.md N. 安全（SEC） | SPEC-E2E-006 | technical | high | AC-E2E-011 | e2e/integration.e2e.ts::9. 跨租户隔离 → 别人的项目拿不到（404 而不是 403） | authoritative | EVD-E2E-011 | **PASS** |
-| docs/architecture.md §5.2 实体关系 | SPEC-E2E-007 | business | medium | AC-E2E-012, AC-E2E-013 | e2e/integration.e2e.ts::10. 重命名项目 → 服务端存的是新名字<br>e2e/integration.e2e.ts::12. 删除项目 → 服务端真的删掉了（且列表里也没有） | authoritative | EVD-E2E-012, EVD-E2E-013 | **PASS** |
+| docs/architecture.md §4 关键场景端到端时序（场景 A） | SPEC-E2E-001 | technical | high | AC-E2E-001, AC-E2E-002 | e2e/auth.e2e.ts::AC-E2E-001 注册 → 服务端签发 HttpOnly 会话，前端据此进入工作台<br>e2e/projects.e2e.ts::AC-E2E-002 新建项目 → 服务端库里真的有这条项目，且归属当前用户 | authoritative | EVD-E2E-001, EVD-E2E-002 | **PASS** |
+| docs/architecture.md §4 关键场景端到端时序（场景 A） | SPEC-E2E-002 | business | high | AC-E2E-003, AC-E2E-004, AC-E2E-005 | e2e/workbench.e2e.ts::AC-E2E-003 生成大纲 → 页数、主题、服务端与 UI 一致<br>e2e/workbench.e2e.ts::AC-E2E-004 改大纲标题 → 服务端存新标题，UI 也显示新标题<br>e2e/workbench.e2e.ts::AC-E2E-005 确认大纲并编译 → 画布渲染的正是服务端那份 IR | authoritative | EVD-E2E-003, EVD-E2E-004, EVD-E2E-005 | **PASS** |
+| docs/backend-design.md §5.3 统一响应与错误规范 | SPEC-E2E-003 | business | high | AC-E2E-006, AC-E2E-007 | e2e/workbench.e2e.ts::AC-E2E-006 就地改文本 → 防抖写回服务端，并产生新版本号<br>e2e/workbench.e2e.ts::AC-E2E-007 两个会话改同一页 → 后者收到 409，前端提示且没覆盖服务端 | authoritative | EVD-E2E-006, EVD-E2E-007 | **PASS** |
+| docs/architecture.md §4 关键场景端到端时序（场景 B：AI 改页） | SPEC-E2E-004 | business | high | AC-E2E-008 | e2e/workbench.e2e.ts::AC-E2E-008 AI 编辑 → 服务端施加补丁，画布跟着重绘 | authoritative | EVD-E2E-008 | **PASS** |
+| docs/architecture.md §4 关键场景端到端时序（场景 C：导出） | SPEC-E2E-005 | business | high | AC-E2E-009, AC-E2E-010, AC-E2E-023, AC-E2E-024 | e2e/exports.e2e.ts::AC-E2E-009 PPTX 导出 → 产物是真正的 OOXML，而且里面是这份文稿<br>e2e/exports.e2e.ts::AC-E2E-010 PDF 导出 → 产物是真正的 PDF（%PDF 魔数）<br>e2e/navigation.e2e.ts::AC-E2E-023 PNG/SVG 导出 → scope 只含当前页<br>e2e/navigation.e2e.ts::AC-E2E-024 导出弹窗的 PNG 说明 → 页码跟着当前页走 | authoritative | EVD-E2E-009, EVD-E2E-010, EVD-E2E-023, EVD-E2E-024 | **PASS** |
+| docs/backend-features.md N. 安全（SEC） | SPEC-E2E-006 | technical | high | AC-E2E-011 | e2e/projects.e2e.ts::AC-E2E-011 跨租户隔离 → 别人的项目拿不到（404 而不是 403） | authoritative | EVD-E2E-011 | **PASS** |
+| docs/architecture.md §5.2 实体关系 | SPEC-E2E-007 | business | medium | AC-E2E-012, AC-E2E-013 | e2e/projects.e2e.ts::AC-E2E-012 重命名项目 → 服务端存的是新名字<br>e2e/projects.e2e.ts::AC-E2E-013 删除项目 → 服务端真的删掉了（且列表里也没有） | authoritative | EVD-E2E-012, EVD-E2E-013 | **PASS** |
+| docs/backend-design.md §API 路由表 | SPEC-E2E-008 | business | medium | AC-E2E-014, AC-E2E-020 | e2e/templates.e2e.ts::应用模板 → 服务端存的是新模板，刷新后仍然是它<br>e2e/templates.e2e.ts::应用不存在的模板 → 界面如实报错，服务端模板不被改动 | authoritative | EVD-E2E-014, EVD-E2E-020 | **PASS** |
+| docs/backend-design.md §17 附录：现状 → 目标 一览 | SPEC-E2E-009 | business | high | AC-E2E-015, AC-E2E-016 | e2e/quality.e2e.ts::质量报告 → 界面分数与服务端权威评分逐项对得上<br>e2e/quality.e2e.ts::一键修复 → 服务端的 IR 真的被改写，版本号前进 | authoritative | EVD-E2E-015, EVD-E2E-016 | **PASS** |
+| docs/backend-design.md §17 附录：现状 → 目标 一览 | SPEC-E2E-010 | business | medium | AC-E2E-017, AC-E2E-018, AC-E2E-025 | e2e/presentation.e2e.ts::放映画面上的文字 == 服务端 IR 里的文字<br>e2e/presentation.e2e.ts::翻页 → 换到服务端的后一页，退回后回到第一页<br>e2e/navigation.e2e.ts::AC-E2E-025 工作台第 2 页点放映 → 从第 2 页开始 | authoritative | EVD-E2E-017, EVD-E2E-018, EVD-E2E-025 | **PASS** |
+| docs/backend-design.md §5.3 统一响应与错误规范 | SPEC-E2E-011 | technical | high | AC-E2E-019 | e2e/errors.e2e.ts::导出提交失败 → 界面显示"导出失败"，绝不显示"导出成功" | formal | EVD-E2E-019 | **PASS** |
+| docs/backend-features.md §N 字体与渲染 TPL-12 / EXP-12 | SPEC-E2E-012 | technical | high | AC-E2E-021, AC-E2E-022 | e2e/offline.e2e.ts::应用 HTML → 没有会阻塞渲染的外部样式表<br>e2e/offline.e2e.ts::外部资源被挂起 → 外壳仍在 8 秒内渲染出来 | formal | EVD-E2E-021, EVD-E2E-022 | **PASS** |
 | docs/backend-features.md 非功能性需求（NFR） | SPEC-NFR-001 | quality | medium | AC-NFR-001 | apps/api/tests/perf/outline-latency.bench.ts::outline-generation-p95-under-threshold | statistical | — | INCONCLUSIVE |
 | docs/backend-features.md 非功能性需求（NFR） | SPEC-NFR-002 | quality | medium | AC-NFR-002 | apps/api/tests/perf/export-latency.bench.ts::pptx-export-p95-under-threshold | statistical | EVD-NFR-002 | **PASS** |
 | docs/architecture.md §7.2 降级链 | SPEC-NFR-003 | quality | high | AC-NFR-003, AC-NFR-004 | apps/api/tests/chaos/model-fallback.test.ts::model-unavailable-falls-back-with-valid-outline<br>apps/api/tests/chaos/model-fallback.test.ts::fallback-outline-varies-by-topic | authoritative | EVD-NFR-003, EVD-NFR-004 | **PASS** |
@@ -74,7 +86,7 @@
 | 有没有判据挂错条款？ | 0 个 | ✅ |
 | 有没有验证器没有对应条款？ | 0 个 | ✅ |
 | 有没有文档段落没有对应条款？ | 4 段 | ✅ 全部登记在 §1.4 |
-| 有没有 `maturity: none` 的条款？ | 1/49（2.0%） | ✅ 低于 30% 阈值 |
+| 有没有 `maturity: none` 的条款？ | 1/60（1.7%） | ✅ 低于 30% 阈值 |
 
 ### 1.3 未覆盖清单
 
@@ -111,8 +123,9 @@
 | 决定 | DEC-007 | 返回 404 NOT_FOUND —— **绝不返回 500**，也**不返回 400** | SPEC-API-001, SPEC-API-003 |
 | 决定 | DEC-008 | 要 —— **每一个**资源读路径都必须带 `deleted_at IS NULL`，包括中间件，而不只是在 list / find 查询里 | SPEC-API-003 |
 | 决定 | DEC-009 | 用 lcov 报告的 ΣLH / ΣLF 精确聚合，不用 text 表格 | SPEC-GOV-001 |
-| 决定 | DEC-010 | 不直连 —— E2E 的模型端点指向**本地替身**（spec/verify/model-stub-server.ts），替身返回官方端点在占位 key 下的**原样** 400 响应体；E2E 因此恒定走「模型不可用 → 本地降级」这条路径 | SPEC-E2E-001, SPEC-E2E-002, SPEC-E2E-003, SPEC-E2E-004, SPEC-E2E-005, SPEC-E2E-006, SPEC-E2E-007 |
-| 决定 | DEC-011 | 不开 —— E2E 的 vite 一律带 `DISABLE_HMR=true`（关掉 hmr 与文件监听） | SPEC-E2E-001, SPEC-E2E-002, SPEC-E2E-003, SPEC-E2E-004, SPEC-E2E-005, SPEC-E2E-006, SPEC-E2E-007 |
+| 决定 | DEC-010 | 不直连 —— E2E 的模型端点指向**本地替身**（spec/verify/model-stub-server.ts），替身返回官方端点在占位 key 下的**原样** 400 响应体；E2E 因此恒定走「模型不可用 → 本地降级」这条路径 | SPEC-E2E-001, SPEC-E2E-002, SPEC-E2E-003, SPEC-E2E-004, SPEC-E2E-005, SPEC-E2E-006, SPEC-E2E-007, SPEC-E2E-008, SPEC-E2E-009, SPEC-E2E-010, SPEC-E2E-011 |
+| 决定 | DEC-011 | 不开 —— E2E 的 vite 一律带 `DISABLE_HMR=true`（关掉 hmr 与文件监听） | SPEC-E2E-001, SPEC-E2E-002, SPEC-E2E-003, SPEC-E2E-004, SPEC-E2E-005, SPEC-E2E-006, SPEC-E2E-007, SPEC-E2E-008, SPEC-E2E-009, SPEC-E2E-010, SPEC-E2E-011 |
+| 决定 | DEC-012 | 1-based —— orderIndex ≥ 1，与领域内核的 outline.order 同基线；导入端据此校验（缺该项校验会让重复的 orderIndex 静默落库，页序从此由数据库决定） | SPEC-EXP-005 |
 
 ---
 
@@ -122,13 +135,13 @@
 
 | 结论 | 条款数 | 判据数 | 占比（按判据） |
 |---|---|---|---|
-| PASS | 47 | 63 | 98.4% |
+| PASS | 58 | 84 | 98.8% |
 | FAIL | 0 | 0 | 0.0% |
-| INCONCLUSIVE | 1 | 1 | 1.6% |
+| INCONCLUSIVE | 1 | 1 | 1.2% |
 | 未覆盖（无判据） | 1 | 0 | 0.0% |
-| **合计** | **49** | **64** | **100%** |
+| **合计** | **60** | **85** | **100%** |
 
-> 结论为 PASS 的判据共 63 条，每一条都在 §2.3 有对应证据记录（EVD-*）。
+> 结论为 PASS 的判据共 84 条，每一条都在 §2.3 有对应证据记录（EVD-*）。
 > 「未覆盖（无判据）」的 1 条（SPEC-GOV-003）连判据都不存在，既不是 PASS 也不是 FAIL —— 见 §2.5。
 
 ### 2.2 失败明细
@@ -153,6 +166,21 @@ EVD-CORE-001
   oracle_tier:   authoritative
   oracle_source: docs/backend-design.md §7.2 —— 每页 1920×1080
   evidence:      spec/evidence/junit.xml
+```
+```
+EVD-CORE-011
+  clause:        SPEC-CORE-001
+  acceptance:    AC-CORE-011
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/backend-design.md §7.2 各格式实现 —— | **PDF** | `pdf-lib` + resvg 位图嵌入 | 每页 1920×108…
+  environment:   bun 1.3.11 / darwin / **无外部服务调用**（数据库为进程内 PGlite，模型端点为本地替身 —— 见 §2.6「E2E 是离线的」）
+  command:       bun test ./e2e/workbench.e2e.ts
+  case:          e2e/workbench.e2e.ts::AC-CORE-011 工作台画布在屏幕上保持 16:9，不出现信箱边
+  result:        该用例通过（AC-CORE-011 工作台画布在屏幕上保持 16:9，不出现信箱边）
+  oracle_tier:   formal
+  oracle_source: docs/backend-design.md §7.2 —— 每页 1920×1080 ⇒ 16:9；viewBox 比例与元素盒比例一致时，preserveAspectRatio="xMidYMid meet" 必然铺满整个盒子（形式化推论，非新增业务规则）
+  evidence:      spec/evidence/junit-e2e.xml
 ```
 ```
 EVD-CORE-002
@@ -290,6 +318,36 @@ EVD-CORE-010
   evidence:      spec/evidence/junit.xml
 ```
 ```
+EVD-CORE-012
+  clause:        SPEC-CORE-009
+  acceptance:    AC-CORE-012
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/backend-features.md §F 幻灯片编辑与版本（SLD）· SLD-02 / SLD-04 —— | SLD-02 | 元素几何更新 | P0 | S1 | 拖拽、方向键微调（步长 1 / Sh…
+  environment:   bun 1.3.11 / darwin / **无外部服务调用**（数据库为进程内 PGlite，模型端点为本地替身 —— 见 §2.6「E2E 是离线的」）
+  command:       bun test ./e2e/workbench.e2e.ts
+  case:          e2e/workbench.e2e.ts::AC-CORE-012 画布放大超出可视区后，左右上下都滚得到，不被裁掉
+  result:        该用例通过（AC-CORE-012 画布放大超出可视区后，左右上下都滚得到，不被裁掉）
+  oracle_tier:   authoritative
+  oracle_source: docs/backend-features.md §F SLD-02 / SLD-04 —— 元素几何更新与内容编辑要求任意元素可选中、可编辑；元素分布在整页 1920×1080 上，故整页必须可见可达
+  evidence:      spec/evidence/junit-e2e.xml
+```
+```
+EVD-CORE-013
+  clause:        SPEC-CORE-009
+  acceptance:    AC-CORE-013
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/backend-features.md §F 幻灯片编辑与版本（SLD）· SLD-02 / SLD-04 —— | SLD-02 | 元素几何更新 | P0 | S1 | 拖拽、方向键微调（步长 1 / Sh…
+  environment:   bun 1.3.11 / darwin / **无外部服务调用**（数据库为进程内 PGlite，模型端点为本地替身 —— 见 §2.6「E2E 是离线的」）
+  command:       bun test ./e2e/workbench.e2e.ts
+  case:          e2e/workbench.e2e.ts::AC-CORE-013 容器尺寸变化后缩放档位自动重新适配，画布不被裁掉
+  result:        该用例通过（AC-CORE-013 容器尺寸变化后缩放档位自动重新适配，画布不被裁掉）
+  oracle_tier:   formal
+  oracle_source: 「适配缩放」的定义（把整页装进可视区）＋ 滚动容器语义：内容不得被裁到不可达的位置（形式化推论，非新增业务规则）
+  evidence:      spec/evidence/junit-e2e.xml
+```
+```
 EVD-QLT-001
   clause:        SPEC-QLT-001
   acceptance:    AC-QLT-001
@@ -421,22 +479,67 @@ EVD-QLT-009
   case:          spec/verify/quality-engine.test.ts::autofix-restores-bounds
   result:        该用例通过（autofix-restores-bounds）
   oracle_tier:   authoritative
-  oracle_source: docs/backend-features.md §E LAY-05（内容区 100px 边距、底部 1020px）＋ §I QLT-06（几何钳制回安全区）
+  oracle_source: docs/backend-features.md §E LAY-05（内容区 100px 边距、底部 1020px）＋ §I QLT-06（几何钳制回安全区）＋ docs/architecture.md §12 ADR-014（越界判据取画布边界，母版元素不得被挪动）
   evidence:      spec/evidence/junit.xml
 ```
 ```
-EVD-QLT-010
+EVD-QLT-011
   clause:        SPEC-QLT-009
-  acceptance:    AC-QLT-010
+  acceptance:    AC-QLT-011
   verdict:       PASS
   spec_version:  1.0
   input_data:    docs/backend-features.md §I 质量评估（QLT）· QLT-06 —— 几何钳制回安全区、ID 重排、补齐缺失元素；修复后复评…
   environment:   bun 1.3.11 / darwin / 无外部服务调用（数据库为进程内 PGlite，AI 端点为本地确定性降级）
   command:       bun test ./spec/verify/quality-engine.test.ts
+  case:          spec/verify/quality-engine.test.ts::autofix-leaves-master-elements-alone
+  result:        该用例通过（autofix-leaves-master-elements-alone）
+  oracle_tier:   authoritative
+  oracle_source: docs/architecture.md §12 ADR-014 —— 母版元素贴着画布边缘是版式设计，修复不得挪动它们
+  evidence:      spec/evidence/junit.xml
+```
+```
+EVD-QLT-010
+  clause:        SPEC-QLT-010
+  acceptance:    AC-QLT-010
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/architecture.md §12 ADR-012 —— **决策**：`@ppt/core` 生成的所有元素 ID 形如 `{role}_{slideI…
+  environment:   bun 1.3.11 / darwin / 无外部服务调用（数据库为进程内 PGlite，AI 端点为本地确定性降级）
+  command:       bun test ./spec/verify/quality-engine.test.ts
   case:          spec/verify/quality-engine.test.ts::autofix-restores-id-uniqueness
   result:        该用例通过（autofix-restores-id-uniqueness）
-  oracle_tier:   self-derived
-  oracle_source: src/engine/qualityEngine.ts 的 ID 重排规则（经 docs/backend-features.md §I QLT-06『ID 重排』追认）
+  oracle_tier:   authoritative
+  oracle_source: docs/architecture.md §12 ADR-012（ID 形如 {role}_{slideId}_{localIndex}，全局唯一是契约）＋ §12 ADR-014（重排只改后半截，前缀必须保留）
+  evidence:      spec/evidence/junit.xml
+```
+```
+EVD-QLT-012
+  clause:        SPEC-QLT-011
+  acceptance:    AC-QLT-012
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/backend-features.md §G 智能编辑 Agent（EDT）· EDT-06 —— 编辑后复评四维分；分数下降超阈值自动回滚并以更严格提示重试一次…
+  environment:   bun 1.3.11 / darwin / 无外部服务调用（数据库为进程内 PGlite，AI 端点为本地确定性降级）
+  command:       bun test ./spec/verify/quality-engine.test.ts
+  case:          spec/verify/quality-engine.test.ts::autofix-never-lowers-score
+  result:        该用例通过（autofix-never-lowers-score）
+  oracle_tier:   authoritative
+  oracle_source: docs/backend-features.md §G EDT-06 —— 分数下降即回滚；docs/architecture.md §12 ADR-014 —— 修复后复评、不更差才生效
+  evidence:      spec/evidence/junit.xml
+```
+```
+EVD-QLT-013
+  clause:        SPEC-QLT-012
+  acceptance:    AC-QLT-013
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/architecture.md §12 ADR-014 —— **决策**：诊断与修复能力必须分开声明 —— 只有真做了自动修复的规则才置 `fixable:…
+  environment:   bun 1.3.11 / darwin / 无外部服务调用（数据库为进程内 PGlite，AI 端点为本地确定性降级）
+  command:       bun test ./spec/verify/quality-engine.test.ts
+  case:          spec/verify/quality-engine.test.ts::issues-declare-fixability
+  result:        该用例通过（issues-declare-fixability）
+  oracle_tier:   authoritative
+  oracle_source: docs/architecture.md §12 ADR-014 —— 诊断与修复能力必须分开声明
   evidence:      spec/evidence/junit.xml
 ```
 ```
@@ -515,6 +618,21 @@ EVD-RND-005
   evidence:      spec/evidence/junit.xml
 ```
 ```
+EVD-RND-006
+  clause:        SPEC-RND-006
+  acceptance:    AC-RND-006
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/architecture.md §12 ADR-011 —— **决策**：`@ppt/core` 的渲染器改为原生 SVG 文本排版（`<text>` + …
+  environment:   bun 1.3.11 / darwin / 无外部服务调用（数据库为进程内 PGlite，AI 端点为本地确定性降级）
+  command:       bun test ./spec/verify/render-svg.test.ts
+  case:          spec/verify/render-svg.test.ts::long-text-is-truncated-with-ellipsis
+  result:        该用例通过（long-text-is-truncated-with-ellipsis）
+  oracle_tier:   authoritative
+  oracle_source: docs/architecture.md §12 ADR-011 —— 换行与截断由渲染层自研；docs/backend-design.md §A —— 需自研文本换行与截断
+  evidence:      spec/evidence/junit.xml
+```
+```
 EVD-EXP-001
   clause:        SPEC-EXP-001
   acceptance:    AC-EXP-001
@@ -572,6 +690,36 @@ EVD-EXP-004
   result:        该用例通过（export-filename-sanitized）
   oracle_tier:   authoritative
   oracle_source: docs/backend-features.md §J EXP-13 —— 名称清洗（去非法字符）
+  evidence:      spec/evidence/junit.xml
+```
+```
+EVD-EXP-005
+  clause:        SPEC-EXP-005
+  acceptance:    AC-EXP-005
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/backend-features.md §C 项目管理（PRJ）· PRJ-07 —— | PRJ-07 | 导入 Slide IR JSON | P0 | S1 | 校验 `slid…
+  environment:   bun 1.3.11 / darwin / 无外部服务调用（数据库为进程内 PGlite，AI 端点为本地确定性降级）
+  command:       bun test ./apps/api/tests/integration/import-bundle.test.ts
+  case:          apps/api/tests/integration/import-bundle.test.ts::exported-bundle-round-trips-with-page-order-intact
+  result:        该用例通过（exported-bundle-round-trips-with-page-order-intact）
+  oracle_tier:   authoritative
+  oracle_source: docs/backend-features.md §C PRJ-07 —— 校验 slides/name 字段合法性；非法文件返回明确错误而非崩溃（并见 docs/test-cases.md TC-CONTRACT-034~036、TC-EXP-023）
+  evidence:      spec/evidence/junit.xml
+```
+```
+EVD-EXP-006
+  clause:        SPEC-EXP-005
+  acceptance:    AC-EXP-006
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/backend-features.md §C 项目管理（PRJ）· PRJ-07 —— | PRJ-07 | 导入 Slide IR JSON | P0 | S1 | 校验 `slid…
+  environment:   bun 1.3.11 / darwin / 无外部服务调用（数据库为进程内 PGlite，AI 端点为本地确定性降级）
+  command:       bun test ./apps/api/tests/integration/import-bundle.test.ts
+  case:          apps/api/tests/integration/import-bundle.test.ts::duplicate-order-index-is-rejected
+  result:        该用例通过（duplicate-order-index-is-rejected）
+  oracle_tier:   authoritative
+  oracle_source: docs/backend-features.md §C PRJ-07 + docs/test-cases.md TC-CONTRACT-034~036 —— 非法文件返回明确错误（400）而非崩溃
   evidence:      spec/evidence/junit.xml
 ```
 ```
@@ -822,9 +970,9 @@ EVD-E2E-001
   spec_version:  1.0
   input_data:    docs/architecture.md §4 关键场景端到端时序（场景 A） —— 用户 │ 体验层 │ API 层 │ 编排层 │ 领域层 │ 基础设施 —— 输入需求 → PO…
   environment:   bun 1.3.11 / darwin / **无外部服务调用**（数据库为进程内 PGlite，模型端点为本地替身 —— 见 §2.6「E2E 是离线的」）
-  command:       bun test ./e2e/integration.e2e.ts
-  case:          e2e/integration.e2e.ts::1. 注册 → 服务端签发 HttpOnly 会话，前端据此进入工作台
-  result:        该用例通过（1. 注册 → 服务端签发 HttpOnly 会话，前端据此进入工作台）
+  command:       bun test ./e2e/auth.e2e.ts
+  case:          e2e/auth.e2e.ts::AC-E2E-001 注册 → 服务端签发 HttpOnly 会话，前端据此进入工作台
+  result:        该用例通过（AC-E2E-001 注册 → 服务端签发 HttpOnly 会话，前端据此进入工作台）
   oracle_tier:   authoritative
   oracle_source: docs/architecture.md §4 场景 A —— 注册后由 API 层签发会话并驱动体验层进入工作台
   evidence:      spec/evidence/junit-e2e.xml
@@ -837,9 +985,9 @@ EVD-E2E-002
   spec_version:  1.0
   input_data:    docs/architecture.md §4 关键场景端到端时序（场景 A） —— 用户 │ 体验层 │ API 层 │ 编排层 │ 领域层 │ 基础设施 —— 输入需求 → PO…
   environment:   bun 1.3.11 / darwin / **无外部服务调用**（数据库为进程内 PGlite，模型端点为本地替身 —— 见 §2.6「E2E 是离线的」）
-  command:       bun test ./e2e/integration.e2e.ts
-  case:          e2e/integration.e2e.ts::2. 新建项目 → 服务端库里真的有这条项目
-  result:        该用例通过（2. 新建项目 → 服务端库里真的有这条项目）
+  command:       bun test ./e2e/projects.e2e.ts
+  case:          e2e/projects.e2e.ts::AC-E2E-002 新建项目 → 服务端库里真的有这条项目，且归属当前用户
+  result:        该用例通过（AC-E2E-002 新建项目 → 服务端库里真的有这条项目，且归属当前用户）
   oracle_tier:   authoritative
   oracle_source: docs/architecture.md §4 场景 A —— 体验层发起的写操作最终持久化到 PG
   evidence:      spec/evidence/junit-e2e.xml
@@ -852,9 +1000,9 @@ EVD-E2E-003
   spec_version:  1.0
   input_data:    docs/architecture.md §4 关键场景端到端时序（场景 A） —— 产出 outline + SlideContent → ↓ Zod校验 → ↓ bindCont…
   environment:   bun 1.3.11 / darwin / **无外部服务调用**（数据库为进程内 PGlite，模型端点为本地替身 —— 见 §2.6「E2E 是离线的」）
-  command:       bun test ./e2e/integration.e2e.ts
-  case:          e2e/integration.e2e.ts::3. 生成大纲 → 服务端按主题动态生成（不是写死的固定文案）
-  result:        该用例通过（3. 生成大纲 → 服务端按主题动态生成（不是写死的固定文案））
+  command:       bun test ./e2e/workbench.e2e.ts
+  case:          e2e/workbench.e2e.ts::AC-E2E-003 生成大纲 → 页数、主题、服务端与 UI 一致
+  result:        该用例通过（AC-E2E-003 生成大纲 → 页数、主题、服务端与 UI 一致）
   oracle_tier:   authoritative
   oracle_source: docs/architecture.md §4 场景 A 与 §7.3 —— 降级链触发时产出确定性内容（按 topic 动态生成，不再是写死的 Agent 架构大纲）
   evidence:      spec/evidence/junit-e2e.xml
@@ -867,9 +1015,9 @@ EVD-E2E-004
   spec_version:  1.0
   input_data:    docs/architecture.md §4 关键场景端到端时序（场景 A） —— 产出 outline + SlideContent → ↓ Zod校验 → ↓ bindCont…
   environment:   bun 1.3.11 / darwin / **无外部服务调用**（数据库为进程内 PGlite，模型端点为本地替身 —— 见 §2.6「E2E 是离线的」）
-  command:       bun test ./e2e/integration.e2e.ts
-  case:          e2e/integration.e2e.ts::3b. 编辑大纲标题 → 服务端存的是前端改的那份
-  result:        该用例通过（3b. 编辑大纲标题 → 服务端存的是前端改的那份）
+  command:       bun test ./e2e/workbench.e2e.ts
+  case:          e2e/workbench.e2e.ts::AC-E2E-004 改大纲标题 → 服务端存新标题，UI 也显示新标题
+  result:        该用例通过（AC-E2E-004 改大纲标题 → 服务端存新标题，UI 也显示新标题）
   oracle_tier:   authoritative
   oracle_source: docs/architecture.md §4 场景 A —— 体验层的编辑必须持久化到服务端
   evidence:      spec/evidence/junit-e2e.xml
@@ -882,9 +1030,9 @@ EVD-E2E-005
   spec_version:  1.0
   input_data:    docs/architecture.md §4 关键场景端到端时序（场景 A） —— 产出 outline + SlideContent → ↓ Zod校验 → ↓ bindCont…
   environment:   bun 1.3.11 / darwin / **无外部服务调用**（数据库为进程内 PGlite，模型端点为本地替身 —— 见 §2.6「E2E 是离线的」）
-  command:       bun test ./e2e/integration.e2e.ts
-  case:          e2e/integration.e2e.ts::4. 编译 → 工作台渲染的是服务端生成的 Slide IR
-  result:        该用例通过（4. 编译 → 工作台渲染的是服务端生成的 Slide IR）
+  command:       bun test ./e2e/workbench.e2e.ts
+  case:          e2e/workbench.e2e.ts::AC-E2E-005 确认大纲并编译 → 画布渲染的正是服务端那份 IR
+  result:        该用例通过（AC-E2E-005 确认大纲并编译 → 画布渲染的正是服务端那份 IR）
   oracle_tier:   authoritative
   oracle_source: docs/architecture.md §4 场景 A —— 编译后由服务端返回 SlideIR 并持久化
   evidence:      spec/evidence/junit-e2e.xml
@@ -897,9 +1045,9 @@ EVD-E2E-006
   spec_version:  1.0
   input_data:    docs/backend-design.md §5.3 统一响应与错误规范 —— **乐观并发**：所有 `PATCH /slides/:slideId` 必须携带 `baseV…
   environment:   bun 1.3.11 / darwin / **无外部服务调用**（数据库为进程内 PGlite，模型端点为本地替身 —— 见 §2.6「E2E 是离线的」）
-  command:       bun test ./e2e/integration.e2e.ts
-  case:          e2e/integration.e2e.ts::5. 编辑文本 → 防抖同步写回服务端（乐观锁生成新版本）
-  result:        该用例通过（5. 编辑文本 → 防抖同步写回服务端（乐观锁生成新版本））
+  command:       bun test ./e2e/workbench.e2e.ts
+  case:          e2e/workbench.e2e.ts::AC-E2E-006 就地改文本 → 防抖写回服务端，并产生新版本号
+  result:        该用例通过（AC-E2E-006 就地改文本 → 防抖写回服务端，并产生新版本号）
   oracle_tier:   authoritative
   oracle_source: docs/backend-design.md §5.3 —— 写操作必须携带 baseVersionId 并生成新版本
   evidence:      spec/evidence/junit-e2e.xml
@@ -912,9 +1060,9 @@ EVD-E2E-007
   spec_version:  1.0
   input_data:    docs/backend-design.md §5.3 统一响应与错误规范 —— **乐观并发**：所有 `PATCH /slides/:slideId` 必须携带 `baseV…
   environment:   bun 1.3.11 / darwin / **无外部服务调用**（数据库为进程内 PGlite，模型端点为本地替身 —— 见 §2.6「E2E 是离线的」）
-  command:       bun test ./e2e/integration.e2e.ts
-  case:          e2e/integration.e2e.ts::6. 陈旧 baseVersionId → 409 冲突，且不覆盖服务端内容
-  result:        该用例通过（6. 陈旧 baseVersionId → 409 冲突，且不覆盖服务端内容）
+  command:       bun test ./e2e/workbench.e2e.ts
+  case:          e2e/workbench.e2e.ts::AC-E2E-007 两个会话改同一页 → 后者收到 409，前端提示且没覆盖服务端
+  result:        该用例通过（AC-E2E-007 两个会话改同一页 → 后者收到 409，前端提示且没覆盖服务端）
   oracle_tier:   authoritative
   oracle_source: docs/backend-design.md §5.3 —— 不匹配则返回 409 SLIDE_VERSION_CONFLICT
   evidence:      spec/evidence/junit-e2e.xml
@@ -927,9 +1075,9 @@ EVD-E2E-008
   spec_version:  1.0
   input_data:    docs/architecture.md §4 关键场景端到端时序（场景 B：AI 改页） —— ### 场景 B：AI 改页（增量编辑）…
   environment:   bun 1.3.11 / darwin / **无外部服务调用**（数据库为进程内 PGlite，模型端点为本地替身 —— 见 §2.6「E2E 是离线的」）
-  command:       bun test ./e2e/integration.e2e.ts
-  case:          e2e/integration.e2e.ts::7. AI 编辑 → 服务端施加 IRPatch，前端采纳服务端返回的 IR
-  result:        该用例通过（7. AI 编辑 → 服务端施加 IRPatch，前端采纳服务端返回的 IR）
+  command:       bun test ./e2e/workbench.e2e.ts
+  case:          e2e/workbench.e2e.ts::AC-E2E-008 AI 编辑 → 服务端施加补丁，画布跟着重绘
+  result:        该用例通过（AC-E2E-008 AI 编辑 → 服务端施加补丁，画布跟着重绘）
   oracle_tier:   authoritative
   oracle_source: docs/architecture.md §4 场景 B —— AI 改页由服务端施加增量补丁后返回新 IR
   evidence:      spec/evidence/junit-e2e.xml
@@ -942,9 +1090,9 @@ EVD-E2E-009
   spec_version:  1.0
   input_data:    docs/architecture.md §4 关键场景端到端时序（场景 C：导出） —— ### 场景 C：导出（服务端管线）…
   environment:   bun 1.3.11 / darwin / **无外部服务调用**（数据库为进程内 PGlite，模型端点为本地替身 —— 见 §2.6「E2E 是离线的」）
-  command:       bun test ./e2e/integration.e2e.ts
-  case:          e2e/integration.e2e.ts::8. 导出 → 服务端任务产出真实 PPTX 产物
-  result:        该用例通过（8. 导出 → 服务端任务产出真实 PPTX 产物）
+  command:       bun test ./e2e/exports.e2e.ts
+  case:          e2e/exports.e2e.ts::AC-E2E-009 PPTX 导出 → 产物是真正的 OOXML，而且里面是这份文稿
+  result:        该用例通过（AC-E2E-009 PPTX 导出 → 产物是真正的 OOXML，而且里面是这份文稿）
   oracle_tier:   authoritative
   oracle_source: docs/architecture.md §4 场景 C —— 导出走服务端管线产出真实产物
   evidence:      spec/evidence/junit-e2e.xml
@@ -957,11 +1105,41 @@ EVD-E2E-010
   spec_version:  1.0
   input_data:    docs/architecture.md §4 关键场景端到端时序（场景 C：导出） —— ### 场景 C：导出（服务端管线）…
   environment:   bun 1.3.11 / darwin / **无外部服务调用**（数据库为进程内 PGlite，模型端点为本地替身 —— 见 §2.6「E2E 是离线的」）
-  command:       bun test ./e2e/integration.e2e.ts
-  case:          e2e/integration.e2e.ts::11. 导出 PDF → 产物是真正的 PDF（%PDF 魔数）
-  result:        该用例通过（11. 导出 PDF → 产物是真正的 PDF（%PDF 魔数））
+  command:       bun test ./e2e/exports.e2e.ts
+  case:          e2e/exports.e2e.ts::AC-E2E-010 PDF 导出 → 产物是真正的 PDF（%PDF 魔数）
+  result:        该用例通过（AC-E2E-010 PDF 导出 → 产物是真正的 PDF（%PDF 魔数））
   oracle_tier:   authoritative
   oracle_source: docs/architecture.md §4 场景 C —— 导出走服务端管线产出真实产物
+  evidence:      spec/evidence/junit-e2e.xml
+```
+```
+EVD-E2E-023
+  clause:        SPEC-E2E-005
+  acceptance:    AC-E2E-023
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/architecture.md §4 关键场景端到端时序（场景 C：导出） —— ### 场景 C：导出（服务端管线）…
+  environment:   bun 1.3.11 / darwin / **无外部服务调用**（数据库为进程内 PGlite，模型端点为本地替身 —— 见 §2.6「E2E 是离线的」）
+  command:       bun test ./e2e/navigation.e2e.ts
+  case:          e2e/navigation.e2e.ts::AC-E2E-023 PNG/SVG 导出 → scope 只含当前页
+  result:        该用例通过（AC-E2E-023 PNG/SVG 导出 → scope 只含当前页）
+  oracle_tier:   authoritative
+  oracle_source: docs/backend-design.md §5.2 API 路由表 —— 导出任务以 scope 决定范围；scope 必须由当前页推导
+  evidence:      spec/evidence/junit-e2e.xml
+```
+```
+EVD-E2E-024
+  clause:        SPEC-E2E-005
+  acceptance:    AC-E2E-024
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/architecture.md §4 关键场景端到端时序（场景 C：导出） —— ### 场景 C：导出（服务端管线）…
+  environment:   bun 1.3.11 / darwin / **无外部服务调用**（数据库为进程内 PGlite，模型端点为本地替身 —— 见 §2.6「E2E 是离线的」）
+  command:       bun test ./e2e/navigation.e2e.ts
+  case:          e2e/navigation.e2e.ts::AC-E2E-024 导出弹窗的 PNG 说明 → 页码跟着当前页走
+  result:        该用例通过（AC-E2E-024 导出弹窗的 PNG 说明 → 页码跟着当前页走）
+  oracle_tier:   authoritative
+  oracle_source: docs/backend-design.md §5.2 API 路由表 —— 导出范围由当前页推导，界面文案必须如实回显当前页码
   evidence:      spec/evidence/junit-e2e.xml
 ```
 ```
@@ -972,9 +1150,9 @@ EVD-E2E-011
   spec_version:  1.0
   input_data:    docs/backend-features.md N. 安全（SEC） —— | SEC-08 | ID 枚举防护 | P1 | S1 | 越权访问统一返回 404（不泄露"…
   environment:   bun 1.3.11 / darwin / **无外部服务调用**（数据库为进程内 PGlite，模型端点为本地替身 —— 见 §2.6「E2E 是离线的」）
-  command:       bun test ./e2e/integration.e2e.ts
-  case:          e2e/integration.e2e.ts::9. 跨租户隔离 → 别人的项目拿不到（404 而不是 403）
-  result:        该用例通过（9. 跨租户隔离 → 别人的项目拿不到（404 而不是 403））
+  command:       bun test ./e2e/projects.e2e.ts
+  case:          e2e/projects.e2e.ts::AC-E2E-011 跨租户隔离 → 别人的项目拿不到（404 而不是 403）
+  result:        该用例通过（AC-E2E-011 跨租户隔离 → 别人的项目拿不到（404 而不是 403））
   oracle_tier:   authoritative
   oracle_source: docs/backend-features.md SEC-08 —— 越权访问统一返回 404（不泄露"存在但无权"）
   evidence:      spec/evidence/junit-e2e.xml
@@ -987,9 +1165,9 @@ EVD-E2E-012
   spec_version:  1.0
   input_data:    docs/architecture.md §5.2 实体关系 —— ├──< projects ──┬──< slides ──< slide_versions…
   environment:   bun 1.3.11 / darwin / **无外部服务调用**（数据库为进程内 PGlite，模型端点为本地替身 —— 见 §2.6「E2E 是离线的」）
-  command:       bun test ./e2e/integration.e2e.ts
-  case:          e2e/integration.e2e.ts::10. 重命名项目 → 服务端存的是新名字
-  result:        该用例通过（10. 重命名项目 → 服务端存的是新名字）
+  command:       bun test ./e2e/projects.e2e.ts
+  case:          e2e/projects.e2e.ts::AC-E2E-012 重命名项目 → 服务端存的是新名字
+  result:        该用例通过（AC-E2E-012 重命名项目 → 服务端存的是新名字）
   oracle_tier:   authoritative
   oracle_source: docs/architecture.md §5.2 —— 项目实体的写操作最终持久化到服务端
   evidence:      spec/evidence/junit-e2e.xml
@@ -1002,11 +1180,161 @@ EVD-E2E-013
   spec_version:  1.0
   input_data:    docs/architecture.md §5.2 实体关系 —— ├──< projects ──┬──< slides ──< slide_versions…
   environment:   bun 1.3.11 / darwin / **无外部服务调用**（数据库为进程内 PGlite，模型端点为本地替身 —— 见 §2.6「E2E 是离线的」）
-  command:       bun test ./e2e/integration.e2e.ts
-  case:          e2e/integration.e2e.ts::12. 删除项目 → 服务端真的删掉了（且列表里也没有）
-  result:        该用例通过（12. 删除项目 → 服务端真的删掉了（且列表里也没有））
+  command:       bun test ./e2e/projects.e2e.ts
+  case:          e2e/projects.e2e.ts::AC-E2E-013 删除项目 → 服务端真的删掉了（且列表里也没有）
+  result:        该用例通过（AC-E2E-013 删除项目 → 服务端真的删掉了（且列表里也没有））
   oracle_tier:   authoritative
   oracle_source: docs/architecture.md §5.2 —— 删除是软删除（deleted_at），所有读路径都必须过滤
+  evidence:      spec/evidence/junit-e2e.xml
+```
+```
+EVD-E2E-014
+  clause:        SPEC-E2E-008
+  acceptance:    AC-E2E-014
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/backend-design.md §API 路由表 —— POST   /api/templates/:id/apply     应用模板并重映射元素样式…
+  environment:   bun 1.3.11 / darwin / **无外部服务调用**（数据库为进程内 PGlite，模型端点为本地替身 —— 见 §2.6「E2E 是离线的」）
+  command:       bun test ./e2e/templates.e2e.ts
+  case:          e2e/templates.e2e.ts::应用模板 → 服务端存的是新模板，刷新后仍然是它
+  result:        该用例通过（应用模板 → 服务端存的是新模板，刷新后仍然是它）
+  oracle_tier:   authoritative
+  oracle_source: docs/backend-design.md §API 路由表 + docs/backend-features.md TPL-03「模板应用 + 元素样式重映射 …… 服务端权威执行」
+  evidence:      spec/evidence/junit-e2e.xml
+```
+```
+EVD-E2E-020
+  clause:        SPEC-E2E-008
+  acceptance:    AC-E2E-020
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/backend-design.md §API 路由表 —— POST   /api/templates/:id/apply     应用模板并重映射元素样式…
+  environment:   bun 1.3.11 / darwin / **无外部服务调用**（数据库为进程内 PGlite，模型端点为本地替身 —— 见 §2.6「E2E 是离线的」）
+  command:       bun test ./e2e/templates.e2e.ts
+  case:          e2e/templates.e2e.ts::应用不存在的模板 → 界面如实报错，服务端模板不被改动
+  result:        该用例通过（应用不存在的模板 → 界面如实报错，服务端模板不被改动）
+  oracle_tier:   authoritative
+  oracle_source: docs/backend-design.md §5.3「服务端返回错误信封时，前端必须把这次操作显示为失败并说明原因；绝不能显示成成功」+ 同节错误码枚举中的 NOT_FOUND（不存在的资源按 404 处理 —— 由该节『项目不存在』示例推广到模板）+ docs/backend-features.md TPL-03「服务端权威执行」
+  evidence:      spec/evidence/junit-e2e.xml
+```
+```
+EVD-E2E-015
+  clause:        SPEC-E2E-009
+  acceptance:    AC-E2E-015
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/backend-design.md §17 附录：现状 → 目标 一览 —— | 质量检查 | 纯前端计算 | 服务端权威 + 生成后自动闸门 |…
+  environment:   bun 1.3.11 / darwin / **无外部服务调用**（数据库为进程内 PGlite，模型端点为本地替身 —— 见 §2.6「E2E 是离线的」）
+  command:       bun test ./e2e/quality.e2e.ts
+  case:          e2e/quality.e2e.ts::质量报告 → 界面分数与服务端权威评分逐项对得上
+  result:        该用例通过（质量报告 → 界面分数与服务端权威评分逐项对得上）
+  oracle_tier:   authoritative
+  oracle_source: docs/backend-design.md §17 —— 质量检查由「纯前端计算」改为「服务端权威」
+  evidence:      spec/evidence/junit-e2e.xml
+```
+```
+EVD-E2E-016
+  clause:        SPEC-E2E-009
+  acceptance:    AC-E2E-016
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/backend-design.md §17 附录：现状 → 目标 一览 —— | 质量检查 | 纯前端计算 | 服务端权威 + 生成后自动闸门 |…
+  environment:   bun 1.3.11 / darwin / **无外部服务调用**（数据库为进程内 PGlite，模型端点为本地替身 —— 见 §2.6「E2E 是离线的」）
+  command:       bun test ./e2e/quality.e2e.ts
+  case:          e2e/quality.e2e.ts::一键修复 → 服务端的 IR 真的被改写，版本号前进
+  result:        该用例通过（一键修复 → 服务端的 IR 真的被改写，版本号前进）
+  oracle_tier:   authoritative
+  oracle_source: docs/backend-design.md §17 —— 服务端权威 + 生成后自动闸门（闸门在服务端执行，修复也必须落库）
+  evidence:      spec/evidence/junit-e2e.xml
+```
+```
+EVD-E2E-017
+  clause:        SPEC-E2E-010
+  acceptance:    AC-E2E-017
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/backend-design.md §17 附录：现状 → 目标 一览 —— | 页面生成 | 前端 `layoutEngine`，7/8 版式硬编码 | `@ppt/cor…
+  environment:   bun 1.3.11 / darwin / **无外部服务调用**（数据库为进程内 PGlite，模型端点为本地替身 —— 见 §2.6「E2E 是离线的」）
+  command:       bun test ./e2e/presentation.e2e.ts
+  case:          e2e/presentation.e2e.ts::放映画面上的文字 == 服务端 IR 里的文字
+  result:        该用例通过（放映画面上的文字 == 服务端 IR 里的文字）
+  oracle_tier:   authoritative
+  oracle_source: docs/backend-design.md §17「前后端一致」+ docs/architecture.md §4 体验层页签含「演示模式」
+  evidence:      spec/evidence/junit-e2e.xml
+```
+```
+EVD-E2E-018
+  clause:        SPEC-E2E-010
+  acceptance:    AC-E2E-018
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/backend-design.md §17 附录：现状 → 目标 一览 —— | 页面生成 | 前端 `layoutEngine`，7/8 版式硬编码 | `@ppt/cor…
+  environment:   bun 1.3.11 / darwin / **无外部服务调用**（数据库为进程内 PGlite，模型端点为本地替身 —— 见 §2.6「E2E 是离线的」）
+  command:       bun test ./e2e/presentation.e2e.ts
+  case:          e2e/presentation.e2e.ts::翻页 → 换到服务端的后一页，退回后回到第一页
+  result:        该用例通过（翻页 → 换到服务端的后一页，退回后回到第一页）
+  oracle_tier:   authoritative
+  oracle_source: docs/backend-design.md §3「Presentation Mode —— 全屏放映 + 缩略图」+ docs/architecture.md §4 体验层页签含「演示模式」
+  evidence:      spec/evidence/junit-e2e.xml
+```
+```
+EVD-E2E-025
+  clause:        SPEC-E2E-010
+  acceptance:    AC-E2E-025
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/backend-design.md §17 附录：现状 → 目标 一览 —— | 页面生成 | 前端 `layoutEngine`，7/8 版式硬编码 | `@ppt/cor…
+  environment:   bun 1.3.11 / darwin / **无外部服务调用**（数据库为进程内 PGlite，模型端点为本地替身 —— 见 §2.6「E2E 是离线的」）
+  command:       bun test ./e2e/navigation.e2e.ts
+  case:          e2e/navigation.e2e.ts::AC-E2E-025 工作台第 2 页点放映 → 从第 2 页开始
+  result:        该用例通过（AC-E2E-025 工作台第 2 页点放映 → 从第 2 页开始）
+  oracle_tier:   authoritative
+  oracle_source: docs/backend-design.md §3「Presentation Mode —— 全屏放映 + 缩略图」—— 放映的起点是当前页，不是恒定的第一页
+  evidence:      spec/evidence/junit-e2e.xml
+```
+```
+EVD-E2E-019
+  clause:        SPEC-E2E-011
+  acceptance:    AC-E2E-019
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/backend-design.md §5.3 统一响应与错误规范 —— 统一响应信封：成功 `{ data, traceId }`，失败 `{ error: { cod…
+  environment:   bun 1.3.11 / darwin / **无外部服务调用**（数据库为进程内 PGlite，模型端点为本地替身 —— 见 §2.6「E2E 是离线的」）
+  command:       bun test ./e2e/errors.e2e.ts
+  case:          e2e/errors.e2e.ts::导出提交失败 → 界面显示"导出失败"，绝不显示"导出成功"
+  result:        该用例通过（导出提交失败 → 界面显示"导出失败"，绝不显示"导出成功"）
+  oracle_tier:   formal
+  oracle_source: 由 SPEC-API-001 推导 —— 统一信封在协议层把成功与失败区分开（形式化约束）；推导依据见本条的 inference
+  evidence:      spec/evidence/junit-e2e.xml
+```
+```
+EVD-E2E-021
+  clause:        SPEC-E2E-012
+  acceptance:    AC-E2E-021
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/backend-features.md §N 字体与渲染 TPL-12 / EXP-12 —— | TPL-12 | 字体资源托管 | P0 | S3 | Manrope / Plus Jak…
+  environment:   bun 1.3.11 / darwin / **无外部服务调用**（数据库为进程内 PGlite，模型端点为本地替身 —— 见 §2.6「E2E 是离线的」）
+  command:       bun test ./e2e/offline.e2e.ts
+  case:          e2e/offline.e2e.ts::应用 HTML → 没有会阻塞渲染的外部样式表
+  result:        该用例通过（应用 HTML → 没有会阻塞渲染的外部样式表）
+  oracle_tier:   formal
+  oracle_source: HTML 平台的形式化约束 —— 浏览器只把「匹配当前媒体类型」的样式表算作渲染阻塞（docs/test-cases.md TC-EXP-001b 同源：服务端 SVG 产物不得含 fonts.googleapis.com 远程引用，ADR-009 vendored fonts）
+  evidence:      spec/evidence/junit-e2e.xml
+```
+```
+EVD-E2E-022
+  clause:        SPEC-E2E-012
+  acceptance:    AC-E2E-022
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/backend-features.md §N 字体与渲染 TPL-12 / EXP-12 —— | TPL-12 | 字体资源托管 | P0 | S3 | Manrope / Plus Jak…
+  environment:   bun 1.3.11 / darwin / **无外部服务调用**（数据库为进程内 PGlite，模型端点为本地替身 —— 见 §2.6「E2E 是离线的」）
+  command:       bun test ./e2e/offline.e2e.ts
+  case:          e2e/offline.e2e.ts::外部资源被挂起 → 外壳仍在 8 秒内渲染出来
+  result:        该用例通过（外部资源被挂起 → 外壳仍在 8 秒内渲染出来）
+  oracle_tier:   formal
+  oracle_source: 浏览器平台的形式化行为（脚本执行被渲染阻塞样式表挡住 ⇒ 应用不挂载）＋ 观测判据（外壳是否出现）；**8 秒是工程阈值**（低于外部挂起窗口 20s、低于 page.goto 默认 30s），文档没有给这个数值 —— 它只保证「回归时会快速失败而不是挂死」
   evidence:      spec/evidence/junit-e2e.xml
 ```
 ```
@@ -1087,11 +1415,15 @@ EVD-GOV-002
 
 ### 2.4 注入错误检查（验证器的元验证）
 
-共 69 个注入用例，**不合格 0 个**。每个用例走「基线 PASS → 注入必须 FAIL → 还原后重新 PASS」三步。
+共 88 个注入用例，**不合格 0 个**。每个用例走「基线 PASS → 注入必须 FAIL → 还原后重新 PASS」三步。
 
 | 判据 | 注入的错误 | 改动的文件 | 检出者 | 基线 | 检出 | 还原 |
 |---|---|---|---|---|---|---|
 | AC-CORE-001 | 把画布尺寸改成 1600×900 | `packages/core/src/engine/layoutEngine.ts` | `spec/verify/core-layout.test.ts::canvas-is-always-1920x1080` | ✅ | ✅ | ✅ |
+| AC-CORE-011 | 画布宽度改成跟着容器走（width: 100%）—— 屏幕上再次变成竖条、出现信箱边 | `src/components/Workbench.tsx` | `e2e/workbench.e2e.ts::AC-CORE-011 工作台画布在屏幕上保持 16:9，不出现信箱边` | ✅ | ✅ | ✅ |
+| AC-CORE-012 | 水平方向把 safe center 改回普通 center —— 溢出的一半被推到不可达的左侧 | `src/components/Workbench.tsx` | `e2e/workbench.e2e.ts::AC-CORE-012 画布放大超出可视区后，左右上下都滚得到，不被裁掉` | ✅ | ✅ | ✅ |
+| AC-CORE-012 | 垂直方向把 safe center 改回普通 center —— 溢出的一半被推到不可达的顶部 | `src/components/Workbench.tsx` | `e2e/workbench.e2e.ts::AC-CORE-012 画布放大超出可视区后，左右上下都滚得到，不被裁掉` | ✅ | ✅ | ✅ |
+| AC-CORE-013 | 不再观察容器尺寸变化 —— 缩放档位停在旧值上，画布不再适配新的可视区 | `src/components/Workbench.tsx` | `e2e/workbench.e2e.ts::AC-CORE-013 容器尺寸变化后缩放档位自动重新适配，画布不被裁掉` | ✅ | ✅ | ✅ |
 | AC-CORE-002 | 让页码元素横向越出画布 | `packages/core/src/engine/layoutEngine.ts` | `spec/verify/core-layout.test.ts::no-element-out-of-canvas` | ✅ | ✅ | ✅ |
 | AC-CORE-003 | 卡片元素 ID 不带 slideId —— 同版式的两页会撞 ID | `packages/core/src/engine/layoutEngine.ts` | `spec/verify/core-layout.test.ts::element-ids-unique-across-slides` | ✅ | ✅ | ✅ |
 | AC-CORE-004 | 卡片元素 ID 不再携带 slideId | `packages/core/src/engine/layoutEngine.ts` | `spec/verify/core-layout.test.ts::layout-element-ids-contain-slide-id` | ✅ | ✅ | ✅ |
@@ -1124,7 +1456,11 @@ EVD-GOV-002
 | AC-EXP-004 | 文件名不再剥离空白与非法字符 | `packages/core/src/engine/exportEngine.ts` | `spec/verify/export-pptx.test.ts::export-filename-sanitized` | ✅ | ✅ | ✅ |
 | AC-EXP-004 | SVG 文件名丢掉扩展名 | `packages/core/src/engine/exportEngine.ts` | `spec/verify/export-pptx.test.ts::export-filename-sanitized` | ✅ | ✅ | ✅ |
 | AC-EXP-004 | JSON 文件名丢掉扩展名 | `packages/core/src/engine/exportEngine.ts` | `spec/verify/export-pptx.test.ts::export-filename-sanitized` | ✅ | ✅ | ✅ |
-| AC-QLT-009 | 自动修复不再收窄超宽元素（修复后仍然越界） | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::autofix-restores-bounds` | ✅ | ✅ | ✅ |
+| AC-EXP-005 | 导入时把页序整体倒过来 —— 导出去能再导回来，但回来的页序是反的 | `apps/api/src/services/projectService.ts` | `apps/api/tests/integration/import-bundle.test.ts::exported-bundle-round-trips-with-page-order-intact` | ✅ | ✅ | ✅ |
+| AC-EXP-006 | orderIndex 的下界校验被拆掉 —— 0 / 负数能落库，违反内核契约 order >= 1 | `apps/api/src/routes/projects.ts` | `apps/api/tests/integration/import-bundle.test.ts::zero-order-index-is-rejected` | ✅ | ✅ | ✅ |
+| AC-EXP-006 | orderIndex 唯一性校验被拆掉 —— 排序键重复，页序静默随机化 | `apps/api/src/routes/projects.ts` | `apps/api/tests/integration/import-bundle.test.ts::duplicate-order-index-is-rejected` | ✅ | ✅ | ✅ |
+| AC-EXP-006 | slides 字段不再必填 —— 缺 slides 的文件被当成空项目导进去 | `apps/api/src/routes/projects.ts` | `apps/api/tests/integration/import-bundle.test.ts::missing-slides-field-is-rejected` | ✅ | ✅ | ✅ |
+| AC-QLT-009 | 自动修复不再把越出画布的元素挪回安全区（修复后仍然越界） | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::autofix-restores-bounds` | ✅ | ✅ | ✅ |
 | AC-API-001 | 成功响应不再带 traceId | `apps/api/src/errors.ts` | `apps/api/tests/contract/response-envelope.test.ts::success-response-envelope` | ✅ | ✅ | ✅ |
 | AC-API-006 | 失败响应的 error 字段被换成 data | `apps/api/src/errors.ts` | `apps/api/tests/contract/response-envelope.test.ts::failure-response-envelope` | ✅ | ✅ | ✅ |
 | AC-API-007 | 错误码枚举被偷偷加了一个 INTERNAL_ERROR | `apps/api/src/errors.ts` | `apps/api/tests/contract/response-envelope.test.ts::error-codes-closed-enum` | ✅ | ✅ | ✅ |
@@ -1147,19 +1483,30 @@ EVD-GOV-002
 | AC-GOV-001 | 把覆盖率门槛从 90 抬到 99（门禁再也拦不住低覆盖率） | `scripts/check-coverage.ts` | `scripts/check-coverage.check.ts::domain-coverage-threshold` | ✅ | ✅ | ✅ |
 | AC-GOV-001 | 取消「一个领域内核文件都没采到 → 未通过」的守卫（无法判定被当成通过） | `scripts/check-coverage.ts` | `scripts/check-coverage.check.ts::domain-coverage-threshold` | ✅ | ✅ | ✅ |
 | AC-GOV-002 | 版式引擎把标题字号从 38 改成 39（实现与快照基线漂移） | `packages/core/src/engine/layoutEngine.ts` | `packages/core/tests/layoutEngine.snapshot.test.ts::golden-snapshots-all-match` | ✅ | ✅ | ✅ |
-| AC-E2E-012 | 重命名时把 name 覆盖回旧值（改名静默不生效） | `apps/api/src/services/projectService.ts` | `e2e/integration.e2e.ts（整文件）` | ✅ | ✅ | ✅ |
-| AC-E2E-013 | 删除项目时不写 deleted_at（软删除没落库） | `apps/api/src/services/projectService.ts` | `e2e/integration.e2e.ts（整文件）` | ✅ | ✅ | ✅ |
-| AC-E2E-011 | 项目查询不再带 userId 条件（浏览器链路上跨租户可读） | `apps/api/src/middleware/auth.ts` | `e2e/integration.e2e.ts（整文件）` | ✅ | ✅ | ✅ |
-| AC-E2E-001 | 会话不落库（Cookie 签发了，服务端却不认这个会话） | `apps/api/src/services/authService.ts` | `e2e/integration.e2e.ts（整文件）` | ✅ | ✅ | ✅ |
-| AC-E2E-002 | 新建项目时归属写成了别的用户（项目不落在当前用户名下） | `apps/api/src/services/projectService.ts` | `e2e/integration.e2e.ts（整文件）` | ✅ | ✅ | ✅ |
-| AC-E2E-003 | 解析主题时忽略用户输入（大纲不再随主题变化） | `apps/api/src/services/agents/topicTerms.ts` | `e2e/integration.e2e.ts（整文件）` | ✅ | ✅ | ✅ |
-| AC-E2E-004 | 项目 PATCH 忽略前端提交的大纲（编辑静默不生效） | `apps/api/src/routes/projects.ts` | `e2e/integration.e2e.ts（整文件）` | ✅ | ✅ | ✅ |
-| AC-E2E-005 | 工作台画布的标题被写死（界面渲染的不是服务端返回的 IR） | `src/components/Workbench.tsx` | `e2e/integration.e2e.ts（整文件）` | ✅ | ✅ | ✅ |
-| AC-E2E-006 | 写回时不生成新版本号（乐观锁失效） | `apps/api/src/services/slideService.ts` | `e2e/integration.e2e.ts（整文件）` | ✅ | ✅ | ✅ |
-| AC-E2E-007 | 乐观锁守卫被拆掉（前置检查 + SQL 条件同时失效） | `apps/api/src/services/slideService.ts` | `e2e/integration.e2e.ts（整文件）` | ✅ | ✅ | ✅ |
-| AC-E2E-008 | IRPatch 施加时被丢弃（服务端没改内容） | `apps/api/src/services/slideService.ts` | `e2e/integration.e2e.ts（整文件）` | ✅ | ✅ | ✅ |
-| AC-E2E-009 | PPTX 产物被替换成假字节（不是真的 PPTX） | `apps/api/src/services/exportService.ts` | `e2e/integration.e2e.ts（整文件）` | ✅ | ✅ | ✅ |
-| AC-E2E-010 | PDF 产物被替换成假字节（不是真的 PDF） | `apps/api/src/services/exportService.ts` | `e2e/integration.e2e.ts（整文件）` | ✅ | ✅ | ✅ |
+| AC-E2E-012 | 重命名时把 name 覆盖回旧值（改名静默不生效） | `apps/api/src/services/projectService.ts` | `e2e/projects.e2e.ts::AC-E2E-012 重命名项目 → 服务端存的是新名字` | ✅ | ✅ | ✅ |
+| AC-E2E-013 | 删除项目时不写 deleted_at（软删除没落库） | `apps/api/src/services/projectService.ts` | `e2e/projects.e2e.ts::AC-E2E-013 删除项目 → 服务端真的删掉了（且列表里也没有）` | ✅ | ✅ | ✅ |
+| AC-E2E-011 | 项目查询不再带 userId 条件（浏览器链路上跨租户可读） | `apps/api/src/middleware/auth.ts` | `e2e/projects.e2e.ts::AC-E2E-011 跨租户隔离 → 别人的项目拿不到（404 而不是 403）` | ✅ | ✅ | ✅ |
+| AC-E2E-001 | 会话不落库（Cookie 签发了，服务端却不认这个会话） | `apps/api/src/services/authService.ts` | `e2e/auth.e2e.ts::AC-E2E-001 注册 → 服务端签发 HttpOnly 会话，前端据此进入工作台` | ✅ | ✅ | ✅ |
+| AC-E2E-002 | 新建项目时归属写成了别的用户（项目不落在当前用户名下） | `apps/api/src/services/projectService.ts` | `e2e/projects.e2e.ts::AC-E2E-002 新建项目 → 服务端库里真的有这条项目，且归属当前用户` | ✅ | ✅ | ✅ |
+| AC-E2E-003 | 解析主题时忽略用户输入（大纲不再随主题变化） | `apps/api/src/services/agents/topicTerms.ts` | `e2e/workbench.e2e.ts::AC-E2E-003 生成大纲 → 页数、主题、服务端与 UI 一致` | ✅ | ✅ | ✅ |
+| AC-E2E-004 | 项目 PATCH 忽略前端提交的大纲（编辑静默不生效） | `apps/api/src/routes/projects.ts` | `e2e/workbench.e2e.ts::AC-E2E-004 改大纲标题 → 服务端存新标题，UI 也显示新标题` | ✅ | ✅ | ✅ |
+| AC-E2E-005 | 工作台画布的标题被写死（界面渲染的不是服务端返回的 IR） | `src/components/Workbench.tsx` | `e2e/workbench.e2e.ts::AC-E2E-005 确认大纲并编译 → 画布渲染的正是服务端那份 IR` | ✅ | ✅ | ✅ |
+| AC-E2E-006 | 写回时不生成新版本号（乐观锁失效） | `apps/api/src/services/slideService.ts` | `e2e/workbench.e2e.ts::AC-E2E-006 就地改文本 → 防抖写回服务端，并产生新版本号` | ✅ | ✅ | ✅ |
+| AC-E2E-007 | 乐观锁守卫被拆掉（前置检查 + SQL 条件同时失效） | `apps/api/src/services/slideService.ts` | `e2e/workbench.e2e.ts::AC-E2E-007 两个会话改同一页 → 后者收到 409，前端提示且没覆盖服务端` | ✅ | ✅ | ✅ |
+| AC-E2E-008 | IRPatch 施加时被丢弃（服务端没改内容） | `apps/api/src/services/slideService.ts` | `e2e/workbench.e2e.ts::AC-E2E-008 AI 编辑 → 服务端施加补丁，画布跟着重绘` | ✅ | ✅ | ✅ |
+| AC-E2E-009 | PPTX 产物被替换成假字节（不是真的 PPTX） | `apps/api/src/services/exportService.ts` | `e2e/exports.e2e.ts::AC-E2E-009 PPTX 导出 → 产物是真正的 OOXML，而且里面是这份文稿` | ✅ | ✅ | ✅ |
+| AC-E2E-010 | PDF 产物被替换成假字节（不是真的 PDF） | `apps/api/src/services/exportService.ts` | `e2e/exports.e2e.ts::AC-E2E-010 PDF 导出 → 产物是真正的 PDF（%PDF 魔数）` | ✅ | ✅ | ✅ |
+| AC-E2E-014 | 应用模板时不写回项目（接口说成功，服务端存的还是旧模板） | `apps/api/src/routes/templates.ts` | `e2e/templates.e2e.ts::应用模板 → 服务端存的是新模板，刷新后仍然是它` | ✅ | ✅ | ✅ |
+| AC-E2E-014 | 前端应用模板时只改本地 state，不落服务端 | `src/App.tsx` | `e2e/templates.e2e.ts::应用模板 → 服务端存的是新模板，刷新后仍然是它` | ✅ | ✅ | ✅ |
+| AC-E2E-020 | 应用模板失败时前端仍然乐观换成本地模板（假成功） | `src/App.tsx` | `e2e/templates.e2e.ts::应用不存在的模板 → 界面如实报错，服务端模板不被改动` | ✅ | ✅ | ✅ |
+| AC-E2E-022 | 把外部字体样式表改回渲染阻塞（CDN 不可达时白屏） | `index.html` | `e2e/offline.e2e.ts::外部资源被挂起 → 外壳仍在 8 秒内渲染出来` | ✅ | ✅ | ✅ |
+| AC-E2E-008 | 本地降级不再校验补丁能不能画出来（IR 变了但页面没变） | `apps/api/src/services/agents/editAgent.ts` | `e2e/workbench.e2e.ts::AC-E2E-008 AI 编辑 → 服务端施加补丁，画布跟着重绘` | ✅ | ✅ | ✅ |
+| AC-E2E-015 | 服务端评估时漏装了 slides（评的是空项目，分数与界面对不上） | `apps/api/src/routes/quality.ts` | `e2e/quality.e2e.ts::质量报告 → 界面分数与服务端权威评分逐项对得上` | ✅ | ✅ | ✅ |
+| AC-E2E-016 | 防抖同步只比较文本（修复带来的 ID 与几何改动不落库） | `src/App.tsx` | `e2e/quality.e2e.ts::一键修复 → 服务端的 IR 真的被改写，版本号前进` | ✅ | ✅ | ✅ |
+| AC-E2E-017 | 放映模式只渲染背景层（正文元素没画出来） | `src/components/PresentationMode.tsx` | `e2e/presentation.e2e.ts::放映画面上的文字 == 服务端 IR 里的文字` | ✅ | ✅ | ✅ |
+| AC-E2E-018 | 翻页一次跳两页（off-by-one，翻到的不是服务端那一页） | `src/components/PresentationMode.tsx` | `e2e/presentation.e2e.ts::翻页 → 换到服务端的后一页，退回后回到第一页` | ✅ | ✅ | ✅ |
+| AC-E2E-019 | 导出提交失败被吞掉，界面改报成功（假成功） | `src/components/ExportModal.tsx` | `e2e/errors.e2e.ts::导出提交失败 → 界面显示"导出失败"，绝不显示"导出成功"` | ✅ | ✅ | ✅ |
+| AC-E2E-021 | 又加了一张渲染阻塞的外部样式表（CDN 不可达时整页白屏） | `index.html` | `e2e/offline.e2e.ts::应用 HTML → 没有会阻塞渲染的外部样式表` | ✅ | ✅ | ✅ |
 
 > 全部注入错误都被对应验证器抓到。**没有 MISSED 行** —— 上表的 PASS 因此不是自证。
 
@@ -1218,12 +1565,12 @@ EVD-GOV-002
 
 ### 生成了什么
 
-- `spec/spec.yaml` —— 49 条条款 / 64 条判据的机器可读契约
+- `spec/spec.yaml` —— 60 条条款 / 85 条判据的机器可读契约
 - `spec/spec.schema.json` —— Spec 自身的结构约束（JSON Schema 2020-12）
-- `spec/verify/*.test.ts` —— 6 个验证器文件（Spec 自检 + 领域内核 + 导出 + 质量引擎 + 渲染）
+- `spec/verify/*.test.ts` —— 11 个验证器文件（Spec 自检 + 领域内核 + 导出 + 质量引擎 + 渲染）
 - `packages/core/tests/` —— 领域内核（@ppt/core）的版式快照与补丁应用测试
 - `apps/api/tests/` —— 后端的契约 / 集成 / 安全 / AI / 混沌 / 性能测试
-- `e2e/integration.e2e.ts` —— 前后端集成（Playwright 真实浏览器 + 真实服务端），断言落在服务端状态上
+- `e2e/` —— 13 条前后端集成链（Playwright 真实浏览器 + 真实服务端），断言落在服务端状态上：`e2e/auth.e2e.ts`、`e2e/errors.e2e.ts`、`e2e/exports.e2e.ts`、`e2e/library.e2e.ts`、`e2e/navigation.e2e.ts`、`e2e/offline.e2e.ts`、`e2e/presentation.e2e.ts`、`e2e/projects.e2e.ts`、`e2e/quality.e2e.ts`、`e2e/templates.e2e.ts`、`e2e/workbench-editing.e2e.ts`、`e2e/workbench-pages.e2e.ts`、`e2e/workbench.e2e.ts`
 - `spec/verify/servers.ts` —— 为 E2E 拉起后端与前端的编排（独立端口、独立数据目录、HMR 关闭）
 - `spec/verify/model-stub-server.ts` —— 模型端点替身本体（独立进程，返回官方端点在占位 key 下的原样 400）
 - `spec/verify/model-stub.ts` —— 替身的启动器（端口经 stdout 的 `PORT=<n>` 交接）
@@ -1238,21 +1585,21 @@ EVD-GOV-002
 ### 覆盖了什么
 
 - 源文档：`docs/backend-design.md`、`docs/backend-features.md`、`docs/architecture.md`、`docs/testing-strategy.md`、`docs/test-cases.md`
-- 条款 49 条（business/technical/quality/governance），判据 64 条 —— 其中 64 条判据指向可执行验证器
-- 成熟度分布：automated 48 / planned 0 / none 1
+- 条款 60 条（business/technical/quality/governance），判据 85 条 —— 其中 85 条判据指向可执行验证器
+- 成熟度分布：automated 59 / planned 0 / none 1
 
 ### 实际验证了什么
 
-- 真的跑了证据集（`bun test spec/verify/ packages/core/tests/ apps/api/tests/ ./scripts/check-coverage.check.ts ./apps/api/tests/perf/export-latency.bench.ts`）：**123 个用例，0 失败，123 通过**，覆盖 22 个测试文件
-- 真的跑了前后端集成 E2E（`bun test ./e2e/integration.e2e.ts`，Playwright 驱动真实 Chromium + 真实服务端）：**13 个用例，0 失败**
-- 真的跑了 `python3 spec/verify/spec-schema.py`：Spec 结构校验通过（49 条条款 / 64 条判据引用完整）
+- 真的跑了证据集（`bun test spec/verify/ packages/core/tests/ apps/api/tests/ ./scripts/check-coverage.check.ts ./apps/api/tests/perf/export-latency.bench.ts`）：**191 个用例，0 失败，191 通过**，覆盖 28 个测试文件
+- 真的跑了前后端集成 E2E（`bun test ./e2e/auth.e2e.ts ./e2e/errors.e2e.ts ./e2e/exports.e2e.ts ./e2e/library.e2e.ts ./e2e/navigation.e2e.ts ./e2e/offline.e2e.ts ./e2e/presentation.e2e.ts ./e2e/projects.e2e.ts ./e2e/quality.e2e.ts ./e2e/templates.e2e.ts ./e2e/workbench-editing.e2e.ts ./e2e/workbench-pages.e2e.ts ./e2e/workbench.e2e.ts`，Playwright 驱动真实 Chromium + 真实服务端）：**98 个用例，0 失败**
+- 真的跑了 `python3 spec/verify/spec-schema.py`：Spec 结构校验通过（60 条条款 / 85 条判据引用完整）
 - 真的跑了 `npx tsc --noEmit`：类型检查通过
-- 真的跑了 `bun run spec/verify/mutation-check.ts`：**69 个注入用例，不合格 0 个** —— 每个用例走「基线 PASS → 注入必须 FAIL → 还原后重新 PASS」三步，源文件已全部还原
-- 领域内核行覆盖率：**92.83% ≥ 90%**（1735/1869 行，证据落盘在 `spec/evidence/coverage.json`）
+- 真的跑了 `bun run spec/verify/mutation-check.ts`：**88 个注入用例，不合格 0 个** —— 每个用例走「基线 PASS → 注入必须 FAIL → 还原后重新 PASS」三步，源文件已全部还原
+- 领域内核行覆盖率：**92.27% ≥ 90%**（1814/1966 行，证据落盘在 `spec/evidence/coverage.json`）
 
 ### 哪些结论仍不可信
 
-- **1 条判据没有做注入错误检查**（AC-NFR-001）—— 它们的 PASS 只来自「测试跑过了」，没有被元验证证明「抓得住错」
+- **8 条判据没有做注入错误检查**（AC-QLT-011、AC-QLT-012、AC-QLT-013、AC-RND-006、AC-E2E-023、AC-E2E-024、AC-E2E-025、AC-NFR-001）—— 它们的 PASS 只来自「测试跑过了」，没有被元验证证明「抓得住错」
 - **SPEC-NFR-001 —— 真实模型下的 P95 从未测过**。验证器已建成，但本轮只跑了降级模式（.env 里的 GEMINI_API_KEY 是占位符），模型往返延迟根本没被采样到
 - **SPEC-GOV-003 —— 质量门禁分数线从未在文档中给出**，判据无法存在（AMB-001 未裁决）
 - **AC-QLT-010 —— self-derived oracle**，只能防回归，不能证明正确
