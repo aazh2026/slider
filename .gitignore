@@ -28,3 +28,7 @@ spec/evidence/mutation-report-partial.json
 
 # 注入检查的跑批互斥锁 —— 随进程生命周期变化，入库只会带来无意义的冲突
 spec/evidence/.mutation-check.lock
+
+# 注入检查还原撞上冲突时的备份 —— 里面是被注入污染过的源码，
+# 只用于人工把对方的改动捞回来，绝不入库
+spec/evidence/.mutation-conflicts/
