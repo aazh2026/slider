@@ -54,12 +54,14 @@ interface Mutation {
   /**
    * 只跑整个文件，不按用例名过滤。
    *
-   * E2E 是一条**顺序流程**（注册 → 建项目 → 生成大纲 → 编译 → 编辑 → 导出），
-   * 后面的用例依赖前面留下的状态。单独跑一个用例会因为"前置没做"而失败 ——
-   * 那种失败跟"验证器抓到了注入的错误"完全是两回事，混在一起就是**假阳性**
-   * （看起来抓到了，其实只是没跑起来）。
+   * 早期 E2E 是一条**顺序流程**（注册 → 建项目 → 生成大纲 → 编译 → 编辑 → 导出），
+   * 后面的用例依赖前面留下的状态，所以当时只能整文件跑 —— 单独跑一个用例会因为
+   * "前置没做"而失败，那种失败跟"验证器抓到了注入的错误"完全是两回事，
+   * 混在一起就是**假阳性**（看起来抓到了，其实只是没跑起来）。
    *
-   * 所以 E2E 的注入检查跑整个文件：文件整体挂掉才算抓到。
+   * 现在 E2E 已拆成**各自完备**的独立链（e2e/*.e2e.ts，每条链自己建项目、自己收尾），
+   * 单用例过滤已经安全 —— 每条注入只跑它自己那一条用例，
+   * 别的用例挂掉不会被误判成"抓到了注入的错误"。
    */
   wholeFile?: boolean;
 }
@@ -74,6 +76,24 @@ const MUTATIONS: Mutation[] = [
     replace: 'const canvas = { width: 1600, height: 900 };',
     testFile: 'spec/verify/core-layout.test.ts',
     testName: 'canvas-is-always-1920x1080',
+  },
+  // ---- SPEC-CORE-001 画布在屏幕上的比例（同一个"1920×1080"事实的另一半） ----
+  //
+  // 2026-11-04 实测到的真实缺陷：画布那层被 flex-shrink 压成了 480×1080 的
+  // 竖条，幻灯片被缩成中间一条 —— 而 IR 里的 canvas 仍然是 1920×1080，
+  // 所有内容类断言照样全绿。AC-CORE-001 的单元判据抓不到它，
+  // 因为它守的是 IR，不是屏幕。
+  //
+  // 这里注入的是**同一类错误**：让画布盒子的宽度跟着容器走（而不是钉死 1920），
+  // 于是屏幕上的画布再次变成竖条 —— 判据必须失败。
+  {
+    criterion: 'AC-CORE-011',
+    description: '画布宽度改成跟着容器走（width: 100%）—— 屏幕上再次变成竖条、出现信箱边',
+    file: 'src/components/Workbench.tsx',
+    find: '                width: 1920,\n                height: 1080,',
+    replace: "                width: '100%',\n                height: 1080,",
+    testFile: 'e2e/workbench.e2e.ts',
+    testName: 'AC-CORE-011 工作台画布在屏幕上保持 16:9，不出现信箱边',
   },
   // ---- SPEC-CORE-002 元素不越界 ----
   {
@@ -397,6 +417,52 @@ const MUTATIONS: Mutation[] = [
     replace: '`${sanitizeFilename(project.name)}_slide_ir`',
     testFile: 'spec/verify/export-pptx.test.ts',
     testName: 'export-filename-sanitized',
+  },
+  // ---- SPEC-EXP-005 导出 → 导入 往返不丢页序 ----
+  {
+    criterion: 'AC-EXP-005',
+    description: '导入时把页序整体倒过来 —— 导出去能再导回来，但回来的页序是反的',
+    file: 'apps/api/src/services/projectService.ts',
+    find:
+      '    await db.db.insert(slides).values({\n' +
+      '      projectId: created.id,\n' +
+      '      slideId: s.slideId,\n' +
+      '      orderIndex: s.orderIndex,',
+    replace:
+      '    await db.db.insert(slides).values({\n' +
+      '      projectId: created.id,\n' +
+      '      slideId: s.slideId,\n' +
+      '      orderIndex: (bundle.slides?.length ?? 0) - s.orderIndex + 1,',
+    testFile: 'apps/api/tests/integration/import-bundle.test.ts',
+    testName: 'exported-bundle-round-trips-with-page-order-intact',
+  },
+  // ---- SPEC-EXP-006 导入端必须校验 bundle 形状 ----
+  {
+    criterion: 'AC-EXP-006',
+    description: 'orderIndex 的下界校验被拆掉 —— 0 / 负数能落库，违反内核契约 order >= 1',
+    file: 'apps/api/src/routes/projects.ts',
+    find: '  orderIndex: z.number().int().min(1),',
+    replace: '  orderIndex: z.number().int(),',
+    testFile: 'apps/api/tests/integration/import-bundle.test.ts',
+    testName: 'zero-order-index-is-rejected',
+  },
+  {
+    criterion: 'AC-EXP-006',
+    description: 'orderIndex 唯一性校验被拆掉 —— 排序键重复，页序静默随机化',
+    file: 'apps/api/src/routes/projects.ts',
+    find: '      const prevOrder = byOrder.get(s.orderIndex);',
+    replace: '      const prevOrder = undefined;',
+    testFile: 'apps/api/tests/integration/import-bundle.test.ts',
+    testName: 'duplicate-order-index-is-rejected',
+  },
+  {
+    criterion: 'AC-EXP-006',
+    description: 'slides 字段不再必填 —— 缺 slides 的文件被当成空项目导进去',
+    file: 'apps/api/src/routes/projects.ts',
+    find: '  slides: ImportSlidesSchema,\n});',
+    replace: '  slides: ImportSlidesSchema.optional(),\n});',
+    testFile: 'apps/api/tests/integration/import-bundle.test.ts',
+    testName: 'missing-slides-field-is-rejected',
   },
   // ---- SPEC-QLT-009 自动修复不制造越界 ----
   {
@@ -755,9 +821,8 @@ const MUTATIONS: Mutation[] = [
     file: 'apps/api/src/services/projectService.ts',
     find: '    .set({ ...patch, updatedAt: new Date() })',
     replace: '    .set({ ...patch, name: existing.name, updatedAt: new Date() })',
-    testFile: 'e2e/integration.e2e.ts',
-    testName: '10. 重命名项目 → 服务端存的是新名字',
-    wholeFile: true,
+    testFile: 'e2e/projects.e2e.ts',
+    testName: 'AC-E2E-012 重命名项目 → 服务端存的是新名字',
   },
   // ---- SPEC-E2E-007 删除必须落库 ----
   {
@@ -766,9 +831,8 @@ const MUTATIONS: Mutation[] = [
     file: 'apps/api/src/services/projectService.ts',
     find: '    .set({ deletedAt: new Date(), updatedAt: new Date() })',
     replace: '    .set({ updatedAt: new Date() })',
-    testFile: 'e2e/integration.e2e.ts',
-    testName: '12. 删除项目 → 服务端真的删掉了（且列表里也没有）',
-    wholeFile: true,
+    testFile: 'e2e/projects.e2e.ts',
+    testName: 'AC-E2E-013 删除项目 → 服务端真的删掉了（且列表里也没有）',
   },
   // ---- SPEC-E2E-006 跨租户隔离 ----
   {
@@ -777,9 +841,8 @@ const MUTATIONS: Mutation[] = [
     file: 'apps/api/src/middleware/auth.ts',
     find: 'and(eq(projects.id, id), eq(projects.userId, userId), isNull(projects.deletedAt))',
     replace: 'and(eq(projects.id, id), isNull(projects.deletedAt))',
-    testFile: 'e2e/integration.e2e.ts',
-    testName: '9. 跨租户隔离 → 别人的项目拿不到（404 而不是 403）',
-    wholeFile: true,
+    testFile: 'e2e/projects.e2e.ts',
+    testName: 'AC-E2E-011 跨租户隔离 → 别人的项目拿不到（404 而不是 403）',
   },
 
   // ---- SPEC-E2E-001 注册必须签发可用的会话 ----
@@ -794,9 +857,8 @@ const MUTATIONS: Mutation[] = [
       '    userId,\n' +
       '    expiresAt,\n' +
       '  });',
-    testFile: 'e2e/integration.e2e.ts',
-    testName: '1. 注册 → 服务端签发 HttpOnly 会话，前端据此进入工作台',
-    wholeFile: true,
+    testFile: 'e2e/auth.e2e.ts',
+    testName: 'AC-E2E-001 注册 → 服务端签发 HttpOnly 会话，前端据此进入工作台',
   },
   // ---- SPEC-E2E-001 项目必须落库且归属当前用户 ----
   {
@@ -808,9 +870,8 @@ const MUTATIONS: Mutation[] = [
       "    .values({\n" +
       "      userId: '00000000-0000-0000-0000-000000000000',\n" +
       '      name: input.name,',
-    testFile: 'e2e/integration.e2e.ts',
-    testName: '2. 新建项目 → 服务端库里真的有这条项目',
-    wholeFile: true,
+    testFile: 'e2e/projects.e2e.ts',
+    testName: 'AC-E2E-002 新建项目 → 服务端库里真的有这条项目，且归属当前用户',
   },
   // ---- SPEC-E2E-002 大纲必须跟着主题走 ----
   {
@@ -821,9 +882,8 @@ const MUTATIONS: Mutation[] = [
     replace:
       "export function parseTopic(topic: string): TopicTerms {\n" +
       "  const original = '通用主题';",
-    testFile: 'e2e/integration.e2e.ts',
-    testName: '3. 生成大纲 → 服务端按主题动态生成（不是写死的固定文案）',
-    wholeFile: true,
+    testFile: 'e2e/workbench.e2e.ts',
+    testName: 'AC-E2E-003 生成大纲 → 页数、主题、服务端与 UI 一致',
   },
   // ---- SPEC-E2E-002 大纲编辑必须落库 ----
   {
@@ -838,9 +898,8 @@ const MUTATIONS: Mutation[] = [
       "    ...(body.outline !== undefined\n" +
       "      ? { outline: c.get('project')!.outline as never }\n" +
       '      : {}),',
-    testFile: 'e2e/integration.e2e.ts',
-    testName: '3b. 编辑大纲标题 → 服务端存的是前端改的那份',
-    wholeFile: true,
+    testFile: 'e2e/workbench.e2e.ts',
+    testName: 'AC-E2E-004 改大纲标题 → 服务端存新标题，UI 也显示新标题',
   },
   // ---- SPEC-E2E-002 工作台必须渲染服务端的 IR ----
   //
@@ -852,9 +911,8 @@ const MUTATIONS: Mutation[] = [
     file: 'src/components/Workbench.tsx',
     find: 'data-slide-title={currentSlide.title}',
     replace: 'data-slide-title="占位标题"',
-    testFile: 'e2e/integration.e2e.ts',
-    testName: '4. 编译 → 工作台渲染的是服务端生成的 Slide IR',
-    wholeFile: true,
+    testFile: 'e2e/workbench.e2e.ts',
+    testName: 'AC-E2E-005 确认大纲并编译 → 画布渲染的正是服务端那份 IR',
   },
   // ---- SPEC-E2E-003 编辑必须写回服务端并生成新版本 ----
   {
@@ -863,9 +921,8 @@ const MUTATIONS: Mutation[] = [
     file: 'apps/api/src/services/slideService.ts',
     find: '    .set({ ir, versionId, updatedAt: new Date() })',
     replace: '    .set({ ir, updatedAt: new Date() })',
-    testFile: 'e2e/integration.e2e.ts',
-    testName: '5. 编辑文本 → 防抖同步写回服务端（乐观锁生成新版本）',
-    wholeFile: true,
+    testFile: 'e2e/workbench.e2e.ts',
+    testName: 'AC-E2E-006 就地改文本 → 防抖写回服务端，并产生新版本号',
   },
   // ---- SPEC-E2E-003 陈旧版本必须被拒 ----
   //
@@ -885,9 +942,8 @@ const MUTATIONS: Mutation[] = [
         replace: '        eq(slides.slideId, opts.slideId)',
       },
     ],
-    testFile: 'e2e/integration.e2e.ts',
-    testName: '6. 陈旧 baseVersionId → 409 冲突，且不覆盖服务端内容',
-    wholeFile: true,
+    testFile: 'e2e/workbench.e2e.ts',
+    testName: 'AC-E2E-007 两个会话改同一页 → 后者收到 409，前端提示且没覆盖服务端',
   },
   // ---- SPEC-E2E-004 AI 补丁必须真的被施加 ----
   {
@@ -896,9 +952,8 @@ const MUTATIONS: Mutation[] = [
     file: 'apps/api/src/services/slideService.ts',
     find: '  const next = applyPatches(current.ir, patches);',
     replace: '  const next = current.ir;',
-    testFile: 'e2e/integration.e2e.ts',
-    testName: '7. AI 编辑 → 服务端施加 IRPatch，前端采纳服务端返回的 IR',
-    wholeFile: true,
+    testFile: 'e2e/workbench.e2e.ts',
+    testName: 'AC-E2E-008 AI 编辑 → 服务端施加补丁，画布跟着重绘',
   },
   // ---- SPEC-E2E-005 导出必须是真 PPTX ----
   {
@@ -907,9 +962,8 @@ const MUTATIONS: Mutation[] = [
     file: 'apps/api/src/services/exportService.ts',
     find: '      const bytes = await ExportEngine.exportPresentationAsPptxBuffer(project, undefined);',
     replace: "      const bytes = new TextEncoder().encode('not-a-real-pptx');",
-    testFile: 'e2e/integration.e2e.ts',
-    testName: '8. 导出 → 服务端任务产出真实 PPTX 产物',
-    wholeFile: true,
+    testFile: 'e2e/exports.e2e.ts',
+    testName: 'AC-E2E-009 PPTX 导出 → 产物是真正的 OOXML，而且里面是这份文稿',
   },
   // ---- SPEC-E2E-005 导出 PDF 必须是真 PDF ----
   {
@@ -919,11 +973,235 @@ const MUTATIONS: Mutation[] = [
     find: "      const out = pdf.output('arraybuffer');",
     replace:
       "      const out = new TextEncoder().encode('not a real pdf').buffer as ArrayBuffer;",
-    testFile: 'e2e/integration.e2e.ts',
-    testName: '11. 导出 PDF → 产物是真正的 PDF（%PDF 魔数）',
-    wholeFile: true,
+    testFile: 'e2e/exports.e2e.ts',
+    testName: 'AC-E2E-010 PDF 导出 → 产物是真正的 PDF（%PDF 魔数）',
   },
 
+  // ---- SPEC-E2E-008 模板必须真的落到服务端 ----
+  //
+  // 这一条注入盯的是"应用模板"这个动作的**服务端**：
+  // 服务端查到了模板、查到了项目，却没把模板写回项目 ——
+  // 接口返回 200，界面上"使用中"的标记也变了（前端本地 state），
+  // 但服务端存的还是旧模板。刷新一下就露馅。
+  {
+    criterion: 'AC-E2E-014',
+    description: '应用模板时不写回项目（接口说成功，服务端存的还是旧模板）',
+    file: 'apps/api/src/routes/templates.ts',
+    find: "  const updated = await updateProject(c.get('db'), userId, project.id, { template: ir });",
+    replace:
+      "  const updated = await updateProject(c.get('db'), userId, project.id, {\n" +
+      '    template: project.template ?? (ir as never),\n' +
+      '  });',
+    testFile: 'e2e/templates.e2e.ts',
+    testName: '应用模板 → 服务端存的是新模板，刷新后仍然是它',
+  },
+  // ---- SPEC-E2E-008 浏览器链路上的模板应用 ----
+  //
+  // 同一个判据的**前端**侧：应用模板时前端只改本地 state、不落服务端。
+  // 这正是"刷新一下就回到旧模板"那个 bug 的原型。
+  {
+    criterion: 'AC-E2E-014',
+    description: '前端应用模板时只改本地 state，不落服务端',
+    file: 'src/App.tsx',
+    find: '        const updated = await ProjectStorage.applyTemplate(currentProject.id, t.templateId);',
+    replace: '        const updated = { ...currentProject, template: t };',
+    testFile: 'e2e/templates.e2e.ts',
+    testName: '应用模板 → 服务端存的是新模板，刷新后仍然是它',
+  },
+  // ---- SPEC-E2E-008 模板应用的失败路径 ----
+  //
+  // **假成功**：服务端拒绝了（模板不存在 → 404），前端却把本地模板换成了新的。
+  // 界面显示"当前使用"的是新模板，服务端存的还是旧的 —— 刷新一下就露馅。
+  // 这条注入盯的正是它。
+  {
+    criterion: 'AC-E2E-020',
+    description: '应用模板失败时前端仍然乐观换成本地模板（假成功）',
+    file: 'src/App.tsx',
+    find:
+      '      } catch (err) {\n' +
+      '        setTemplateNotice(`模板更新失败：${describeError(err)}`);\n' +
+      '        return false;\n' +
+      '      }',
+    replace:
+      '      } catch (err) {\n' +
+      '        setTemplateNotice(`模板更新失败：${describeError(err)}`);\n' +
+      '        // 注入：失败也把本地模板换掉 —— 假成功\n' +
+      '        applyProjects((prev) =>\n' +
+      '          prev.map((p) => (p.id === currentProject.id ? { ...p, template: t } : p))\n' +
+      '        );\n' +
+      '        return false;\n' +
+      '      }',
+    testFile: 'e2e/templates.e2e.ts',
+    testName: '应用不存在的模板 → 界面如实报错，服务端模板不被改动',
+  },
+  // ---- SPEC-E2E-012 外部资源不可达时应用仍能启动 ----
+  //
+  // 把字体样式表改回**渲染阻塞**：外部 CDN 不可达时，
+  // pending 的样式表会连带阻塞脚本执行 ⇒ React 挂不上 ⇒ 白屏。
+  // 这正是这次 E2E 挂死事故的原型。
+  {
+    criterion: 'AC-E2E-022',
+    description: '把外部字体样式表改回渲染阻塞（CDN 不可达时白屏）',
+    file: 'index.html',
+    find:
+      '      rel="stylesheet"\n' +
+      '      media="print"\n' +
+      "      onload=\"this.media='all'\"\n",
+    replace: '      rel="stylesheet"\n',
+    testFile: 'e2e/offline.e2e.ts',
+    testName: '外部资源被挂起 → 外壳仍在 8 秒内渲染出来',
+  },
+
+  // ---- SPEC-E2E-004 AI 补丁必须**画得出来** ----
+  //
+  // 只断言"服务端 IR 变了"是不够的：渲染器装不下的文本块会被整块丢弃 ——
+  // 接口说改好了，页面却一点没变。判据必须落到画布上。
+  // 这条注入把"渲染可见性"检查拆掉，退回到"IR 里有就算数"。
+  {
+    criterion: 'AC-E2E-008',
+    description: '本地降级不再校验补丁能不能画出来（IR 变了但页面没变）',
+    file: 'apps/api/src/services/agents/editAgent.ts',
+    find: '  if (!theme) return true;\n  if (!entry.type || !entry.geometry) return false;',
+    replace: '  if (!theme) return true;\n  if (!entry.type || !entry.geometry) return true;\n  return true;',
+    testFile: 'e2e/workbench.e2e.ts',
+    testName: 'AC-E2E-008 AI 编辑 → 服务端施加补丁，画布跟着重绘',
+  },
+
+  // ---------------------------------------------------------------------------
+  // 新增的四条链（质量 / 放映 / 异常 / 离线）此前只有"测试跑过了"，
+  // 没有被元验证证明"抓得住错" —— 那不叫验证通过。
+  // 下面这六条把每条判据的**代表性错误**各注入一次。
+  // ---------------------------------------------------------------------------
+
+  // ---- AC-E2E-015 界面分数必须等于服务端权威评分 ----
+  //
+  // 前后端跑的是同一份 @ppt/core，数字必须一模一样。
+  // 注入的是"服务端评估时没把 slides 装进项目"—— 评估了空壳，
+  // 分数自然对不上。这正是判据要抓的那类错：
+  // **有一边的输入不是服务端那份 IR**。
+  {
+    criterion: 'AC-E2E-015',
+    description: '服务端评估时漏装了 slides（评的是空项目，分数与界面对不上）',
+    file: 'apps/api/src/routes/quality.ts',
+    find: '  const report = QualityEngine.evaluatePresentation(project);',
+    replace:
+      '  // 注入：服务端评估时漏装了 slides —— 评的是空壳项目\n' +
+      '  const report = QualityEngine.evaluatePresentation({ ...project, slides: [] });',
+    testFile: 'e2e/quality.e2e.ts',
+    testName: '质量报告 → 界面分数与服务端权威评分逐项对得上',
+  },
+  // ---- AC-E2E-016 一键修复必须真的落到服务端 ----
+  //
+  // 修复改的是**元素 ID 与几何**，不是文字。
+  // 注入"防抖同步只比较文字"—— 于是修复在界面上看着生效了，
+  // 服务端的 IR 一个字节没变，版本号也不前进。
+  // 这类错很常见：同步逻辑为了省事只 diff 文本。
+  {
+    criterion: 'AC-E2E-016',
+    description: '防抖同步只比较文本（修复带来的 ID 与几何改动不落库）',
+    file: 'src/App.tsx',
+    find:
+      '    const changed = project.slides.filter((s) => {\n' +
+      '      const before = prevById.get(s.slideId);\n' +
+      '      return !before || JSON.stringify(before) !== JSON.stringify(s);\n' +
+      '    });',
+    replace:
+      '    const changed = project.slides.filter((s) => {\n' +
+      '      const before = prevById.get(s.slideId);\n' +
+      '      // 注入：只比较文本 —— 元素 ID 与几何的改动不落库\n' +
+      '      const textOf = (x: typeof s) => JSON.stringify(x.elements.map((e) => e.content));\n' +
+      '      return !before || textOf(before) !== textOf(s);\n' +
+      '    });',
+    testFile: 'e2e/quality.e2e.ts',
+    testName: '一键修复 → 服务端的 IR 真的被改写，版本号前进',
+  },
+  // ---- AC-E2E-017 放映画面上的文字必须等于服务端 IR 里的文字 ----
+  //
+  // 工作台画一遍、导出一遍、放映再画一遍 —— 三处必须一致。
+  // 注入"放映只渲染背景层"：画布上确实有图，但一个字都没有。
+  //
+  // **注意锚点**：画布真正渲染的是 `renderInlineSvg`，
+  // 同一个文件里还有一个 `renderToString` 的结果（`svgContent`）——
+  // 那个变量**从来没被用过**。第一次注入就改在了那里，
+  // 于是"注入生效了、行为却一点没变"，
+  // 框架如实报了 `caught: false`（"验证器抓不到这个错"）。
+  // 注入必须落在**真正被渲染的那一行**上。
+  {
+    criterion: 'AC-E2E-017',
+    description: '放映模式只渲染背景层（正文元素没画出来）',
+    file: 'src/components/PresentationMode.tsx',
+    find: '            __html: SVGRenderer.renderInlineSvg(currentSlide, project.template.theme),',
+    replace:
+      '            __html: SVGRenderer.renderInlineSvg(\n' +
+      '              {\n' +
+      '                ...currentSlide,\n' +
+      "                elements: currentSlide.elements.filter((el) => el.role === 'background'),\n" +
+      '              },\n' +
+      '              project.template.theme\n' +
+      '            ),',
+    testFile: 'e2e/presentation.e2e.ts',
+    testName: '放映画面上的文字 == 服务端 IR 里的文字',
+  },
+  // ---- AC-E2E-018 翻页必须翻到服务端的那一页 ----
+  //
+  // 注入"一次跳两页"（典型的 off-by-one）——
+  // 界面有反应、页码也在变，唯独不是服务端的那一页。
+  {
+    criterion: 'AC-E2E-018',
+    description: '翻页一次跳两页（off-by-one，翻到的不是服务端那一页）',
+    file: 'src/components/PresentationMode.tsx',
+    find: '  const handleNext = () => {\n    setCurrentIndex((i) => Math.min(total - 1, i + 1));\n  };',
+    replace:
+      '  const handleNext = () => {\n' +
+      '    // 注入：一次跳两页\n' +
+      '    setCurrentIndex((i) => Math.min(total - 1, i + 2));\n' +
+      '  };',
+    testFile: 'e2e/presentation.e2e.ts',
+    testName: '翻页 → 换到服务端的后一页，退回后回到第一页',
+  },
+  // ---- AC-E2E-019 导出失败不能显示成功 ----
+  //
+  // **假成功**是最坏的一种失败：用户以为文稿导出好了，其实根本没导。
+  // 注入"catch 里把失败吞掉、改报成功"。
+  {
+    criterion: 'AC-E2E-019',
+    description: '导出提交失败被吞掉，界面改报成功（假成功）',
+    file: 'src/components/ExportModal.tsx',
+    find:
+      '    } catch (err) {\n' +
+      '      setProgressText(\n' +
+      '        `导出失败：${err instanceof ApiClientError ? err.message : String(err)}`\n' +
+      '      );\n' +
+      '      setIsExporting(false);\n' +
+      '    }',
+    replace:
+      '    } catch (err) {\n' +
+      '      // 注入：失败被吞掉，界面报成功\n' +
+      "      setProgressText('导出成功！文件已开始下载。');\n" +
+      '      setIsExporting(false);\n' +
+      '    }',
+    testFile: 'e2e/errors.e2e.ts',
+    testName: '导出提交失败 → 界面显示"导出失败"，绝不显示"导出成功"',
+  },
+  // ---- AC-E2E-021 应用 HTML 里不能有渲染阻塞的外部样式表 ----
+  //
+  // 注入的是"又加了一张渲染阻塞的 CDN 样式表"——
+  // 这是判据针对的那类回归（AC-E2E-022 注入的是把现有的那张改回阻塞，
+  // 两者是不同的注入点，互不覆盖）。
+  {
+    criterion: 'AC-E2E-021',
+    description: '又加了一张渲染阻塞的外部样式表（CDN 不可达时整页白屏）',
+    file: 'index.html',
+    find: '    <link rel="preconnect" href="https://fonts.googleapis.com">',
+    replace:
+      '    <link rel="preconnect" href="https://fonts.googleapis.com">\n' +
+      '    <link\n' +
+      '      href="https://cdn.jsdelivr.net/npm/design-tokens@1/tokens.css"\n' +
+      '      rel="stylesheet"\n' +
+      '    >',
+    testFile: 'e2e/offline.e2e.ts',
+    testName: '应用 HTML → 没有会阻塞渲染的外部样式表',
+  },
 ];
 
 interface RunResult {

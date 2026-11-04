@@ -16,9 +16,11 @@
  *     spec/evidence/mutation-report.json —— spec/verify/mutation-check.ts 的输出
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import { parseJunitCases, type JunitCase } from './junit.ts';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '../..');
@@ -247,14 +249,6 @@ const KNOWN_LIMITS: Array<{ limit: string; impact: string; acceptable: string; m
 // 读取 junit 结果
 // ---------------------------------------------------------------------------
 
-interface JunitCase {
-  name: string;
-  file: string;
-  failed: boolean;
-  /** 这条证据来自哪个 junit 文件 */
-  evidence: string;
-}
-
 /**
  * 证据文件清单
  *
@@ -283,13 +277,7 @@ function readJunit(): JunitCase[] {
     if (!existsSync(path)) continue;
     const xml = readFileSync(path, 'utf-8');
     // 每个 <testcase ...> 块里，name 是用例名，file 是文件路径；块内有 <failure> 即失败
-    for (const m of xml.matchAll(/<testcase\b([\s\S]*?)(?:\/>|<\/testcase>)/g)) {
-      const attrs = m[1] ?? '';
-      const name = attrs.match(/name="([^"]*)"/)?.[1] ?? '';
-      const file = (attrs.match(/file="([^"]*)"/)?.[1] ?? '').replace(/^.*\/spec\//, 'spec/');
-      const failed = /<failure\b/.test(m[0]);
-      cases.push({ name, file, failed, evidence: label });
-    }
+    cases.push(...parseJunitCases(xml, label));
   }
   return cases;
 }
@@ -375,6 +363,15 @@ function main(): void {
   const e2eCases = junit.filter((c) => c.file.startsWith('e2e/')).length;
   const e2eFailed = junit.filter((c) => c.file.startsWith('e2e/') && c.failed).length;
 
+  // E2E 链清单 —— 从磁盘上现存的链文件读出来，不手写。
+  //
+  // 手写清单的话，新增一条链忘了改这里，报告会列出**已经不存在的文件**，
+  // 而真正跑了的那条链在报告里查无此案 —— 报告与事实脱节。
+  const e2eChainFiles: string[] = readdirSync(resolve(ROOT, 'e2e'))
+    .filter((n) => n.endsWith('.e2e.ts'))
+    .sort()
+    .map((n) => `e2e/${n}`);
+
   // --- 注入检查覆盖了哪些判据 ---
   // 没被注入验证过的判据，它的 PASS 只来自「测试跑过了」，
   // 没有「抓得住错」的元验证 —— 这件事必须写进报告，不能藏起来。
@@ -457,6 +454,11 @@ function main(): void {
   P(`- Spec 版本：\`${spec.meta.spec_version}\``);
   P(`- 条款总数：**${spec.clauses.length}**　判据总数：**${totalCriteria}**`);
   P(`- 生成时 junit 证据：\`spec/evidence/junit.xml\`；注入证据：\`spec/evidence/mutation-report.json\``);
+  P(
+    `- 失败原因：\`spec/evidence/junit-output.txt\`（单元 / 集成）与 \`spec/evidence/junit-e2e-output.txt\`（E2E）—— ` +
+      `**Bun 的 junit 报告只写失败类型、不写错误信息**（实测产出的是 \`<failure type="AssertionError" />\`），` +
+      `失败详情在 stderr 里，所以单独落盘`
+  );
   P();
 
   // ---- 一、追溯矩阵 ----
@@ -515,10 +517,27 @@ function main(): void {
   P();
   P('| Spec ID | 未覆盖原因 | 影响 | 计划 |');
   P('|---|---|---|---|');
-  const gapByClause = new Map(spec.known_gaps.map((g) => [g.clause, g.reason]));
-  const gapPlanByClause = new Map(spec.known_gaps.map((g) => [g.clause, g.plan]));
+  // 一个条款可能登记**多条** known_gap（不同侧面各一条）。
+  // 这里按条款收成**列表**再拼 —— 用 Map 直接存单值的话，
+  // 后登记的那条会把先登记的那条**静默覆盖**，
+  // 报告里就只剩最后一个原因，看不到条款还有别的洞。
+  const gapReasons = new Map<string, string[]>();
+  const gapPlans = new Map<string, string[]>();
+  for (const g of spec.known_gaps) {
+    const reasons = gapReasons.get(g.clause) ?? [];
+    reasons.push(g.reason);
+    gapReasons.set(g.clause, reasons);
+    if (g.plan) {
+      const plans = gapPlans.get(g.clause) ?? [];
+      plans.push(g.plan);
+      gapPlans.set(g.clause, plans);
+    }
+  }
   for (const r of noEvidenceRows) {
-    const reason = gapByClause.get(r.clause.id) ?? INCONCLUSIVE_NOTES[r.clause.id] ?? INCONCLUSIVE_FALLBACK;
+    const reason =
+      gapReasons.get(r.clause.id)?.join('<br>') ??
+      INCONCLUSIVE_NOTES[r.clause.id] ??
+      INCONCLUSIVE_FALLBACK;
     const blockers = spec.ambiguities.filter((a) => a.blocks.includes(r.clause.id));
     const impact = blockers.length
       ? `受 ${blockers.map((b) => b.id).join(', ')} 影响`
@@ -528,7 +547,7 @@ function main(): void {
     // 计划以条款自带的 known_gaps.plan 为准 —— 那是改条款的人写下的下一步，
     // 比生成器里猜一个「实现后端测试骨架后执行」靠谱得多。
     const plan =
-      gapPlanByClause.get(r.clause.id) ??
+      gapPlans.get(r.clause.id)?.join('<br>') ??
       (blockers.length
         ? `待 ${blockers.map((b) => b.id).join(', ')} 裁决后补齐`
         : r.clause.acceptance.length === 0
@@ -604,6 +623,12 @@ function main(): void {
         );
       }
     }
+    P();
+    P(
+      '> 上表的「现象 / 根因」是**已确认**的归因。若某条失败没有归因条目（显示「—」），' +
+        '去 `spec/evidence/junit-output.txt`（单元 / 集成）或 `spec/evidence/junit-e2e-output.txt`（E2E）看原始报错 —— ' +
+        'Bun 的 junit 报告只写失败类型、不写错误信息，那两份 stderr 就是失败原因的第一手材料。'
+    );
   }
   P();
 
@@ -729,7 +754,10 @@ function main(): void {
   P('| 条款 | 缺什么 | 为什么不能用 PASS 代替 |');
   P('|---|---|---|');
   for (const r of noEvidenceRows) {
-    const reason = gapByClause.get(r.clause.id) ?? INCONCLUSIVE_NOTES[r.clause.id] ?? INCONCLUSIVE_FALLBACK;
+    const reason =
+      gapReasons.get(r.clause.id)?.join('<br>') ??
+      INCONCLUSIVE_NOTES[r.clause.id] ??
+      INCONCLUSIVE_FALLBACK;
     const why =
       r.clause.acceptance.length === 0
         ? '判据本身不存在，无法判定 —— 连要测什么都没确定'
@@ -771,7 +799,7 @@ function main(): void {
   P('- `packages/core/tests/` —— 领域内核（@ppt/core）的版式快照与补丁应用测试');
   P('- `apps/api/tests/` —— 后端的契约 / 集成 / 安全 / AI / 混沌 / 性能测试');
   P(
-    '- `e2e/integration.e2e.ts` —— 前后端集成（Playwright 真实浏览器 + 真实服务端），断言落在服务端状态上'
+    `- \`e2e/\` —— ${e2eChainFiles.length} 条前后端集成链（Playwright 真实浏览器 + 真实服务端），断言落在服务端状态上：${e2eChainFiles.map((f) => `\`${f}\``).join('、')}`
   );
   P('- `spec/verify/servers.ts` —— 为 E2E 拉起后端与前端的编排（独立端口、独立数据目录、HMR 关闭）');
   P(
@@ -806,7 +834,7 @@ function main(): void {
     `- 真的跑了证据集（\`bun test spec/verify/ packages/core/tests/ apps/api/tests/ ./scripts/check-coverage.check.ts ./apps/api/tests/perf/export-latency.bench.ts\`）：**${junitCases} 个用例，${junitFailed} 失败，${junitPassed} 通过**，覆盖 ${junitFiles} 个测试文件`
   );
   P(
-    `- 真的跑了前后端集成 E2E（\`bun test ./e2e/integration.e2e.ts\`，Playwright 驱动真实 Chromium + 真实服务端）：**${e2eCases} 个用例，${e2eFailed} 失败**`
+    `- 真的跑了前后端集成 E2E（\`bun test ${e2eChainFiles.map((f) => `./${f}`).join(' ')}\`，Playwright 驱动真实 Chromium + 真实服务端）：**${e2eCases} 个用例，${e2eFailed} 失败**`
   );
   P(
     `- 真的跑了 \`python3 spec/verify/spec-schema.py\`：Spec 结构校验通过（${spec.clauses.length} 条条款 / ${totalCriteria} 条判据引用完整）`

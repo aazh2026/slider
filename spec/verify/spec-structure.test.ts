@@ -209,7 +209,7 @@ describe('验收判据与验证器一一对应', () => {
     //   · <path> 以 ./. 开头 → 按**路径**处理，一定跑到那个文件
     //   · <path> 不带前缀   → 按**过滤器**处理，只匹配 Bun 默认测试规则
     //                          （.test. / _test. / .spec. / _spec.）命中的文件
-    // 于是 `bun test e2e/integration.e2e.ts` 这种写法**一个用例都跑不到**，
+    // 于是 `bun test e2e/workbench.e2e.ts` 这种写法**一个用例都跑不到**，
     // 只会打印一句 "filters did not match any test files" 然后以退出码 1 结束。
     // 基准文件（*.bench.ts）与门禁文件（*.check.ts）都踩这个坑。
     //

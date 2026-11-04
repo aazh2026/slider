@@ -17,12 +17,13 @@
  * 退出码：0 = 全链路通过；1 = 有环节失败（具体哪一环看输出）。
  */
 
-import { spawnSync } from 'node:child_process';
-import { mkdirSync } from 'node:fs';
+import { spawn } from 'node:child_process';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { startServers } from './servers';
+import { discoverChains, runE2eChains } from './run-e2e';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '../..');
@@ -36,6 +37,22 @@ interface Step {
   run?: () => Promise<number>;
   /** 失败是否可接受 —— 实现缺陷导致的测试失败不算「工具链坏了」 */
   tolerateFailure: boolean;
+  /**
+   * 这一步的 stderr 落盘到哪儿（相对 spec/evidence/）。
+   *
+   * **为什么要单独存 stderr**：
+   *
+   * Bun 的 junit reporter 在 `<failure>` 里**只写 type，一个字的信息都不写** ——
+   * 实测 `expect(1, '自定义消息').toBe(0)` 失败时产出的就是
+   * `<failure type="AssertionError" />`。
+   *
+   * 而 Bun 在 junit 模式下**仍然把失败详情打到 stderr**
+   * （源码片段、错误信息、期望值与实际值、调用栈）。
+   * 于是 stderr 就是那份"到底为什么失败"的诊断材料 ——
+   * 不存下来，失败原因就随着终端滚动消失了，
+   * 事后只剩一句"某某用例失败"，连根因的方向都没有。
+   */
+  stderrFile?: string;
 }
 
 const STEPS: Step[] = [
@@ -43,11 +60,13 @@ const STEPS: Step[] = [
     name: 'Spec 结构校验（JSON Schema 2020-12）',
     cmd: ['python3', 'spec/verify/spec-schema.py'],
     tolerateFailure: false,
+    stderrFile: 'step-schema.txt',
   },
   {
     name: '类型检查（验证器代码自身）',
     cmd: ['npx', 'tsc', '--noEmit'],
     tolerateFailure: false,
+    stderrFile: 'step-typecheck.txt',
   },
   {
     // 证据集 = 判据真正被执行到的全部测试。
@@ -73,6 +92,7 @@ const STEPS: Step[] = [
       './apps/api/tests/perf/export-latency.bench.ts',
     ],
     tolerateFailure: true,
+    stderrFile: 'junit-output.txt',
   },
   {
     // 前后端集成 E2E —— 真实浏览器 + 真实服务端。
@@ -90,13 +110,58 @@ const STEPS: Step[] = [
     name: '注入错误检查（验证器的元验证）',
     cmd: ['bun', 'run', 'spec/verify/mutation-check.ts'],
     tolerateFailure: false,
+    stderrFile: 'step-mutation.txt',
   },
   {
     name: '生成追溯矩阵',
     cmd: ['bun', 'run', 'spec/verify/traceability.ts'],
     tolerateFailure: false,
+    stderrFile: 'step-traceability.txt',
   },
 ];
+
+/**
+ * 跑一个命令式步骤，并把 stderr 落盘。
+ *
+ * **为什么用异步 spawn 而不是 spawnSync**：
+ * spawnSync 会把父进程的事件循环堵死。父进程里有一件必须一直跑的活 ——
+ * E2E 那一步要从后端/前端子进程的 stdout 里持续抽走日志
+ * （servers.ts 的 collect()）。管道缓冲区有限（macOS 上约 64KB），
+ * 父进程一堵死，抽日志就停了，后端写日志写满管道 → **后端自己被写日志卡住** →
+ * HTTP 响应发不出去 → 页面等一个永远不会来的响应。
+ *
+ * 这是一条与浏览器无关的挂死路径，症状和 E2E 那条一模一样。
+ * 用异步 spawn 把它从根上排掉。
+ */
+async function runCmd(cmd: string[], stderrFile?: string): Promise<number> {
+  const proc = spawn(cmd[0]!, cmd.slice(1), {
+    cwd: ROOT,
+    // stdout 直接继承（应用的日志照常流式打屏），
+    // stderr 接出来 —— 见 Step.stderrFile 的说明
+    stdio: ['inherit', 'inherit', 'pipe'],
+    env: process.env,
+  });
+
+  const chunks: Buffer[] = [];
+  proc.stderr?.on('data', (chunk: Buffer) => {
+    chunks.push(chunk);
+    try {
+      process.stderr.write(chunk);
+    } catch {
+      /* 自己的 stderr 已经关了 —— 不影响结论 */
+    }
+  });
+
+  const code = await new Promise<number>((res) => {
+    proc.on('exit', (c, signal) => res(signal ? 128 : (c ?? 1)));
+    proc.on('error', () => res(1));
+  });
+
+  if (stderrFile) {
+    writeFileSync(join(EVIDENCE_DIR, stderrFile), Buffer.concat(chunks));
+  }
+  return code;
+}
 
 /**
  * 拉起后端 + 前端，跑 E2E，产出 junit-e2e.xml
@@ -106,27 +171,46 @@ const STEPS: Step[] = [
 async function runE2e(): Promise<number> {
   const handle = await startServers();
   console.log(`  后端：${handle.apiBase}　前端：${handle.webBase}`);
+
+  // 每条链是一个独立文件 —— 各自完备、互不依赖。
+  //
+  // 必须用 `./` 前缀点名：*.e2e.ts 不匹配 Bun 的默认测试规则，
+  // 不带前缀会被当成**过滤器**，一个用例都跑不到（静默通过 = 没验证）。
+  const chains = await discoverChains();
+  if (chains.length === 0) {
+    console.error('❌ e2e/ 下没有任何 *.e2e.ts —— 这一步等于没跑');
+    await handle.stop();
+    return 1;
+  }
+  console.log(`  链：${chains.join('  ')}\n`);
+
   try {
-    const proc = Bun.spawn(
-      [
-        'bun',
-        'test',
-        './e2e/integration.e2e.ts',
-        '--reporter=junit',
-        `--reporter-outfile=${join(EVIDENCE_DIR, 'junit-e2e.xml')}`,
-      ],
-      {
-        cwd: ROOT,
-        stdout: 'inherit',
-        stderr: 'inherit',
-        env: { ...process.env, ...handle.env },
-      }
-    );
-    return await proc.exited;
+    // **一条链一个进程** —— 理由与实测见 spec/verify/run-e2e.ts 的文件头。
+    //
+    // 九条链塞进一个 bun test 进程时，第 5～6 条链开始页面就起不来，
+    // 浏览器死掉之后 bun test 永远不退出 —— 整轮流水线被一条链拖死。
+    // 拆开之后九条链全过，证据合并成同一份 junit-e2e.xml。
+    const { code, results } = await runE2eChains(handle, { chains });
+
+    // 失败时把服务端日志倒出来 —— "用例没过"本身没有诊断价值，
+    // 要知道是请求没发出去、服务端报了什么，得看日志。
+    if (code !== 0) {
+      const bad = results.filter((r) => r.code !== 0).map((r) => r.chain);
+      console.error(`\n--- E2E 失败链：${bad.join('  ')} —— 服务端日志 ---`);
+      console.error(handle.logs());
+    }
+    return code;
   } finally {
     await handle.stop();
   }
 }
+
+/**
+ * e2e/ 下现存的链 —— 从 run-e2e.ts 导入。
+ *
+ * **只有一份实现**：链的发现逻辑写两遍，早晚有一份会漏掉新链 ——
+ * 而"漏掉一条链"意味着"新用例没跑但报告说全绿"。
+ */
 
 async function main(): Promise<number> {
   mkdirSync(EVIDENCE_DIR, { recursive: true });
@@ -152,12 +236,7 @@ async function main(): Promise<number> {
           ? [...cmd, '--reporter=junit', `--reporter-outfile=${join(EVIDENCE_DIR, 'junit.xml')}`]
           : cmd;
 
-      const proc = spawnSync(args[0]!, args.slice(1), {
-        cwd: ROOT,
-        stdio: 'inherit',
-        env: process.env,
-      });
-      code = proc.status ?? 1;
+      code = await runCmd(args, step.stderrFile);
     }
 
     const ok = code === 0;
@@ -196,4 +275,14 @@ async function main(): Promise<number> {
   return 0;
 }
 
-process.exit(await main());
+const exitCode = await main();
+
+// 显式等输出落盘再退 —— process.exit 不会等 stdout/stderr 的异步写完。
+// 管道场景下（`bun run spec/verify/all.ts > log.txt`）末尾的汇总会丢，
+// 而汇总恰恰是整轮跑批最该被看到的那几行。
+await new Promise<void>((resolve) => {
+  process.stdout.write('', () => {
+    process.stderr.write('', () => resolve());
+  });
+});
+process.exit(exitCode);
