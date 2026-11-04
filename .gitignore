@@ -17,3 +17,7 @@ spec/evidence/e2e-media/
 # 只跑了部分链时的**临时**证据 —— 绝不能盖掉全量证据（见 spec/verify/run-e2e.ts）
 spec/evidence/junit-e2e-partial-*.xml
 spec/evidence/junit-e2e-partial-*-output.txt
+
+# Claude Code 调度器的运行时锁 —— 每个工作目录一份、随进程生命周期变化，
+# 入库只会带来无意义的冲突
+.claude/scheduled_tasks.lock
