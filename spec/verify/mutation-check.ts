@@ -34,6 +34,12 @@ import { acquireMutationLock } from './mutationLock';
 import { restoreFiles } from './mutationRestore';
 import { sha256Of } from './evidenceFreshness';
 import { dataDepsOfFile } from './dataDeps';
+import {
+  mutationExitCode,
+  mutationVerdictOf,
+  summarizeMutationCases,
+  type MutationVerdict,
+} from './mutationVerdict';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '../..');
@@ -1769,6 +1775,22 @@ function serverTail(run: RunResult): string {
   return `\n--- 该轮服务端日志（失败轮）---\n${tail(run.serverLog, 60)}`;
 }
 
+/**
+ * 一条注入结果的结论 —— 内部字段名（baseline/caught/restored）
+ * 与报告字段名（baseline_pass/…）不一样，这里做一次改名。
+ */
+function verdictOfResult(r: {
+  baseline: boolean;
+  caught: boolean;
+  restored: boolean;
+}): MutationVerdict {
+  return mutationVerdictOf({
+    baseline_pass: r.baseline,
+    caught: r.caught,
+    restored_pass: r.restored,
+  });
+}
+
 async function runChecks(): Promise<number> {
   const results: Array<{
     criterion: string;
@@ -1973,7 +1995,11 @@ async function runChecks(): Promise<number> {
         baseline: baseline.passed,
         caught: !mutated.passed,
         restored: false,
-        note: mutated.passed ? '注入后验证器仍然通过 —— 验证器抓不到这个错' : '已报错',
+        note: !baseline.passed
+          ? '基线没过 —— 没跑出结论'
+          : mutated.passed
+            ? '注入后验证器仍然通过 —— 验证器抓不到这个错'
+            : '已报错',
         outputTail:
           tail(baseline.output) +
           '\n--- 注入后 ---\n' +
@@ -2060,15 +2086,26 @@ async function runChecks(): Promise<number> {
     return 2;
   }
 
-  let broken = 0;
-  for (const r of results) {
-    if (dryRun) {
-      // 干跑模式只关心锚点命中与否
-      if (r.note.includes('锚点未命中')) broken++;
-      continue;
-    }
-    if (!r.baseline || !r.caught || !r.restored) broken++;
-  }
+  // 干跑模式只关心锚点命中与否
+  const dryRunBroken = dryRun
+    ? results.filter((r) => r.note.includes('锚点未命中')).length
+    : 0;
+  // 正常模式：三档结论 —— 见 spec/verify/mutationVerdict.ts：
+  // **基线红是「没跑出结论」，不是「验证器抓不住」**。
+  // 以前这里是一句 `!baseline || !caught || !restored` —— 基线红也算「不合格」，
+  // 于是整轮报「存在抓不到注入错误的验证器」，把「环境抖了」
+  // 说成「验证器太弱」，下一步就会去补强一个没毛病的验证器。
+  const summary = dryRun
+    ? null
+    : summarizeMutationCases(
+        results.map((r) => ({
+          baseline_pass: r.baseline,
+          caught: r.caught,
+          restored_pass: r.restored,
+        }))
+      );
+  const broken = dryRun ? dryRunBroken : summary!.fail;
+  const inconclusive = summary?.inconclusive ?? 0;
 
   // 落盘机器可读结果 —— 追溯矩阵的「注入错误检查」一节由它生成，不手写
   if (!dryRun) {
@@ -2081,7 +2118,10 @@ async function runChecks(): Promise<number> {
           // 报告是什么时候生成的 —— 与文件指纹一起，构成「这批结论对哪一版代码成立」
           generated_at: new Date().toISOString(),
           total: results.length,
+          // 「不合格」= 结论是不通过（验证器抓不住 / 源文件被改坏）
           unqualified: broken,
+          // 「没跑出结论」= 基线自己就没过 —— 单独计数，不混进「不合格」
+          inconclusive,
           cases: results.map((r) => {
             // 这个验证器还依赖哪些数据文件 —— 声明在它自己文件里的 `@verdict-deps:`
             const dataDeps = dataDepsOfFile(ROOT, r.testFile);
@@ -2096,6 +2136,8 @@ async function runChecks(): Promise<number> {
             baseline_pass: r.baseline,
             caught: r.caught,
             restored_pass: r.restored,
+            // 这一条的三档结论 —— 读者不必自己从三个布尔量推
+            verdict: verdictOfResult(r),
             note: r.note,
             // ---- 文件指纹：这批结论是对**哪一版代码**成立的 ----
             //
@@ -2155,25 +2197,48 @@ async function runChecks(): Promise<number> {
     return broken > 0 ? 1 : 0;
   }
 
-  console.log('判据            基线PASS  抓到注入  还原后PASS  说明');
+  console.log('判据            基线PASS  抓到注入  还原后PASS  结论          说明');
   console.log('─'.repeat(96));
   for (const r of results) {
     const mark = (b: boolean) => (b ? '  ✓    ' : '  ✗    ');
+    const v = verdictOfResult(r);
+    const verdictText =
+      v === 'PASS' ? '通过        ' : v === 'FAIL' ? '不通过      ' : '没跑出结论  ';
     console.log(
-      `${r.criterion.padEnd(16)}${mark(r.baseline)}${mark(r.caught)}${mark(r.restored)}   ${r.description}${
+      `${r.criterion.padEnd(16)}${mark(r.baseline)}${mark(r.caught)}${mark(r.restored)}${verdictText}  ${r.description}${
         r.note && r.note !== '已报错' ? `（${r.note}）` : ''
       }`
     );
   }
   console.log('─'.repeat(96));
-  console.log(`共 ${results.length} 个注入用例；不合格 ${broken} 个`);
+  console.log(
+    `共 ${results.length} 个注入用例；不合格 ${broken} 个` +
+      (inconclusive > 0 ? `；另有 ${inconclusive} 个没跑出结论（基线没过）` : '')
+  );
 
   if (broken > 0) {
     console.log('\n❌ 存在抓不到注入错误的验证器 —— 需要补强后才能声称这些判据有效。');
-    return 1;
+    if (inconclusive > 0) {
+      console.log(
+        `   （另有 ${inconclusive} 个用例基线自己就没过 —— 那几个**没跑出结论**，不是验证器弱。）`
+      );
+    }
+    return mutationExitCode(summary!);
+  }
+  if (inconclusive > 0) {
+    // 基线红 —— 这一轮什么都没证明。
+    // 说成「验证器抓不住」是**假结论**：验证器确实抓到了（那一栏是 ✓），
+    // 只是基线那一轮自己就红着 —— 注入后的那一轮本来也会因为同样的原因红。
+    // 读的人（和下一轮的我）会去补强一个没毛病的验证器 —— 那是假结论最贵的地方。
+    console.log(
+      `\n⚠️ 有 ${inconclusive} 个注入用例的**基线自己就没过** —— 这些用例**没跑出结论**。`
+    );
+    console.log('   （不是「验证器抓不住」：注入后的那一轮本来也会因为同样的原因红。）');
+    console.log('   这一轮的注入结论对这些用例一律不算数 —— 隔离复跑一次再判。');
+    return mutationExitCode(summary!);
   }
   console.log('\n✅ 每个注入错误都被对应验证器抓到，且源文件已全部还原。');
-  return 0;
+  return mutationExitCode(summary!);
 }
 
 /**

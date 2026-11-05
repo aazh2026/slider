@@ -31,6 +31,7 @@ import {
   worstOf,
   type Verdict,
 } from './verdict.ts';
+import { mutationVerdictOf, summarizeMutationCases } from './mutationVerdict.ts';
 import {
   currentFingerprints,
   freshnessQualifier,
@@ -322,6 +323,8 @@ function readMutation(): {
   generated_at?: string;
   total: number;
   unqualified: number;
+  /** 没跑出结论的个数 —— 基线自己就没过的那些（老报告没有这个字段） */
+  inconclusive?: number;
   cases: Array<{
     criterion: string;
     description: string;
@@ -337,6 +340,8 @@ function readMutation(): {
     baseline_pass: boolean;
     caught: boolean;
     restored_pass: boolean;
+    /** 这一条的三档结论（老报告没有 —— 现场从三个布尔量推） */
+    verdict?: string;
     note: string;
   }>;
 } {
@@ -1146,21 +1151,47 @@ function main(): void {
   // ---- 2.4 注入错误检查 ----
   P('### 2.4 注入错误检查（验证器的元验证）');
   P();
+  // 三档结论 —— 基线自己就没过的那些是「没跑出结论」，不是「验证器弱」。
+  // 计数现场算（老报告没有 inconclusive 字段），规则见 spec/verify/mutationVerdict.ts。
+  const mutationSummary = summarizeMutationCases(
+    mutation.cases.map((c) => ({
+      baseline_pass: c.baseline_pass,
+      caught: c.caught,
+      restored_pass: c.restored_pass,
+    }))
+  );
   P(
-    `共 ${mutation.total} 个注入用例，**不合格 ${mutation.unqualified} 个**。每个用例走「基线 PASS → 注入必须 FAIL → 还原后重新 PASS」三步。`
+    `共 ${mutation.total} 个注入用例，**不合格 ${mutationSummary.fail} 个**` +
+      (mutationSummary.inconclusive > 0
+        ? `，**另有 ${mutationSummary.inconclusive} 个没跑出结论**（基线自己就没过）`
+        : '') +
+      `。每个用例走「基线 PASS → 注入必须 FAIL → 还原后重新 PASS」三步。`
   );
   P();
-  P('| 判据 | 注入的错误 | 改动的文件 | 检出者 | 基线 | 检出 | 还原 |');
-  P('|---|---|---|---|---|---|---|');
+  P('| 判据 | 注入的错误 | 改动的文件 | 检出者 | 基线 | 检出 | 还原 | 结论 |');
+  P('|---|---|---|---|---|---|---|---|');
   for (const c of mutation.cases) {
     const yn = (b: boolean) => (b ? '✅' : '**MISSED**');
+    const v = mutationVerdictOf({
+      baseline_pass: c.baseline_pass,
+      caught: c.caught,
+      restored_pass: c.restored_pass,
+    });
+    const verdictCell =
+      v === 'PASS' ? '通过' : v === 'FAIL' ? '**不通过**' : '**没跑出结论**';
     P(
-      `| ${c.criterion} | ${c.description} | \`${c.mutated_file}\` | \`${c.verifier}\` | ${yn(c.baseline_pass)} | ${yn(c.caught)} | ${yn(c.restored_pass)} |`
+      `| ${c.criterion} | ${c.description} | \`${c.mutated_file}\` | \`${c.verifier}\` | ${yn(c.baseline_pass)} | ${yn(c.caught)} | ${yn(c.restored_pass)} | ${verdictCell} |`
     );
   }
   P();
-  if (mutation.unqualified > 0) {
+  if (mutationSummary.fail > 0) {
     P('> ⚠️ 存在 MISSED 的行 —— 这些判据的「通过」不构成证据。');
+  } else if (mutationSummary.inconclusive > 0) {
+    P(
+      `> ⚠️ 有 ${mutationSummary.inconclusive} 行的**基线自己就没过** —— 这些用例**没跑出结论**。` +
+        '**不能**据此说「验证器抓得住」：注入后的那一轮本来也会因为同样的原因红。' +
+        '（这类红多半是环境抖了 —— 别的跑批在抢、或者机器睡了；隔离复跑一次再判。）'
+    );
   } else {
     P(
       '> 全部注入错误都被对应验证器抓到。**没有 MISSED 行** —— 上表的 PASS 因此不是自证。**但那是跑批那一刻的结论**：这些用例现在还跑不跑得起来，见 §2.4.2。'
@@ -1369,7 +1400,11 @@ function main(): void {
     `- 真的跑了 \`npx tsc --noEmit\`：类型检查通过`
   );
   P(
-    `- 真的跑了 \`bun run spec/verify/mutation-check.ts\`：**${mutation.total} 个注入用例，不合格 ${mutation.unqualified} 个** —— 每个用例走「基线 PASS → 注入必须 FAIL → 还原后重新 PASS」三步，源文件已全部还原` +
+    `- 真的跑了 \`bun run spec/verify/mutation-check.ts\`：**${mutation.total} 个注入用例，不合格 ${mutationSummary.fail} 个**` +
+      (mutationSummary.inconclusive > 0
+        ? `，另有 ${mutationSummary.inconclusive} 个没跑出结论（基线自己就没过）`
+        : '') +
+      ` —— 每个用例走「基线 PASS → 注入必须 FAIL → 还原后重新 PASS」三步，源文件已全部还原` +
       freshnessQualifier(freshness) +
       reconciliationQualifier(reconciliation)
   );
@@ -1441,7 +1476,12 @@ function main(): void {
       `超时 ${timeoutCrit} 条判据 —— **没跑出结论**，不是断言不通过（多半是环境被抢或机器睡眠；隔离复跑一次再判）`
     );
   }
-  console.log(`注入检查：${mutation.total} 个用例，不合格 ${mutation.unqualified} 个`);
+  console.log(
+    `注入检查：${mutation.total} 个用例，不合格 ${mutationSummary.fail} 个` +
+      (mutationSummary.inconclusive > 0
+        ? `，另有 ${mutationSummary.inconclusive} 个没跑出结论（基线没过）`
+        : '')
+  );
   console.log(
     `注入对账：定义 ${reconciliation.defined} / 报告 ${reconciliation.reported} / 跑不起来 ${reconciliation.broken.length} / 缺报告 ${reconciliation.notInReport.length} / 孤儿 ${reconciliation.orphanInReport.length}`
   );
