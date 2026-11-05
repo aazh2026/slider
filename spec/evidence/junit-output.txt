@@ -1,11 +1,11 @@
 
 scripts/check-coverage.check.ts:
 [coverage] ✗ 覆盖率报告里没有任何 packages/core/src/engine/ 下的文件 —— 无法判定覆盖率，按未通过处理
-[coverage]   （采到的文件共 1 个，示例：y-lcov-NmMJyy/somewhere/else.ts）
+[coverage]   （采到的文件共 1 个，示例：cov-L1nysP/somewhere/else.ts）
 
 apps/api/tests/perf/export-latency.bench.ts:
 
- 471 pass
+ 478 pass
  0 fail
- 4505 expect() calls
-Ran 471 tests across 46 files. [75.13s]
+ 4531 expect() calls
+Ran 478 tests across 47 files. [78.87s]

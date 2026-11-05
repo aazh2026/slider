@@ -1,153 +1,154 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="bun test" tests="98" assertions="358" failures="0" skipped="0" time="83.373165">
+<testsuites name="bun test" tests="99" assertions="364" failures="0" skipped="0" time="86.141133">
 <testsuite name="e2e/auth.e2e.ts" file="e2e/auth.e2e.ts" tests="10" assertions="35" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-    <testsuite name="认证链（真实浏览器 + 真实服务端）" file="e2e/auth.e2e.ts" line="99" tests="10" assertions="35" failures="0" skipped="0" time="4.495" hostname="AarondeMacBook-Pro.local">
-      <testcase name="AC-E2E-001 注册 → 服务端签发 HttpOnly 会话，前端据此进入工作台" classname="认证链（真实浏览器 + 真实服务端）" time="0.416439" file="e2e/auth.e2e.ts" line="100" assertions="7" />
-      <testcase name="登录 → 用已注册的账号换一个新会话" classname="认证链（真实浏览器 + 真实服务端）" time="0.494851" file="e2e/auth.e2e.ts" line="130" assertions="5" />
-      <testcase name="密码错误 → 前端显示错误，且不下发任何会话 Cookie" classname="认证链（真实浏览器 + 真实服务端）" time="0.490501" file="e2e/auth.e2e.ts" line="162" assertions="3" />
-      <testcase name="登出 → 服务端作废会话（不是只把界面藏起来）" classname="认证链（真实浏览器 + 真实服务端）" time="0.399873" file="e2e/auth.e2e.ts" line="191" assertions="3" />
-      <testcase name="会话在服务端失效 → 前端自己退回登录页" classname="认证链（真实浏览器 + 真实服务端）" time="0.59624" file="e2e/auth.e2e.ts" line="242" assertions="0" />
-      <testcase name="侧边栏折叠与展开 → 折叠态留一个当前项目圆点，展开后项目卡片回来" classname="认证链（真实浏览器 + 真实服务端）" time="0.368995" file="e2e/auth.e2e.ts" line="283" assertions="4" />
-      <testcase name="工作室主题切换 → &lt;html&gt; 上的 dark 类真的跟着变" classname="认证链（真实浏览器 + 真实服务端）" time="0.384022" file="e2e/auth.e2e.ts" line="310" assertions="2" />
-      <testcase name="PPT 底色快切 → 服务端的模板真的从浅色翻成深色" classname="认证链（真实浏览器 + 真实服务端）" time="0.501377" file="e2e/auth.e2e.ts" line="335" assertions="3" />
-      <testcase name="项目下拉切换器 → 点另一份作品，当前作品就换了" classname="认证链（真实浏览器 + 真实服务端）" time="0.533993" file="e2e/auth.e2e.ts" line="368" assertions="1" />
-      <testcase name="侧边栏六个页签 → 没有作品时，只有不依赖作品的三个能点" classname="认证链（真实浏览器 + 真实服务端）" time="0.314018" file="e2e/auth.e2e.ts" line="422" assertions="7" />
+    <testsuite name="认证链（真实浏览器 + 真实服务端）" file="e2e/auth.e2e.ts" line="99" tests="10" assertions="35" failures="0" skipped="0" time="4.737" hostname="AarondeMacBook-Pro.local">
+      <testcase name="AC-E2E-001 注册 → 服务端签发 HttpOnly 会话，前端据此进入工作台" classname="认证链（真实浏览器 + 真实服务端）" time="0.451485" file="e2e/auth.e2e.ts" line="100" assertions="7" />
+      <testcase name="登录 → 用已注册的账号换一个新会话" classname="认证链（真实浏览器 + 真实服务端）" time="0.533382" file="e2e/auth.e2e.ts" line="130" assertions="5" />
+      <testcase name="密码错误 → 前端显示错误，且不下发任何会话 Cookie" classname="认证链（真实浏览器 + 真实服务端）" time="0.502868" file="e2e/auth.e2e.ts" line="162" assertions="3" />
+      <testcase name="登出 → 服务端作废会话（不是只把界面藏起来）" classname="认证链（真实浏览器 + 真实服务端）" time="0.413404" file="e2e/auth.e2e.ts" line="191" assertions="3" />
+      <testcase name="会话在服务端失效 → 前端自己退回登录页" classname="认证链（真实浏览器 + 真实服务端）" time="0.605544" file="e2e/auth.e2e.ts" line="242" assertions="0" />
+      <testcase name="侧边栏折叠与展开 → 折叠态留一个当前项目圆点，展开后项目卡片回来" classname="认证链（真实浏览器 + 真实服务端）" time="0.419784" file="e2e/auth.e2e.ts" line="283" assertions="4" />
+      <testcase name="工作室主题切换 → &lt;html&gt; 上的 dark 类真的跟着变" classname="认证链（真实浏览器 + 真实服务端）" time="0.418949" file="e2e/auth.e2e.ts" line="310" assertions="2" />
+      <testcase name="PPT 底色快切 → 服务端的模板真的从浅色翻成深色" classname="认证链（真实浏览器 + 真实服务端）" time="0.53571" file="e2e/auth.e2e.ts" line="335" assertions="3" />
+      <testcase name="项目下拉切换器 → 点另一份作品，当前作品就换了" classname="认证链（真实浏览器 + 真实服务端）" time="0.53304" file="e2e/auth.e2e.ts" line="368" assertions="1" />
+      <testcase name="侧边栏六个页签 → 没有作品时，只有不依赖作品的三个能点" classname="认证链（真实浏览器 + 真实服务端）" time="0.328164" file="e2e/auth.e2e.ts" line="422" assertions="7" />
     </testsuite>
   </testsuite>
 <testsuite name="e2e/errors.e2e.ts" file="e2e/errors.e2e.ts" tests="4" assertions="12" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-    <testsuite name="异常链（真实浏览器 + 真实服务端）" file="e2e/errors.e2e.ts" line="71" tests="4" assertions="12" failures="0" skipped="0" time="2.031" hostname="AarondeMacBook-Pro.local">
-      <testcase name="后端连不上 → 界面明说连不上，登录入口仍然可用" classname="异常链（真实浏览器 + 真实服务端）" time="0.185988" file="e2e/errors.e2e.ts" line="72" assertions="4" />
-      <testcase name="项目列表加载失败 → 显示 load-error，且没有假装&quot;加载成功&quot;" classname="异常链（真实浏览器 + 真实服务端）" time="0.295039" file="e2e/errors.e2e.ts" line="99" assertions="3" />
-      <testcase name="导出提交失败 → 界面显示&quot;导出失败&quot;，绝不显示&quot;导出成功&quot;" classname="异常链（真实浏览器 + 真实服务端）" time="0.773626" file="e2e/errors.e2e.ts" line="143" assertions="3" />
-      <testcase name="导出任务失败 → 界面显示失败原因，不触发下载" classname="异常链（真实浏览器 + 真实服务端）" time="0.778224" file="e2e/errors.e2e.ts" line="182" assertions="2" />
+    <testsuite name="异常链（真实浏览器 + 真实服务端）" file="e2e/errors.e2e.ts" line="71" tests="4" assertions="12" failures="0" skipped="0" time="2.054" hostname="AarondeMacBook-Pro.local">
+      <testcase name="后端连不上 → 界面明说连不上，登录入口仍然可用" classname="异常链（真实浏览器 + 真实服务端）" time="0.187037" file="e2e/errors.e2e.ts" line="72" assertions="4" />
+      <testcase name="项目列表加载失败 → 显示 load-error，且没有假装&quot;加载成功&quot;" classname="异常链（真实浏览器 + 真实服务端）" time="0.299686" file="e2e/errors.e2e.ts" line="99" assertions="3" />
+      <testcase name="导出提交失败 → 界面显示&quot;导出失败&quot;，绝不显示&quot;导出成功&quot;" classname="异常链（真实浏览器 + 真实服务端）" time="0.784446" file="e2e/errors.e2e.ts" line="143" assertions="3" />
+      <testcase name="导出任务失败 → 界面显示失败原因，不触发下载" classname="异常链（真实浏览器 + 真实服务端）" time="0.784509" file="e2e/errors.e2e.ts" line="182" assertions="2" />
     </testsuite>
   </testsuite>
 <testsuite name="e2e/exports.e2e.ts" file="e2e/exports.e2e.ts" tests="5" assertions="35" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-    <testsuite name="导出链（真实浏览器 + 真实服务端）" file="e2e/exports.e2e.ts" line="127" tests="5" assertions="35" failures="0" skipped="0" time="8.304" hostname="AarondeMacBook-Pro.local">
-      <testcase name="AC-E2E-009 PPTX 导出 → 产物是真正的 OOXML，而且里面是这份文稿" classname="导出链（真实浏览器 + 真实服务端）" time="1.021764" file="e2e/exports.e2e.ts" line="128" assertions="6" />
-      <testcase name="AC-E2E-010 PDF 导出 → 产物是真正的 PDF（%PDF 魔数）" classname="导出链（真实浏览器 + 真实服务端）" time="4.04727" file="e2e/exports.e2e.ts" line="159" assertions="5" />
-      <testcase name="PNG 导出 → 产物是真正的 PNG 位图" classname="导出链（真实浏览器 + 真实服务端）" time="1.264284" file="e2e/exports.e2e.ts" line="178" assertions="7" />
-      <testcase name="SVG 导出 → 产物是真正的 SVG，而且画的是这一页" classname="导出链（真实浏览器 + 真实服务端）" time="0.977785" file="e2e/exports.e2e.ts" line="216" assertions="7" />
-      <testcase name="JSON 导出 → 产物是能解析的 Slide IR，且与服务端一致" classname="导出链（真实浏览器 + 真实服务端）" time="0.995725" file="e2e/exports.e2e.ts" line="240" assertions="10" />
+    <testsuite name="导出链（真实浏览器 + 真实服务端）" file="e2e/exports.e2e.ts" line="127" tests="5" assertions="35" failures="0" skipped="0" time="8.525" hostname="AarondeMacBook-Pro.local">
+      <testcase name="AC-E2E-009 PPTX 导出 → 产物是真正的 OOXML，而且里面是这份文稿" classname="导出链（真实浏览器 + 真实服务端）" time="1.041479" file="e2e/exports.e2e.ts" line="128" assertions="6" />
+      <testcase name="AC-E2E-010 PDF 导出 → 产物是真正的 PDF（%PDF 魔数）" classname="导出链（真实浏览器 + 真实服务端）" time="4.151973" file="e2e/exports.e2e.ts" line="159" assertions="5" />
+      <testcase name="PNG 导出 → 产物是真正的 PNG 位图" classname="导出链（真实浏览器 + 真实服务端）" time="1.309784" file="e2e/exports.e2e.ts" line="178" assertions="7" />
+      <testcase name="SVG 导出 → 产物是真正的 SVG，而且画的是这一页" classname="导出链（真实浏览器 + 真实服务端）" time="1.012598" file="e2e/exports.e2e.ts" line="216" assertions="7" />
+      <testcase name="JSON 导出 → 产物是能解析的 Slide IR，且与服务端一致" classname="导出链（真实浏览器 + 真实服务端）" time="1.01208" file="e2e/exports.e2e.ts" line="240" assertions="10" />
     </testsuite>
   </testsuite>
-<testsuite name="e2e/library.e2e.ts" file="e2e/library.e2e.ts" tests="12" assertions="36" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-    <testsuite name="作品库链（真实浏览器 + 真实服务端）" file="e2e/library.e2e.ts" line="148" tests="12" assertions="36" failures="0" skipped="0" time="6.527" hostname="AarondeMacBook-Pro.local">
-      <testcase name="搜索 → 只剩下命中名字的那一张卡" classname="作品库链（真实浏览器 + 真实服务端）" time="0.544628" file="e2e/library.e2e.ts" line="149" assertions="2" />
-      <testcase name="搜索无命中 → 一张卡都不剩（空态）" classname="作品库链（真实浏览器 + 真实服务端）" time="0.501222" file="e2e/library.e2e.ts" line="164" assertions="2" />
-      <testcase name="深色底筛选 → 只剩深色模板的那一份" classname="作品库链（真实浏览器 + 真实服务端）" time="0.558562" file="e2e/library.e2e.ts" line="179" assertions="2" />
-      <testcase name="浅色底筛选 → 只剩浅色模板的那一份" classname="作品库链（真实浏览器 + 真实服务端）" time="0.535496" file="e2e/library.e2e.ts" line="194" assertions="2" />
-      <testcase name="全部筛选 → 两份都回来" classname="作品库链（真实浏览器 + 真实服务端）" time="0.564774" file="e2e/library.e2e.ts" line="209" assertions="5" />
-      <testcase name="卡片页数写的是真实页数（不是「0 页」）" classname="作品库链（真实浏览器 + 真实服务端）" time="0.506324" file="e2e/library.e2e.ts" line="230" assertions="3" />
-      <testcase name="按页数从多到少排序 → 页多的排前面" classname="作品库链（真实浏览器 + 真实服务端）" time="0.510827" file="e2e/library.e2e.ts" line="247" assertions="3" />
-      <testcase name="复制作品 → 服务端多一份，页数与原件相同" classname="作品库链（真实浏览器 + 真实服务端）" time="0.555799" file="e2e/library.e2e.ts" line="264" assertions="3" />
-      <testcase name="导出 JSON → 拿到的是带页面的完整 bundle" classname="作品库链（真实浏览器 + 真实服务端）" time="0.536808" file="e2e/library.e2e.ts" line="293" assertions="7" />
-      <testcase name="导入 JSON → 服务端多一份「(导入)」，页面也回来了" classname="作品库链（真实浏览器 + 真实服务端）" time="0.529304" file="e2e/library.e2e.ts" line="326" assertions="3" />
-      <testcase name="新建弹窗选模板 → 服务端这份作品用的就是选中的模板" classname="作品库链（真实浏览器 + 真实服务端）" time="0.629875" file="e2e/library.e2e.ts" line="366" assertions="2" />
-      <testcase name="打开工作台 → 进到工作台且画布上就是那一页" classname="作品库链（真实浏览器 + 真实服务端）" time="0.560062" file="e2e/library.e2e.ts" line="404" assertions="2" />
+<testsuite name="e2e/library.e2e.ts" file="e2e/library.e2e.ts" tests="13" assertions="42" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
+    <testsuite name="作品库链（真实浏览器 + 真实服务端）" file="e2e/library.e2e.ts" line="152" tests="13" assertions="42" failures="0" skipped="0" time="7.173" hostname="AarondeMacBook-Pro.local">
+      <testcase name="搜索 → 只剩下命中名字的那一张卡" classname="作品库链（真实浏览器 + 真实服务端）" time="0.568232" file="e2e/library.e2e.ts" line="153" assertions="2" />
+      <testcase name="搜索无命中 → 一张卡都不剩（空态）" classname="作品库链（真实浏览器 + 真实服务端）" time="0.525133" file="e2e/library.e2e.ts" line="168" assertions="2" />
+      <testcase name="深色底筛选 → 只剩深色模板的那一份" classname="作品库链（真实浏览器 + 真实服务端）" time="0.531756" file="e2e/library.e2e.ts" line="183" assertions="2" />
+      <testcase name="浅色底筛选 → 只剩浅色模板的那一份" classname="作品库链（真实浏览器 + 真实服务端）" time="0.544045" file="e2e/library.e2e.ts" line="198" assertions="2" />
+      <testcase name="全部筛选 → 两份都回来" classname="作品库链（真实浏览器 + 真实服务端）" time="0.574383" file="e2e/library.e2e.ts" line="213" assertions="5" />
+      <testcase name="卡片页数写的是真实页数（不是「0 页」）" classname="作品库链（真实浏览器 + 真实服务端）" time="0.520533" file="e2e/library.e2e.ts" line="234" assertions="3" />
+      <testcase name="按页数从多到少排序 → 页多的排前面" classname="作品库链（真实浏览器 + 真实服务端）" time="0.512139" file="e2e/library.e2e.ts" line="251" assertions="3" />
+      <testcase name="复制作品 → 服务端多一份，页数与原件相同" classname="作品库链（真实浏览器 + 真实服务端）" time="0.565141" file="e2e/library.e2e.ts" line="268" assertions="3" />
+      <testcase name="导出 JSON → 拿到的是带页面的完整 bundle" classname="作品库链（真实浏览器 + 真实服务端）" time="0.541107" file="e2e/library.e2e.ts" line="297" assertions="7" />
+      <testcase name="导出 PPTX → 拿到的是带页面的 pptx（不是零页空壳）" classname="作品库链（真实浏览器 + 真实服务端）" time="0.578931" file="e2e/library.e2e.ts" line="330" assertions="6" />
+      <testcase name="导入 JSON → 服务端多一份「(导入)」，页面也回来了" classname="作品库链（真实浏览器 + 真实服务端）" time="0.534895" file="e2e/library.e2e.ts" line="373" assertions="3" />
+      <testcase name="新建弹窗选模板 → 服务端这份作品用的就是选中的模板" classname="作品库链（真实浏览器 + 真实服务端）" time="0.623403" file="e2e/library.e2e.ts" line="413" assertions="2" />
+      <testcase name="打开工作台 → 进到工作台且画布上就是那一页" classname="作品库链（真实浏览器 + 真实服务端）" time="0.558467" file="e2e/library.e2e.ts" line="451" assertions="2" />
     </testsuite>
   </testsuite>
 <testsuite name="e2e/navigation.e2e.ts" file="e2e/navigation.e2e.ts" tests="13" assertions="45" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-    <testsuite name="导航链（真实浏览器 + 真实服务端）" file="e2e/navigation.e2e.ts" line="228" tests="13" assertions="45" failures="0" skipped="0" time="8.738" hostname="AarondeMacBook-Pro.local">
-      <testcase name="大纲：新增页面 → 服务端的大纲真的多了一项" classname="导航链（真实浏览器 + 真实服务端）" time="0.522885" file="e2e/navigation.e2e.ts" line="233" assertions="4" />
-      <testcase name="大纲：改页面目标 → 服务端那一项的 purpose 变了" classname="导航链（真实浏览器 + 真实服务端）" time="0.453373" file="e2e/navigation.e2e.ts" line="260" assertions="2" />
-      <testcase name="大纲：改核心结论 → 服务端那一项的 keyMessage 变了" classname="导航链（真实浏览器 + 真实服务端）" time="0.458837" file="e2e/navigation.e2e.ts" line="285" assertions="2" />
-      <testcase name="大纲：改版式 → 服务端那一项的 layoutPreference 变了" classname="导航链（真实浏览器 + 真实服务端）" time="0.447856" file="e2e/navigation.e2e.ts" line="310" assertions="2" />
-      <testcase name="大纲：上移本页 → 服务端的页序真的换了" classname="导航链（真实浏览器 + 真实服务端）" time="0.499849" file="e2e/navigation.e2e.ts" line="333" assertions="3" />
-      <testcase name="大纲：下移本页 → 服务端的页序真的换了" classname="导航链（真实浏览器 + 真实服务端）" time="0.530857" file="e2e/navigation.e2e.ts" line="363" assertions="3" />
-      <testcase name="大纲：删除本页 → 服务端的大纲少了一项" classname="导航链（真实浏览器 + 真实服务端）" time="0.49411" file="e2e/navigation.e2e.ts" line="395" assertions="5" />
-      <testcase name="页签互切 → 六个页签都真的切过去了" classname="导航链（真实浏览器 + 真实服务端）" time="0.645693" file="e2e/navigation.e2e.ts" line="428" assertions="1" />
-      <testcase name="AC-E2E-023 PNG/SVG 导出 → scope 只含当前页" classname="导航链（真实浏览器 + 真实服务端）" time="0.661375" file="e2e/navigation.e2e.ts" line="460" assertions="8" />
-      <testcase name="AC-E2E-024 导出弹窗的 PNG 说明 → 页码跟着当前页走" classname="导航链（真实浏览器 + 真实服务端）" time="0.516824" file="e2e/navigation.e2e.ts" line="500" assertions="4" />
-      <testcase name="AC-E2E-025 工作台第 2 页点放映 → 从第 2 页开始" classname="导航链（真实浏览器 + 真实服务端）" time="0.502622" file="e2e/navigation.e2e.ts" line="526" assertions="6" />
-      <testcase name="放映：退出放映回到工作台，页码没变" classname="导航链（真实浏览器 + 真实服务端）" time="0.517017" file="e2e/navigation.e2e.ts" line="570" assertions="3" />
-      <testcase name="放映：计时器重置归零" classname="导航链（真实浏览器 + 真实服务端）" time="2.494053" file="e2e/navigation.e2e.ts" line="598" assertions="2" />
+    <testsuite name="导航链（真实浏览器 + 真实服务端）" file="e2e/navigation.e2e.ts" line="228" tests="13" assertions="45" failures="0" skipped="0" time="9.02" hostname="AarondeMacBook-Pro.local">
+      <testcase name="大纲：新增页面 → 服务端的大纲真的多了一项" classname="导航链（真实浏览器 + 真实服务端）" time="0.556901" file="e2e/navigation.e2e.ts" line="233" assertions="4" />
+      <testcase name="大纲：改页面目标 → 服务端那一项的 purpose 变了" classname="导航链（真实浏览器 + 真实服务端）" time="0.504312" file="e2e/navigation.e2e.ts" line="260" assertions="2" />
+      <testcase name="大纲：改核心结论 → 服务端那一项的 keyMessage 变了" classname="导航链（真实浏览器 + 真实服务端）" time="0.479686" file="e2e/navigation.e2e.ts" line="285" assertions="2" />
+      <testcase name="大纲：改版式 → 服务端那一项的 layoutPreference 变了" classname="导航链（真实浏览器 + 真实服务端）" time="0.47032" file="e2e/navigation.e2e.ts" line="310" assertions="2" />
+      <testcase name="大纲：上移本页 → 服务端的页序真的换了" classname="导航链（真实浏览器 + 真实服务端）" time="0.561334" file="e2e/navigation.e2e.ts" line="333" assertions="3" />
+      <testcase name="大纲：下移本页 → 服务端的页序真的换了" classname="导航链（真实浏览器 + 真实服务端）" time="0.547479" file="e2e/navigation.e2e.ts" line="363" assertions="3" />
+      <testcase name="大纲：删除本页 → 服务端的大纲少了一项" classname="导航链（真实浏览器 + 真实服务端）" time="0.534801" file="e2e/navigation.e2e.ts" line="395" assertions="5" />
+      <testcase name="页签互切 → 六个页签都真的切过去了" classname="导航链（真实浏览器 + 真实服务端）" time="0.621875" file="e2e/navigation.e2e.ts" line="428" assertions="1" />
+      <testcase name="AC-E2E-023 PNG/SVG 导出 → scope 只含当前页" classname="导航链（真实浏览器 + 真实服务端）" time="0.65006" file="e2e/navigation.e2e.ts" line="460" assertions="8" />
+      <testcase name="AC-E2E-024 导出弹窗的 PNG 说明 → 页码跟着当前页走" classname="导航链（真实浏览器 + 真实服务端）" time="0.511496" file="e2e/navigation.e2e.ts" line="500" assertions="4" />
+      <testcase name="AC-E2E-025 工作台第 2 页点放映 → 从第 2 页开始" classname="导航链（真实浏览器 + 真实服务端）" time="0.508748" file="e2e/navigation.e2e.ts" line="526" assertions="6" />
+      <testcase name="放映：退出放映回到工作台，页码没变" classname="导航链（真实浏览器 + 真实服务端）" time="0.542643" file="e2e/navigation.e2e.ts" line="570" assertions="3" />
+      <testcase name="放映：计时器重置归零" classname="导航链（真实浏览器 + 真实服务端）" time="2.537758" file="e2e/navigation.e2e.ts" line="598" assertions="2" />
     </testsuite>
   </testsuite>
 <testsuite name="e2e/offline.e2e.ts" file="e2e/offline.e2e.ts" tests="2" assertions="4" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-    <testsuite name="离线链（外部资源不可达时应用仍能启动）" file="e2e/offline.e2e.ts" line="81" tests="2" assertions="4" failures="0" skipped="0" time="0.283" hostname="AarondeMacBook-Pro.local">
-      <testcase name="应用 HTML → 没有会阻塞渲染的外部样式表" classname="离线链（外部资源不可达时应用仍能启动）" time="0.001496" file="e2e/offline.e2e.ts" line="82" assertions="2" />
-      <testcase name="外部资源被挂起 → 外壳仍在 8 秒内渲染出来" classname="离线链（外部资源不可达时应用仍能启动）" time="0.282683" file="e2e/offline.e2e.ts" line="108" assertions="2" />
+    <testsuite name="离线链（外部资源不可达时应用仍能启动）" file="e2e/offline.e2e.ts" line="81" tests="2" assertions="4" failures="0" skipped="0" time="0.277" hostname="AarondeMacBook-Pro.local">
+      <testcase name="应用 HTML → 没有会阻塞渲染的外部样式表" classname="离线链（外部资源不可达时应用仍能启动）" time="0.001982" file="e2e/offline.e2e.ts" line="82" assertions="2" />
+      <testcase name="外部资源被挂起 → 外壳仍在 8 秒内渲染出来" classname="离线链（外部资源不可达时应用仍能启动）" time="0.276341" file="e2e/offline.e2e.ts" line="108" assertions="2" />
     </testsuite>
   </testsuite>
 <testsuite name="e2e/presentation.e2e.ts" file="e2e/presentation.e2e.ts" tests="4" assertions="14" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-    <testsuite name="演示链（真实浏览器 + 真实服务端）" file="e2e/presentation.e2e.ts" line="91" tests="4" assertions="14" failures="0" skipped="0" time="2.896" hostname="AarondeMacBook-Pro.local">
-      <testcase name="进入放映 → 画的是服务端第一页，页码是 01 / N" classname="演示链（真实浏览器 + 真实服务端）" time="0.717914" file="e2e/presentation.e2e.ts" line="92" assertions="5" />
-      <testcase name="翻页 → 换到服务端的后一页，退回后回到第一页" classname="演示链（真实浏览器 + 真实服务端）" time="0.740727" file="e2e/presentation.e2e.ts" line="123" assertions="1" />
-      <testcase name="放映画面上的文字 == 服务端 IR 里的文字" classname="演示链（真实浏览器 + 真实服务端）" time="0.67711" file="e2e/presentation.e2e.ts" line="159" assertions="5" />
-      <testcase name="备注抽屉 → 显示本页要点；退出演放 → 回到工作台" classname="演示链（真实浏览器 + 真实服务端）" time="0.762896" file="e2e/presentation.e2e.ts" line="183" assertions="3" />
+    <testsuite name="演示链（真实浏览器 + 真实服务端）" file="e2e/presentation.e2e.ts" line="91" tests="4" assertions="14" failures="0" skipped="0" time="2.92" hostname="AarondeMacBook-Pro.local">
+      <testcase name="进入放映 → 画的是服务端第一页，页码是 01 / N" classname="演示链（真实浏览器 + 真实服务端）" time="0.715095" file="e2e/presentation.e2e.ts" line="92" assertions="5" />
+      <testcase name="翻页 → 换到服务端的后一页，退回后回到第一页" classname="演示链（真实浏览器 + 真实服务端）" time="0.760053" file="e2e/presentation.e2e.ts" line="123" assertions="1" />
+      <testcase name="放映画面上的文字 == 服务端 IR 里的文字" classname="演示链（真实浏览器 + 真实服务端）" time="0.657737" file="e2e/presentation.e2e.ts" line="159" assertions="5" />
+      <testcase name="备注抽屉 → 显示本页要点；退出演放 → 回到工作台" classname="演示链（真实浏览器 + 真实服务端）" time="0.788372" file="e2e/presentation.e2e.ts" line="183" assertions="3" />
     </testsuite>
   </testsuite>
 <testsuite name="e2e/projects.e2e.ts" file="e2e/projects.e2e.ts" tests="7" assertions="25" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-    <testsuite name="项目链（真实浏览器 + 真实服务端）" file="e2e/projects.e2e.ts" line="67" tests="7" assertions="25" failures="0" skipped="0" time="4.283" hostname="AarondeMacBook-Pro.local">
-      <testcase name="AC-E2E-002 新建项目 → 服务端库里真的有这条项目，且归属当前用户" classname="项目链（真实浏览器 + 真实服务端）" time="0.553398" file="e2e/projects.e2e.ts" line="68" assertions="6" />
-      <testcase name="AC-E2E-012 重命名项目 → 服务端存的是新名字" classname="项目链（真实浏览器 + 真实服务端）" time="0.512057" file="e2e/projects.e2e.ts" line="103" assertions="2" />
-      <testcase name="AC-E2E-013 删除项目 → 服务端真的删掉了（且列表里也没有）" classname="项目链（真实浏览器 + 真实服务端）" time="0.730634" file="e2e/projects.e2e.ts" line="142" assertions="4" />
-      <testcase name="AC-E2E-011 跨租户隔离 → 别人的项目拿不到（404 而不是 403）" classname="项目链（真实浏览器 + 真实服务端）" time="0.618254" file="e2e/projects.e2e.ts" line="195" assertions="5" />
-      <testcase name="零项目 → 空态提示可见，且能从空态回到作品库" classname="项目链（真实浏览器 + 真实服务端）" time="0.426688" file="e2e/projects.e2e.ts" line="253" assertions="2" />
-      <testcase name="项目列表 → UI 上的卡片与服务端列表逐条对得上" classname="项目链（真实浏览器 + 真实服务端）" time="0.661727" file="e2e/projects.e2e.ts" line="279" assertions="3" />
-      <testcase name="跨租户的项目不能被当前用户删除" classname="项目链（真实浏览器 + 真实服务端）" time="0.783333" file="e2e/projects.e2e.ts" line="319" assertions="3" />
+    <testsuite name="项目链（真实浏览器 + 真实服务端）" file="e2e/projects.e2e.ts" line="67" tests="7" assertions="25" failures="0" skipped="0" time="4.351" hostname="AarondeMacBook-Pro.local">
+      <testcase name="AC-E2E-002 新建项目 → 服务端库里真的有这条项目，且归属当前用户" classname="项目链（真实浏览器 + 真实服务端）" time="0.553453" file="e2e/projects.e2e.ts" line="68" assertions="6" />
+      <testcase name="AC-E2E-012 重命名项目 → 服务端存的是新名字" classname="项目链（真实浏览器 + 真实服务端）" time="0.526076" file="e2e/projects.e2e.ts" line="103" assertions="2" />
+      <testcase name="AC-E2E-013 删除项目 → 服务端真的删掉了（且列表里也没有）" classname="项目链（真实浏览器 + 真实服务端）" time="0.716451" file="e2e/projects.e2e.ts" line="142" assertions="4" />
+      <testcase name="AC-E2E-011 跨租户隔离 → 别人的项目拿不到（404 而不是 403）" classname="项目链（真实浏览器 + 真实服务端）" time="0.671265" file="e2e/projects.e2e.ts" line="195" assertions="5" />
+      <testcase name="零项目 → 空态提示可见，且能从空态回到作品库" classname="项目链（真实浏览器 + 真实服务端）" time="0.426827" file="e2e/projects.e2e.ts" line="253" assertions="2" />
+      <testcase name="项目列表 → UI 上的卡片与服务端列表逐条对得上" classname="项目链（真实浏览器 + 真实服务端）" time="0.672631" file="e2e/projects.e2e.ts" line="279" assertions="3" />
+      <testcase name="跨租户的项目不能被当前用户删除" classname="项目链（真实浏览器 + 真实服务端）" time="0.787555" file="e2e/projects.e2e.ts" line="319" assertions="3" />
     </testsuite>
   </testsuite>
 <testsuite name="e2e/quality.e2e.ts" file="e2e/quality.e2e.ts" tests="2" assertions="12" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-    <testsuite name="质量链（真实浏览器 + 真实服务端）" file="e2e/quality.e2e.ts" line="91" tests="2" assertions="12" failures="0" skipped="0" time="2.198" hostname="AarondeMacBook-Pro.local">
-      <testcase name="质量报告 → 界面分数与服务端权威评分逐项对得上" classname="质量链（真实浏览器 + 真实服务端）" time="0.697066" file="e2e/quality.e2e.ts" line="92" assertions="8" />
-      <testcase name="一键修复 → 服务端的 IR 真的被改写，版本号前进" classname="质量链（真实浏览器 + 真实服务端）" time="1.501897" file="e2e/quality.e2e.ts" line="120" assertions="4" />
+    <testsuite name="质量链（真实浏览器 + 真实服务端）" file="e2e/quality.e2e.ts" line="91" tests="2" assertions="12" failures="0" skipped="0" time="2.203" hostname="AarondeMacBook-Pro.local">
+      <testcase name="质量报告 → 界面分数与服务端权威评分逐项对得上" classname="质量链（真实浏览器 + 真实服务端）" time="0.717152" file="e2e/quality.e2e.ts" line="92" assertions="8" />
+      <testcase name="一键修复 → 服务端的 IR 真的被改写，版本号前进" classname="质量链（真实浏览器 + 真实服务端）" time="1.486756" file="e2e/quality.e2e.ts" line="120" assertions="4" />
     </testsuite>
   </testsuite>
 <testsuite name="e2e/templates.e2e.ts" file="e2e/templates.e2e.ts" tests="3" assertions="9" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-    <testsuite name="模板链（真实浏览器 + 真实服务端）" file="e2e/templates.e2e.ts" line="57" tests="3" assertions="9" failures="0" skipped="0" time="2.261" hostname="AarondeMacBook-Pro.local">
-      <testcase name="模板中心 → 卡片与内置模板表逐条对得上，深浅筛选各归其位" classname="模板链（真实浏览器 + 真实服务端）" time="0.633391" file="e2e/templates.e2e.ts" line="58" assertions="2" />
-      <testcase name="应用模板 → 服务端存的是新模板，刷新后仍然是它" classname="模板链（真实浏览器 + 真实服务端）" time="0.918599" file="e2e/templates.e2e.ts" line="107" assertions="2" />
-      <testcase name="应用不存在的模板 → 界面如实报错，服务端模板不被改动" classname="模板链（真实浏览器 + 真实服务端）" time="0.710439" file="e2e/templates.e2e.ts" line="167" assertions="5" />
+    <testsuite name="模板链（真实浏览器 + 真实服务端）" file="e2e/templates.e2e.ts" line="57" tests="3" assertions="9" failures="0" skipped="0" time="2.367" hostname="AarondeMacBook-Pro.local">
+      <testcase name="模板中心 → 卡片与内置模板表逐条对得上，深浅筛选各归其位" classname="模板链（真实浏览器 + 真实服务端）" time="0.619574" file="e2e/templates.e2e.ts" line="58" assertions="2" />
+      <testcase name="应用模板 → 服务端存的是新模板，刷新后仍然是它" classname="模板链（真实浏览器 + 真实服务端）" time="0.989891" file="e2e/templates.e2e.ts" line="107" assertions="2" />
+      <testcase name="应用不存在的模板 → 界面如实报错，服务端模板不被改动" classname="模板链（真实浏览器 + 真实服务端）" time="0.759413" file="e2e/templates.e2e.ts" line="167" assertions="5" />
     </testsuite>
   </testsuite>
 <testsuite name="e2e/workbench.e2e.ts" file="e2e/workbench.e2e.ts" tests="12" assertions="78" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-    <testsuite name="工作台链（真实浏览器 + 真实服务端）" file="e2e/workbench.e2e.ts" line="76" tests="12" assertions="78" failures="0" skipped="0" time="15.486" hostname="AarondeMacBook-Pro.local">
-      <testcase name="AC-E2E-003 生成大纲 → 页数、主题、服务端与 UI 一致" classname="工作台链（真实浏览器 + 真实服务端）" time="0.559192" file="e2e/workbench.e2e.ts" line="77" assertions="7" />
-      <testcase name="AC-E2E-004 改大纲标题 → 服务端存新标题，UI 也显示新标题" classname="工作台链（真实浏览器 + 真实服务端）" time="0.587263" file="e2e/workbench.e2e.ts" line="113" assertions="2" />
-      <testcase name="AC-E2E-005 确认大纲并编译 → 画布渲染的正是服务端那份 IR" classname="工作台链（真实浏览器 + 真实服务端）" time="0.619237" file="e2e/workbench.e2e.ts" line="158" assertions="12" />
-      <testcase name="AC-CORE-011 工作台画布在屏幕上保持 16:9，不出现信箱边" classname="工作台链（真实浏览器 + 真实服务端）" time="1.023266" file="e2e/workbench.e2e.ts" line="220" assertions="13" />
-      <testcase name="AC-CORE-012 画布放大超出可视区后，左右上下都滚得到，不被裁掉" classname="工作台链（真实浏览器 + 真实服务端）" time="1.897445" file="e2e/workbench.e2e.ts" line="305" assertions="11" />
-      <testcase name="AC-CORE-013 容器尺寸变化后缩放档位自动重新适配，画布不被裁掉" classname="工作台链（真实浏览器 + 真实服务端）" time="1.771838" file="e2e/workbench.e2e.ts" line="409" assertions="9" />
-      <testcase name="AC-E2E-006 就地改文本 → 防抖写回服务端，并产生新版本号" classname="工作台链（真实浏览器 + 真实服务端）" time="1.581297" file="e2e/workbench.e2e.ts" line="488" assertions="3" />
-      <testcase name="AC-E2E-007 两个会话改同一页 → 后者收到 409，前端提示且没覆盖服务端" classname="工作台链（真实浏览器 + 真实服务端）" time="2.738802" file="e2e/workbench.e2e.ts" line="534" assertions="6" />
-      <testcase name="AC-E2E-008 AI 编辑 → 服务端施加补丁，画布跟着重绘" classname="工作台链（真实浏览器 + 真实服务端）" time="0.719972" file="e2e/workbench.e2e.ts" line="593" assertions="2" />
-      <testcase name="AI 样式模式 → 请求带上 mode=style，服务端照单执行" classname="工作台链（真实浏览器 + 真实服务端）" time="0.728374" file="e2e/workbench.e2e.ts" line="643" assertions="4" />
-      <testcase name="版本快照 → 回退后服务端内容也回到修改前" classname="工作台链（真实浏览器 + 真实服务端）" time="2.412856" file="e2e/workbench.e2e.ts" line="693" assertions="5" />
-      <testcase name="刷新页面 → 摘要没有把已加载的 IR 抹掉（合并回归）" classname="工作台链（真实浏览器 + 真实服务端）" time="0.852729" file="e2e/workbench.e2e.ts" line="755" assertions="4" />
+    <testsuite name="工作台链（真实浏览器 + 真实服务端）" file="e2e/workbench.e2e.ts" line="76" tests="12" assertions="78" failures="0" skipped="0" time="15.792" hostname="AarondeMacBook-Pro.local">
+      <testcase name="AC-E2E-003 生成大纲 → 页数、主题、服务端与 UI 一致" classname="工作台链（真实浏览器 + 真实服务端）" time="0.554553" file="e2e/workbench.e2e.ts" line="77" assertions="7" />
+      <testcase name="AC-E2E-004 改大纲标题 → 服务端存新标题，UI 也显示新标题" classname="工作台链（真实浏览器 + 真实服务端）" time="0.608216" file="e2e/workbench.e2e.ts" line="113" assertions="2" />
+      <testcase name="AC-E2E-005 确认大纲并编译 → 画布渲染的正是服务端那份 IR" classname="工作台链（真实浏览器 + 真实服务端）" time="0.658383" file="e2e/workbench.e2e.ts" line="158" assertions="12" />
+      <testcase name="AC-CORE-011 工作台画布在屏幕上保持 16:9，不出现信箱边" classname="工作台链（真实浏览器 + 真实服务端）" time="1.046929" file="e2e/workbench.e2e.ts" line="220" assertions="13" />
+      <testcase name="AC-CORE-012 画布放大超出可视区后，左右上下都滚得到，不被裁掉" classname="工作台链（真实浏览器 + 真实服务端）" time="1.931654" file="e2e/workbench.e2e.ts" line="305" assertions="11" />
+      <testcase name="AC-CORE-013 容器尺寸变化后缩放档位自动重新适配，画布不被裁掉" classname="工作台链（真实浏览器 + 真实服务端）" time="1.760013" file="e2e/workbench.e2e.ts" line="409" assertions="9" />
+      <testcase name="AC-E2E-006 就地改文本 → 防抖写回服务端，并产生新版本号" classname="工作台链（真实浏览器 + 真实服务端）" time="1.601941" file="e2e/workbench.e2e.ts" line="488" assertions="3" />
+      <testcase name="AC-E2E-007 两个会话改同一页 → 后者收到 409，前端提示且没覆盖服务端" classname="工作台链（真实浏览器 + 真实服务端）" time="2.782079" file="e2e/workbench.e2e.ts" line="534" assertions="6" />
+      <testcase name="AC-E2E-008 AI 编辑 → 服务端施加补丁，画布跟着重绘" classname="工作台链（真实浏览器 + 真实服务端）" time="0.777473" file="e2e/workbench.e2e.ts" line="593" assertions="2" />
+      <testcase name="AI 样式模式 → 请求带上 mode=style，服务端照单执行" classname="工作台链（真实浏览器 + 真实服务端）" time="0.764339" file="e2e/workbench.e2e.ts" line="643" assertions="4" />
+      <testcase name="版本快照 → 回退后服务端内容也回到修改前" classname="工作台链（真实浏览器 + 真实服务端）" time="2.447042" file="e2e/workbench.e2e.ts" line="693" assertions="5" />
+      <testcase name="刷新页面 → 摘要没有把已加载的 IR 抹掉（合并回归）" classname="工作台链（真实浏览器 + 真实服务端）" time="0.86444" file="e2e/workbench.e2e.ts" line="755" assertions="4" />
     </testsuite>
   </testsuite>
 <testsuite name="e2e/workbench-editing.e2e.ts" file="e2e/workbench-editing.e2e.ts" tests="14" assertions="23" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-    <testsuite name="工作台元素编辑链（真实浏览器 + 真实服务端）" file="e2e/workbench-editing.e2e.ts" line="51" tests="14" assertions="23" failures="0" skipped="0" time="17.243" hostname="AarondeMacBook-Pro.local">
-      <testcase name="选中元素 → 属性面板回显的是服务端 IR 里的真实几何" classname="工作台元素编辑链（真实浏览器 + 真实服务端）" time="0.462948" file="e2e/workbench-editing.e2e.ts" line="52" assertions="5" />
-      <testcase name="改 X 坐标 → 服务端那一页的 geometry.x 真的变了" classname="工作台元素编辑链（真实浏览器 + 真实服务端）" time="1.204909" file="e2e/workbench-editing.e2e.ts" line="80" assertions="1" />
-      <testcase name="改 Y 坐标 → 服务端那一页的 geometry.y 真的变了" classname="工作台元素编辑链（真实浏览器 + 真实服务端）" time="1.209805" file="e2e/workbench-editing.e2e.ts" line="103" assertions="1" />
-      <testcase name="改宽高 → 服务端那一页的 geometry.width / height 真的变了" classname="工作台元素编辑链（真实浏览器 + 真实服务端）" time="1.219496" file="e2e/workbench-editing.e2e.ts" line="126" assertions="1" />
-      <testcase name="改字号 → 服务端那一页的 style.fontSize 真的变了" classname="工作台元素编辑链（真实浏览器 + 真实服务端）" time="1.21307" file="e2e/workbench-editing.e2e.ts" line="153" assertions="1" />
-      <testcase name="改字重 → 服务端那一页的 style.fontWeight 真的变了" classname="工作台元素编辑链（真实浏览器 + 真实服务端）" time="1.203873" file="e2e/workbench-editing.e2e.ts" line="176" assertions="1" />
-      <testcase name="改背景色 → 服务端那一页的 style.backgroundColor 真的变了" classname="工作台元素编辑链（真实浏览器 + 真实服务端）" time="1.205985" file="e2e/workbench-editing.e2e.ts" line="199" assertions="2" />
-      <testcase name="改文本内容 → 服务端那一页的 content 真的变了" classname="工作台元素编辑链（真实浏览器 + 真实服务端）" time="1.200735" file="e2e/workbench-editing.e2e.ts" line="227" assertions="1" />
-      <testcase name="水平居中 → 服务端那一页的 x 落在画布正中" classname="工作台元素编辑链（真实浏览器 + 真实服务端）" time="1.252849" file="e2e/workbench-editing.e2e.ts" line="251" assertions="1" />
-      <testcase name="垂直居中 → 服务端那一页的 y 落在画布正中" classname="工作台元素编辑链（真实浏览器 + 真实服务端）" time="1.259091" file="e2e/workbench-editing.e2e.ts" line="276" assertions="1" />
-      <testcase name="复制元素 → 服务端那一页多出一个副本元素" classname="工作台元素编辑链（真实浏览器 + 真实服务端）" time="1.258695" file="e2e/workbench-editing.e2e.ts" line="301" assertions="3" />
-      <testcase name="删除元素 → 服务端那一页真的少了一个元素" classname="工作台元素编辑链（真实浏览器 + 真实服务端）" time="1.25867" file="e2e/workbench-editing.e2e.ts" line="333" assertions="1" />
-      <testcase name="撤销 → 服务端那一页回到改之前的值" classname="工作台元素编辑链（真实浏览器 + 真实服务端）" time="2.042116" file="e2e/workbench-editing.e2e.ts" line="359" assertions="1" />
-      <testcase name="置顶 → 服务端那一页的 zIndex 变成最大" classname="工作台元素编辑链（真实浏览器 + 真实服务端）" time="1.259122" file="e2e/workbench-editing.e2e.ts" line="395" assertions="3" />
+    <testsuite name="工作台元素编辑链（真实浏览器 + 真实服务端）" file="e2e/workbench-editing.e2e.ts" line="51" tests="14" assertions="23" failures="0" skipped="0" time="17.696" hostname="AarondeMacBook-Pro.local">
+      <testcase name="选中元素 → 属性面板回显的是服务端 IR 里的真实几何" classname="工作台元素编辑链（真实浏览器 + 真实服务端）" time="0.486784" file="e2e/workbench-editing.e2e.ts" line="52" assertions="5" />
+      <testcase name="改 X 坐标 → 服务端那一页的 geometry.x 真的变了" classname="工作台元素编辑链（真实浏览器 + 真实服务端）" time="1.242029" file="e2e/workbench-editing.e2e.ts" line="80" assertions="1" />
+      <testcase name="改 Y 坐标 → 服务端那一页的 geometry.y 真的变了" classname="工作台元素编辑链（真实浏览器 + 真实服务端）" time="1.246735" file="e2e/workbench-editing.e2e.ts" line="103" assertions="1" />
+      <testcase name="改宽高 → 服务端那一页的 geometry.width / height 真的变了" classname="工作台元素编辑链（真实浏览器 + 真实服务端）" time="1.226675" file="e2e/workbench-editing.e2e.ts" line="126" assertions="1" />
+      <testcase name="改字号 → 服务端那一页的 style.fontSize 真的变了" classname="工作台元素编辑链（真实浏览器 + 真实服务端）" time="1.237834" file="e2e/workbench-editing.e2e.ts" line="153" assertions="1" />
+      <testcase name="改字重 → 服务端那一页的 style.fontWeight 真的变了" classname="工作台元素编辑链（真实浏览器 + 真实服务端）" time="1.238821" file="e2e/workbench-editing.e2e.ts" line="176" assertions="1" />
+      <testcase name="改背景色 → 服务端那一页的 style.backgroundColor 真的变了" classname="工作台元素编辑链（真实浏览器 + 真实服务端）" time="1.226072" file="e2e/workbench-editing.e2e.ts" line="199" assertions="2" />
+      <testcase name="改文本内容 → 服务端那一页的 content 真的变了" classname="工作台元素编辑链（真实浏览器 + 真实服务端）" time="1.221835" file="e2e/workbench-editing.e2e.ts" line="227" assertions="1" />
+      <testcase name="水平居中 → 服务端那一页的 x 落在画布正中" classname="工作台元素编辑链（真实浏览器 + 真实服务端）" time="1.284656" file="e2e/workbench-editing.e2e.ts" line="251" assertions="1" />
+      <testcase name="垂直居中 → 服务端那一页的 y 落在画布正中" classname="工作台元素编辑链（真实浏览器 + 真实服务端）" time="1.297334" file="e2e/workbench-editing.e2e.ts" line="276" assertions="1" />
+      <testcase name="复制元素 → 服务端那一页多出一个副本元素" classname="工作台元素编辑链（真实浏览器 + 真实服务端）" time="1.294356" file="e2e/workbench-editing.e2e.ts" line="301" assertions="3" />
+      <testcase name="删除元素 → 服务端那一页真的少了一个元素" classname="工作台元素编辑链（真实浏览器 + 真实服务端）" time="1.30645" file="e2e/workbench-editing.e2e.ts" line="333" assertions="1" />
+      <testcase name="撤销 → 服务端那一页回到改之前的值" classname="工作台元素编辑链（真实浏览器 + 真实服务端）" time="2.084812" file="e2e/workbench-editing.e2e.ts" line="359" assertions="1" />
+      <testcase name="置顶 → 服务端那一页的 zIndex 变成最大" classname="工作台元素编辑链（真实浏览器 + 真实服务端）" time="1.309221" file="e2e/workbench-editing.e2e.ts" line="395" assertions="3" />
     </testsuite>
   </testsuite>
 <testsuite name="e2e/workbench-pages.e2e.ts" file="e2e/workbench-pages.e2e.ts" tests="10" assertions="30" failures="0" skipped="0" time="0" hostname="AarondeMacBook-Pro.local">
-    <testsuite name="工作台页级操作链（真实浏览器 + 真实服务端）" file="e2e/workbench-pages.e2e.ts" line="76" tests="10" assertions="30" failures="0" skipped="0" time="5.6" hostname="AarondeMacBook-Pro.local">
-      <testcase name="加页 → 缩略图多一页，画布切到新页" classname="工作台页级操作链（真实浏览器 + 真实服务端）" time="0.523457" file="e2e/workbench-pages.e2e.ts" line="77" assertions="4" />
-      <testcase name="加页 → 版式弹窗可以关掉且不产生新页" classname="工作台页级操作链（真实浏览器 + 真实服务端）" time="0.463124" file="e2e/workbench-pages.e2e.ts" line="99" assertions="3" />
-      <testcase name="复制页 → 缩略图多一页，新页标题带「(副本)」" classname="工作台页级操作链（真实浏览器 + 真实服务端）" time="0.468634" file="e2e/workbench-pages.e2e.ts" line="117" assertions="3" />
-      <testcase name="删页 → 缩略图少一页" classname="工作台页级操作链（真实浏览器 + 真实服务端）" time="0.50852" file="e2e/workbench-pages.e2e.ts" line="140" assertions="2" />
-      <testcase name="上移 → 缩略图顺序真的换了位置" classname="工作台页级操作链（真实浏览器 + 真实服务端）" time="0.505995" file="e2e/workbench-pages.e2e.ts" line="157" assertions="3" />
-      <testcase name="下移 → 缩略图顺序真的换了位置" classname="工作台页级操作链（真实浏览器 + 真实服务端）" time="0.505551" file="e2e/workbench-pages.e2e.ts" line="176" assertions="3" />
-      <testcase name="点缩略图 → 画布切到那一页" classname="工作台页级操作链（真实浏览器 + 真实服务端）" time="0.422272" file="e2e/workbench-pages.e2e.ts" line="195" assertions="2" />
-      <testcase name="撤销 → 页级操作也能退回去" classname="工作台页级操作链（真实浏览器 + 真实服务端）" time="0.47486" file="e2e/workbench-pages.e2e.ts" line="210" assertions="3" />
-      <testcase name="插入元素 → 元素级编辑会落库（服务端 IR 多一个元素）" classname="工作台页级操作链（真实浏览器 + 真实服务端）" time="1.258009" file="e2e/workbench-pages.e2e.ts" line="230" assertions="1" />
-      <testcase name="收起左栏 → 只剩页码按钮，展开后缩略图回来" classname="工作台页级操作链（真实浏览器 + 真实服务端）" time="0.474991" file="e2e/workbench-pages.e2e.ts" line="254" assertions="6" />
+    <testsuite name="工作台页级操作链（真实浏览器 + 真实服务端）" file="e2e/workbench-pages.e2e.ts" line="76" tests="10" assertions="30" failures="0" skipped="0" time="5.876" hostname="AarondeMacBook-Pro.local">
+      <testcase name="加页 → 缩略图多一页，画布切到新页" classname="工作台页级操作链（真实浏览器 + 真实服务端）" time="0.574234" file="e2e/workbench-pages.e2e.ts" line="77" assertions="4" />
+      <testcase name="加页 → 版式弹窗可以关掉且不产生新页" classname="工作台页级操作链（真实浏览器 + 真实服务端）" time="0.512361" file="e2e/workbench-pages.e2e.ts" line="99" assertions="3" />
+      <testcase name="复制页 → 缩略图多一页，新页标题带「(副本)」" classname="工作台页级操作链（真实浏览器 + 真实服务端）" time="0.507733" file="e2e/workbench-pages.e2e.ts" line="117" assertions="3" />
+      <testcase name="删页 → 缩略图少一页" classname="工作台页级操作链（真实浏览器 + 真实服务端）" time="0.506229" file="e2e/workbench-pages.e2e.ts" line="140" assertions="2" />
+      <testcase name="上移 → 缩略图顺序真的换了位置" classname="工作台页级操作链（真实浏览器 + 真实服务端）" time="0.468978" file="e2e/workbench-pages.e2e.ts" line="157" assertions="3" />
+      <testcase name="下移 → 缩略图顺序真的换了位置" classname="工作台页级操作链（真实浏览器 + 真实服务端）" time="0.518596" file="e2e/workbench-pages.e2e.ts" line="176" assertions="3" />
+      <testcase name="点缩略图 → 画布切到那一页" classname="工作台页级操作链（真实浏览器 + 真实服务端）" time="0.446675" file="e2e/workbench-pages.e2e.ts" line="195" assertions="2" />
+      <testcase name="撤销 → 页级操作也能退回去" classname="工作台页级操作链（真实浏览器 + 真实服务端）" time="0.548989" file="e2e/workbench-pages.e2e.ts" line="210" assertions="3" />
+      <testcase name="插入元素 → 元素级编辑会落库（服务端 IR 多一个元素）" classname="工作台页级操作链（真实浏览器 + 真实服务端）" time="1.300399" file="e2e/workbench-pages.e2e.ts" line="230" assertions="1" />
+      <testcase name="收起左栏 → 只剩页码按钮，展开后缩略图回来" classname="工作台页级操作链（真实浏览器 + 真实服务端）" time="0.497087" file="e2e/workbench-pages.e2e.ts" line="254" assertions="6" />
     </testsuite>
   </testsuite>
 </testsuites>

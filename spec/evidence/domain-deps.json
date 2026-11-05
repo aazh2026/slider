@@ -1,0 +1,86 @@
+{
+  "scannedRoot": "packages/core/src",
+  "filesScanned": 19,
+  "ledgerPath": "spec/domain-deps-baseline.json",
+  "violations": [
+    {
+      "file": "packages/core/src/engine/exportEngine.ts",
+      "kind": "dom",
+      "symbol": "document",
+      "count": 10,
+      "lines": [
+        176,
+        180,
+        182,
+        190,
+        194,
+        196,
+        455,
+        485,
+        488,
+        490
+      ]
+    },
+    {
+      "file": "packages/core/src/engine/exportEngine.ts",
+      "kind": "dom",
+      "symbol": "Image",
+      "count": 1,
+      "lines": [
+        452
+      ]
+    },
+    {
+      "file": "packages/core/src/engine/exportEngine.ts",
+      "kind": "io",
+      "symbol": "jspdf",
+      "count": 1,
+      "lines": [
+        7
+      ]
+    },
+    {
+      "file": "packages/core/src/engine/exportEngine.ts",
+      "kind": "io",
+      "symbol": "pptxgenjs",
+      "count": 1,
+      "lines": [
+        6
+      ]
+    }
+  ],
+  "baseline": [
+    {
+      "file": "packages/core/src/engine/exportEngine.ts",
+      "kind": "io",
+      "symbol": "pptxgenjs",
+      "maxCount": 1,
+      "reason": "导出引擎直接引 PPTX 生成库（会写文件）。导出属于 IO，正确的位置是 adapters 层 —— adapters 层还没建（见 docs/architecture.md）。"
+    },
+    {
+      "file": "packages/core/src/engine/exportEngine.ts",
+      "kind": "io",
+      "symbol": "jspdf",
+      "maxCount": 1,
+      "reason": "同上：PDF 导出库会落盘，属于 IO。"
+    },
+    {
+      "file": "packages/core/src/engine/exportEngine.ts",
+      "kind": "dom",
+      "symbol": "document",
+      "maxCount": 10,
+      "reason": "PNG/JPG 导出靠 document.createElement('a') 触发下载、document.createElement('canvas') 取像素。浏览器依赖，不是 import 进来的 —— 所以门禁除了查 import 还要查自由使用的主机全局。"
+    },
+    {
+      "file": "packages/core/src/engine/exportEngine.ts",
+      "kind": "dom",
+      "symbol": "Image",
+      "maxCount": 1,
+      "reason": "SVG 转位图靠 new Image() 解码。同一笔债的另一半。"
+    }
+  ],
+  "added": [],
+  "exceeded": [],
+  "stale": [],
+  "passed": true
+}

@@ -1,7 +1,7 @@
 {
   "generated_by": "spec/verify/mutation-check.ts",
-  "generated_at": "2026-11-05T11:54:43.219Z",
-  "total": 122,
+  "generated_at": "2026-11-05T13:56:09.434Z",
+  "total": 127,
   "unqualified": 0,
   "inconclusive": 0,
   "cases": [
@@ -3548,6 +3548,146 @@
       "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "c342a48f97f4feaa01ae5c54938d8cdbb28fda363eb2c6863b815896144dc7ec",
       "source_sha256": "d34b49569087eb7d30933022a74536f75d2373ba2d5e43c7dacd0087f02d6c3f",
+      "data_deps": [],
+      "data_sha256": {},
+      "output_tail": ""
+    },
+    {
+      "criterion": "AC-E2E-026",
+      "description": "PPTX 导出又用回卡片摘要 —— 摘要的 slides 是空数组，导出来是零页空壳",
+      "mutated_file": "src/components/ProjectsManager.tsx",
+      "verifier": "e2e/library.e2e.ts::导出 PPTX → 拿到的是带页面的 pptx（不是零页空壳）",
+      "verifier_file": "e2e/library.e2e.ts",
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "e2e/library.e2e.ts::导出 PPTX → 拿到的是带页面的 pptx（不是零页空壳）"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "verdict": "PASS",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
+      "verifier_sha256": "dd097b8aea55db84683062a7eed160aee75f64dc41449049e0500e843c74765b",
+      "source_sha256": "d5046cffd4e140d48d11749d7e5bdc9d17aa84d406df36a5a55eaa9eb64b94c0",
+      "data_deps": [],
+      "data_sha256": {},
+      "output_tail": ""
+    },
+    {
+      "criterion": "AC-GOV-005",
+      "description": "账本外的新违规被放行 —— 领域层新引一个 IO 库，门禁却不报",
+      "mutated_file": "scripts/check-domain-deps.ts",
+      "verifier": "scripts/check-domain-deps.check.ts::domain-deps-ledger-ratchet-fails-in-both-directions",
+      "verifier_file": "scripts/check-domain-deps.check.ts",
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "scripts/check-domain-deps.check.ts::domain-deps-ledger-ratchet-fails-in-both-directions"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "verdict": "PASS",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
+      "verifier_sha256": "98ed570892bcdeffcaa8753e1a6c8f639508977c51850abf6972371c7704fff6",
+      "source_sha256": "6ccf32740dd363747c0bd8e560891f99b265a0a8b85bd9dd0cf9fbfeb3925546",
+      "data_deps": [],
+      "data_sha256": {},
+      "output_tail": ""
+    },
+    {
+      "criterion": "AC-GOV-005",
+      "description": "超过账本上限不算失败 —— 债在长大，门禁却不报",
+      "mutated_file": "scripts/check-domain-deps.ts",
+      "verifier": "scripts/check-domain-deps.check.ts::domain-deps-ledger-ratchet-fails-in-both-directions",
+      "verifier_file": "scripts/check-domain-deps.check.ts",
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "scripts/check-domain-deps.check.ts::domain-deps-ledger-ratchet-fails-in-both-directions"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "verdict": "PASS",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
+      "verifier_sha256": "98ed570892bcdeffcaa8753e1a6c8f639508977c51850abf6972371c7704fff6",
+      "source_sha256": "6ccf32740dd363747c0bd8e560891f99b265a0a8b85bd9dd0cf9fbfeb3925546",
+      "data_deps": [],
+      "data_sha256": {},
+      "output_tail": ""
+    },
+    {
+      "criterion": "AC-GOV-005",
+      "description": "已经还清的债不再报 —— 账本烂成万能赦免状，门禁却不报",
+      "mutated_file": "scripts/check-domain-deps.ts",
+      "verifier": "scripts/check-domain-deps.check.ts::domain-deps-ledger-ratchet-fails-in-both-directions",
+      "verifier_file": "scripts/check-domain-deps.check.ts",
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "scripts/check-domain-deps.check.ts::domain-deps-ledger-ratchet-fails-in-both-directions"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "verdict": "PASS",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
+      "verifier_sha256": "98ed570892bcdeffcaa8753e1a6c8f639508977c51850abf6972371c7704fff6",
+      "source_sha256": "6ccf32740dd363747c0bd8e560891f99b265a0a8b85bd9dd0cf9fbfeb3925546",
+      "data_deps": [],
+      "data_sha256": {},
+      "output_tail": ""
+    },
+    {
+      "criterion": "AC-GOV-005",
+      "description": "领域层偷偷引了 Node 的 fs —— 门禁必须抓到",
+      "mutated_file": "packages/core/src/engine/elementVariant.ts",
+      "verifier": "scripts/check-domain-deps.check.ts::domain-layer-has-no-unregistered-host-dependency",
+      "verifier_file": "scripts/check-domain-deps.check.ts",
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "scripts/check-domain-deps.check.ts::domain-layer-has-no-unregistered-host-dependency"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "verdict": "PASS",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
+      "verifier_sha256": "98ed570892bcdeffcaa8753e1a6c8f639508977c51850abf6972371c7704fff6",
+      "source_sha256": "5672e6c572de4bd8f8e1c7429b3eb025b1db6d120ed6d5c49904d868d7850351",
       "data_deps": [],
       "data_sha256": {},
       "output_tail": ""
