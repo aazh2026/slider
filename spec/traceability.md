@@ -156,13 +156,13 @@
 
 > 结论为 PASS 的判据共 105 条，每一条都在 §2.3 有对应证据记录（EVD-*）。
 > 「未覆盖（无判据）」的 1 条（SPEC-GOV-003）连判据都不存在，既不是 PASS 也不是 FAIL —— 见 §2.5。
-> **证据集对账**：这轮证据集共 560 个用例（spec/evidence/junit.xml 462 + spec/evidence/junit-e2e.xml 98），其中 105 个被某条判据点名、455 个没有。
-> 没有判据的 455 个用例里 **0 个失败** —— 上表的「FAIL 0」不是漏报：它们也都过了。
+> **证据集对账**：这轮证据集共 569 个用例（spec/evidence/junit.xml 471 + spec/evidence/junit-e2e.xml 98），其中 105 个被某条判据点名、464 个没有。
+> 没有判据的 464 个用例里 **0 个失败** —— 上表的「FAIL 0」不是漏报：它们也都过了。
 > 判据点名的 106 个验证目标里，**1 个在这轮证据集里没找到**（`apps/api/tests/perf/outline-latency.bench.ts::outline-generation-p95-under-threshold`）—— 挂不上验证目标的判据一律 INCONCLUSIVE，绝不按「通过」算（§2.5）。
 
 #### 2.1.1 这批结论对应的是哪一版代码
 
-这些证据生成于：spec/evidence/junit.xml 2026-11-05 19:02:00、spec/evidence/junit-e2e.xml 2026-11-05 19:03:25。每一条 PASS/FAIL 都是**跑批那一刻**的结论 —— 跑完之后动过它依赖的文件，这条结论就不再自动适用于当前代码。下面按「这条结论依赖的文件有没有在证据之后被改过」逐条判定。
+这些证据生成于：spec/evidence/junit.xml 2026-11-05 19:39:48、spec/evidence/junit-e2e.xml 2026-11-05 19:41:13。每一条 PASS/FAIL 都是**跑批那一刻**的结论 —— 跑完之后动过它依赖的文件，这条结论就不再自动适用于当前代码。下面按「这条结论依赖的文件有没有在证据之后被改过」逐条判定。
 
 > **105 条结论全部仍然成立** —— 它们依赖的文件在证据生成之后都没有被改过。
 
@@ -180,7 +180,7 @@
 
 #### 未挂判据的失败
 
-（无）—— 没有判据的 455 个用例也全都过了。这一节存在的意义是：**「没有失败」得说得出依据**，不能靠「没列」来暗示。
+（无）—— 没有判据的 464 个用例也全都过了。这一节存在的意义是：**「没有失败」得说得出依据**，不能靠「没列」来暗示。
 
 ### 2.3 证据清单
 
@@ -1895,7 +1895,7 @@ EVD-GOV-004
 
 #### 2.4.1 这批结论还对当前代码成立吗
 
-注入报告生成于 2026-11-05T11:17:39.448Z。「验证器抓得住这个错」是**某一版**验证器与**某一版**实现之间的结论 —— 跑完之后动过其中任何一边，这条结论就不再自动适用于当前代码。下面按报告里记下的文件指纹逐条比对。
+注入报告生成于 2026-11-05T11:54:43.219Z。「验证器抓得住这个错」是**某一版**验证器与**某一版**实现之间的结论 —— 跑完之后动过其中任何一边，这条结论就不再自动适用于当前代码。下面按报告里记下的文件指纹逐条比对。
 
 > 逐条比对了跑批时的文件指纹与当前的文件内容：**122 条全部仍然成立**（验证器、被改动的源文件与数据依赖都和跑批时一致）。
 
@@ -1975,7 +1975,7 @@ EVD-GOV-004
 
 - `spec/spec.yaml` —— 70 条条款 / 106 条判据的机器可读契约
 - `spec/spec.schema.json` —— Spec 自身的结构约束（JSON Schema 2020-12）
-- `spec/verify/*.test.ts` —— 26 个验证器文件（Spec 自检 + 领域内核 + 导出 + 质量引擎 + 渲染）
+- `spec/verify/*.test.ts` —— 27 个验证器文件（Spec 自检 + 领域内核 + 导出 + 质量引擎 + 渲染）
 - `packages/core/tests/` —— 领域内核（@ppt/core）的版式快照与补丁应用测试
 - `apps/api/tests/` —— 后端的契约 / 集成 / 安全 / AI / 混沌 / 性能测试
 - `e2e/` —— 13 条前后端集成链（Playwright 真实浏览器 + 真实服务端），断言落在服务端状态上：`e2e/auth.e2e.ts`、`e2e/errors.e2e.ts`、`e2e/exports.e2e.ts`、`e2e/library.e2e.ts`、`e2e/navigation.e2e.ts`、`e2e/offline.e2e.ts`、`e2e/presentation.e2e.ts`、`e2e/projects.e2e.ts`、`e2e/quality.e2e.ts`、`e2e/templates.e2e.ts`、`e2e/workbench-editing.e2e.ts`、`e2e/workbench-pages.e2e.ts`、`e2e/workbench.e2e.ts`
@@ -1998,9 +1998,9 @@ EVD-GOV-004
 
 ### 实际验证了什么
 
-- 真的跑了证据集（`bun test spec/verify/ packages/core/tests/ apps/api/tests/ ./scripts/check-coverage.check.ts ./apps/api/tests/perf/export-latency.bench.ts`）：**462 个用例，0 失败，462 通过**，覆盖 45 个测试文件
+- 真的跑了证据集（`bun test spec/verify/ packages/core/tests/ apps/api/tests/ ./scripts/check-coverage.check.ts ./apps/api/tests/perf/export-latency.bench.ts`）：**471 个用例，0 失败，471 通过**，覆盖 46 个测试文件
 - 真的跑了前后端集成 E2E（`bun test ./e2e/auth.e2e.ts ./e2e/errors.e2e.ts ./e2e/exports.e2e.ts ./e2e/library.e2e.ts ./e2e/navigation.e2e.ts ./e2e/offline.e2e.ts ./e2e/presentation.e2e.ts ./e2e/projects.e2e.ts ./e2e/quality.e2e.ts ./e2e/templates.e2e.ts ./e2e/workbench-editing.e2e.ts ./e2e/workbench-pages.e2e.ts ./e2e/workbench.e2e.ts`，Playwright 驱动真实 Chromium + 真实服务端）：**98 个用例，0 失败**
-- 证据集对账：两层证据共 **560 个用例**，其中 **105 个挂了判据**、455 个没挂；没挂判据的用例里 **0 个失败** —— 「失败明细」里那个「（无）」不是漏报
+- 证据集对账：两层证据共 **569 个用例**，其中 **105 个挂了判据**、464 个没挂；没挂判据的用例里 **0 个失败** —— 「失败明细」里那个「（无）」不是漏报
 - 真的跑了 `python3 spec/verify/spec-schema.py`：Spec 结构校验通过（70 条条款 / 106 条判据引用完整）
 - 真的跑了 `npx tsc --noEmit`：类型检查通过
 - 真的跑了 `bun run spec/verify/mutation-check.ts`：**122 个注入用例，不合格 0 个** —— 每个用例走「基线 → 注入 → 还原」三步，结论由**差分**给出（只看注入带来了哪些新的失败），源文件已全部还原 —— 其中对**当前代码**仍然成立 **122** 条、已过期 **0** 条（见 §2.4.1）
