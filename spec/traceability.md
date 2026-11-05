@@ -4,7 +4,7 @@
 > 重新生成：`bun run spec/verify/traceability.ts`（前置：先跑测试与注入检查，见 `spec/README.md`）。
 
 - Spec 版本：`1.0`
-- 条款总数：**68**　判据总数：**101**
+- 条款总数：**70**　判据总数：**106**
 - 生成时 junit 证据：`spec/evidence/junit.xml`；注入证据：`spec/evidence/mutation-report.json`
 - 失败原因：`spec/evidence/junit-output.txt`（单元 / 集成）与 `spec/evidence/junit-e2e-output.txt`（E2E）—— **Bun 的 junit 报告只写失败类型、不写错误信息**（实测产出的是 `<failure type="AssertionError" />`），失败详情在 stderr 里，所以单独落盘
 
@@ -26,6 +26,7 @@
 | docs/backend-features.md §E 版式与内容绑定（LAY）· LAY-02 | SPEC-CORE-008 | business | high | AC-CORE-008, AC-CORE-009, AC-CORE-010 | spec/verify/core-content.test.ts::bullet-consuming-layouts-use-outline-bullets<br>spec/verify/core-content.test.ts::cover-content-traceable-to-outline<br>spec/verify/core-content.test.ts::render-output-follows-outline-bullets | authoritative | EVD-CORE-008, EVD-CORE-009, EVD-CORE-010 | **PASS** |
 | docs/backend-features.md §F 幻灯片编辑与版本（SLD）· SLD-02 / SLD-04 | SPEC-CORE-009 | business | high | AC-CORE-012, AC-CORE-013 | e2e/workbench.e2e.ts::AC-CORE-012 画布放大超出可视区后，左右上下都滚得到，不被裁掉<br>e2e/workbench.e2e.ts::AC-CORE-013 容器尺寸变化后缩放档位自动重新适配，画布不被裁掉 | authoritative, formal | EVD-CORE-012, EVD-CORE-013 | **PASS** |
 | docs/architecture.md §12 ADR-018 · 语义住在字段里，不住在 ID 里 | SPEC-CORE-010 | technical | high | AC-CORE-014, AC-CORE-015, AC-CORE-016, AC-CORE-017 | spec/verify/element-variant.test.ts::layout-engine-sets-variant-on-every-element<br>spec/verify/element-variant.test.ts::id-repair-derives-prefix-from-variant<br>spec/verify/element-variant.test.ts::render-and-theme-follow-variant-not-id<br>spec/verify/element-variant.test.ts::no-consumer-parses-element-ids | authoritative | EVD-CORE-014, EVD-CORE-015, EVD-CORE-016, EVD-CORE-017 | **PASS** |
+| docs/architecture.md §12 ADR-020 | SPEC-CORE-011 | technical | high | AC-CORE-018, AC-CORE-019, AC-CORE-020 | packages/core/tests/contentBinding.test.ts::slots-not-consumed-by-layout-are-dropped<br>packages/core/tests/contentBinding.test.ts::missing-required-slot-is-an-error<br>packages/core/tests/contentBinding.test.ts::stats-kpi-without-number-degrades-to-cards-grid | authoritative | EVD-CORE-018, EVD-CORE-019, EVD-CORE-020 | **PASS** |
 | docs/backend-features.md §I 质量评估（QLT）· QLT-01 | SPEC-QLT-001 | technical | high | AC-QLT-001 | spec/verify/quality-engine.test.ts::quality-formula-weights | authoritative | EVD-QLT-001 | **PASS** |
 | docs/backend-features.md §I 质量评估（QLT）· QLT-02 | SPEC-QLT-002 | technical | medium | AC-QLT-002 | spec/verify/quality-engine.test.ts::canvas-mismatch-penalty | authoritative | EVD-QLT-002 | **PASS** |
 | docs/backend-features.md §I 质量评估（QLT）· QLT-02 | SPEC-QLT-003 | technical | medium | AC-QLT-003 | spec/verify/quality-engine.test.ts::duplicate-id-penalty | authoritative | EVD-QLT-003 | **PASS** |
@@ -84,6 +85,7 @@
 | docs/testing-strategy.md §8 质量门禁指标 | SPEC-GOV-001 | governance | medium | AC-GOV-001 | scripts/check-coverage.check.ts::domain-coverage-threshold | authoritative | EVD-GOV-001 | **PASS** |
 | docs/testing-strategy.md §1.2 可发布门槛（Definition of Done） | SPEC-GOV-002 | governance | high | AC-GOV-002 | packages/core/tests/layoutEngine.snapshot.test.ts::golden-snapshots-all-match | authoritative | EVD-GOV-002 | **PASS** |
 | docs/architecture.md §7.3 质量闸门（生成 → 落库的唯一通道） | SPEC-GOV-003 | governance | high | — | — | — | — | **未覆盖** |
+| docs/quality-strategy.md §波 2 · 64 组快照回归升级 | SPEC-GOV-004 | governance | high | AC-GOV-003, AC-GOV-004 | packages/core/tests/layoutInvariants.test.ts::elements-belong-to-declared-layers<br>packages/core/tests/layoutInvariants.test.ts::no-quality-issue-in-any-combo | authoritative | EVD-GOV-003, EVD-GOV-004 | **PASS** |
 
 ### 1.2 反向孤儿检查
 
@@ -94,7 +96,7 @@
 | 有没有判据挂错条款？ | 0 个 | ✅ |
 | 有没有验证器没有对应条款？ | 0 个 | ✅ |
 | 有没有文档段落没有对应条款？ | 4 段 | ✅ 全部登记在 §1.4 |
-| 有没有 `maturity: none` 的条款？ | 1/68（1.5%） | ✅ 低于 30% 阈值 |
+| 有没有 `maturity: none` 的条款？ | 1/70（1.4%） | ✅ 低于 30% 阈值 |
 
 ### 1.3 未覆盖清单
 
@@ -146,23 +148,23 @@
 
 | 结论 | 条款数 | 判据数 | 占比（按判据） |
 |---|---|---|---|
-| PASS | 66 | 100 | 99.0% |
+| PASS | 68 | 105 | 99.1% |
 | FAIL | 0 | 0 | 0.0% |
-| INCONCLUSIVE | 1 | 1 | 1.0% |
+| INCONCLUSIVE | 1 | 1 | 0.9% |
 | 未覆盖（无判据） | 1 | 0 | 0.0% |
-| **合计** | **68** | **101** | **100%** |
+| **合计** | **70** | **106** | **100%** |
 
-> 结论为 PASS 的判据共 100 条，每一条都在 §2.3 有对应证据记录（EVD-*）。
+> 结论为 PASS 的判据共 105 条，每一条都在 §2.3 有对应证据记录（EVD-*）。
 > 「未覆盖（无判据）」的 1 条（SPEC-GOV-003）连判据都不存在，既不是 PASS 也不是 FAIL —— 见 §2.5。
-> **证据集对账**：这轮证据集共 440 个用例（spec/evidence/junit.xml 342 + spec/evidence/junit-e2e.xml 98），其中 100 个被某条判据点名、340 个没有。
-> 没有判据的 340 个用例里 **0 个失败** —— 上表的「FAIL 0」不是漏报：它们也都过了。
-> 判据点名的 101 个验证目标里，**1 个在这轮证据集里没找到**（`apps/api/tests/perf/outline-latency.bench.ts::outline-generation-p95-under-threshold`）—— 挂不上验证目标的判据一律 INCONCLUSIVE，绝不按「通过」算（§2.5）。
+> **证据集对账**：这轮证据集共 499 个用例（spec/evidence/junit.xml 401 + spec/evidence/junit-e2e.xml 98），其中 105 个被某条判据点名、394 个没有。
+> 没有判据的 394 个用例里 **0 个失败** —— 上表的「FAIL 0」不是漏报：它们也都过了。
+> 判据点名的 106 个验证目标里，**1 个在这轮证据集里没找到**（`apps/api/tests/perf/outline-latency.bench.ts::outline-generation-p95-under-threshold`）—— 挂不上验证目标的判据一律 INCONCLUSIVE，绝不按「通过」算（§2.5）。
 
 #### 2.1.1 这批结论对应的是哪一版代码
 
-这些证据生成于：spec/evidence/junit.xml 2026-11-05 07:35:09、spec/evidence/junit-e2e.xml 2026-11-05 07:36:38。每一条 PASS/FAIL 都是**跑批那一刻**的结论 —— 跑完之后动过它依赖的文件，这条结论就不再自动适用于当前代码。下面按「这条结论依赖的文件有没有在证据之后被改过」逐条判定。
+这些证据生成于：spec/evidence/junit.xml 2026-11-05 16:05:24、spec/evidence/junit-e2e.xml 2026-11-05 16:07:04。每一条 PASS/FAIL 都是**跑批那一刻**的结论 —— 跑完之后动过它依赖的文件，这条结论就不再自动适用于当前代码。下面按「这条结论依赖的文件有没有在证据之后被改过」逐条判定。
 
-> **100 条结论全部仍然成立** —— 它们依赖的文件在证据生成之后都没有被改过。
+> **105 条结论全部仍然成立** —— 它们依赖的文件在证据生成之后都没有被改过。
 
 > **E2E 的依赖只能按整条链算**：Playwright 规格通过浏览器操作页面、通过 HTTP 打到服务端，它的 import 闭包里**没有**前端与服务端的代码。本次 E2E 证据之后没有源文件被改过，28 条 E2E 结论仍然成立。
 
@@ -174,7 +176,7 @@
 
 #### 未挂判据的失败
 
-（无）—— 没有判据的 340 个用例也全都过了。这一节存在的意义是：**「没有失败」得说得出依据**，不能靠「没列」来暗示。
+（无）—— 没有判据的 394 个用例也全都过了。这一节存在的意义是：**「没有失败」得说得出依据**，不能靠「没列」来暗示。
 
 ### 2.3 证据清单
 
@@ -433,6 +435,51 @@ EVD-CORE-017
   result:        该用例通过（no-consumer-parses-element-ids）
   oracle_tier:   authoritative
   oracle_source: docs/architecture.md §12 ADR-018 —— legacyVariantOf 是全仓唯一一处解析 ID 语义的地方，且只在字段缺失时触发
+  evidence:      spec/evidence/junit.xml
+```
+```
+EVD-CORE-018
+  clause:        SPEC-CORE-011
+  acceptance:    AC-CORE-018
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/architecture.md §12 ADR-020 —— **契约表是唯一真相源**（`packages/core/src/data/layoutInte…
+  environment:   bun 1.3.11 / darwin / 无外部服务调用（数据库为进程内 PGlite，AI 端点为本地确定性降级）
+  command:       bun test ./packages/core/tests/contentBinding.test.ts
+  case:          packages/core/tests/contentBinding.test.ts::slots-not-consumed-by-layout-are-dropped
+  result:        该用例通过（slots-not-consumed-by-layout-are-dropped）
+  oracle_tier:   authoritative
+  oracle_source: docs/architecture.md §12 ADR-020 —— 绑定按契约裁剪；`consumes` 是『不在表里的槽位不进这一页』
+  evidence:      spec/evidence/junit.xml
+```
+```
+EVD-CORE-019
+  clause:        SPEC-CORE-011
+  acceptance:    AC-CORE-019
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/architecture.md §12 ADR-020 —— **契约表是唯一真相源**（`packages/core/src/data/layoutInte…
+  environment:   bun 1.3.11 / darwin / 无外部服务调用（数据库为进程内 PGlite，AI 端点为本地确定性降级）
+  command:       bun test ./packages/core/tests/contentBinding.test.ts
+  case:          packages/core/tests/contentBinding.test.ts::missing-required-slot-is-an-error
+  result:        该用例通过（missing-required-slot-is-an-error）
+  oracle_tier:   authoritative
+  oracle_source: docs/architecture.md §12 ADR-020 —— 校验器给出结论：缺什么报 error，多余的报 warning；ok 只看 error 级；『有 4 个指标』和『有 4 个带数字的指标』不是一回事
+  evidence:      spec/evidence/junit.xml
+```
+```
+EVD-CORE-020
+  clause:        SPEC-CORE-011
+  acceptance:    AC-CORE-020
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/architecture.md §12 ADR-020 —— **契约表是唯一真相源**（`packages/core/src/data/layoutInte…
+  environment:   bun 1.3.11 / darwin / 无外部服务调用（数据库为进程内 PGlite，AI 端点为本地确定性降级）
+  command:       bun test ./packages/core/tests/contentBinding.test.ts
+  case:          packages/core/tests/contentBinding.test.ts::stats-kpi-without-number-degrades-to-cards-grid
+  result:        该用例通过（stats-kpi-without-number-degrades-to-cards-grid）
+  oracle_tier:   authoritative
+  oracle_source: docs/architecture.md §12 ADR-020 —— 降级规则写在表里，引擎只执行；stats_kpi 是唯一声明了 degradesTo 的版式
   evidence:      spec/evidence/junit.xml
 ```
 ```
@@ -1680,6 +1727,36 @@ EVD-GOV-002
   oracle_source: docs/testing-strategy.md §1.2 —— 黄金快照全部一致（64 组：8 版式 × 8 主题）
   evidence:      spec/evidence/junit.xml
 ```
+```
+EVD-GOV-003
+  clause:        SPEC-GOV-004
+  acceptance:    AC-GOV-003
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/quality-strategy.md §波 2 · 64 组快照回归升级 —— 8 版式 × 8 主题，从「渲染不崩、不断言别的」升级为「断言不变量」—— 层归属正确、acce…
+  environment:   bun 1.3.11 / darwin / 无外部服务调用（数据库为进程内 PGlite，AI 端点为本地确定性降级）
+  command:       bun test ./packages/core/tests/layoutInvariants.test.ts
+  case:          packages/core/tests/layoutInvariants.test.ts::elements-belong-to-declared-layers
+  result:        该用例通过（elements-belong-to-declared-layers）
+  oracle_tier:   authoritative
+  oracle_source: docs/architecture.md §12 ADR-018（层归属由 variant 决定）+ §12 ADR-017 / DEC-014（10px 是安全距）+ docs/quality-strategy.md §波 2
+  evidence:      spec/evidence/junit.xml
+```
+```
+EVD-GOV-004
+  clause:        SPEC-GOV-004
+  acceptance:    AC-GOV-004
+  verdict:       PASS
+  spec_version:  1.0
+  input_data:    docs/quality-strategy.md §波 2 · 64 组快照回归升级 —— 8 版式 × 8 主题，从「渲染不崩、不断言别的」升级为「断言不变量」—— 层归属正确、acce…
+  environment:   bun 1.3.11 / darwin / 无外部服务调用（数据库为进程内 PGlite，AI 端点为本地确定性降级）
+  command:       bun test ./packages/core/tests/layoutInvariants.test.ts
+  case:          packages/core/tests/layoutInvariants.test.ts::no-quality-issue-in-any-combo
+  result:        该用例通过（no-quality-issue-in-any-combo）
+  oracle_tier:   authoritative
+  oracle_source: docs/quality-strategy.md §波 2 —— 质量引擎是「事后扣分」，不变量是「产物本身就必须成立」；两者都成立才算这一版式是对的
+  evidence:      spec/evidence/junit.xml
+```
 
 ### 2.4 注入错误检查（验证器的元验证）
 
@@ -1783,9 +1860,9 @@ EVD-GOV-002
 
 #### 2.4.1 这批结论还对当前代码成立吗
 
-注入报告生成于 2026-11-04T23:50:23.720Z。「验证器抓得住这个错」是**某一版**验证器与**某一版**实现之间的结论 —— 跑完之后动过其中任何一边，这条结论就不再自动适用于当前代码。下面按报告里记下的文件指纹逐条比对。
+注入报告生成于 2026-11-05T08:14:23.476Z。「验证器抓得住这个错」是**某一版**验证器与**某一版**实现之间的结论 —— 跑完之后动过其中任何一边，这条结论就不再自动适用于当前代码。下面按报告里记下的文件指纹逐条比对。
 
-> 逐条比对了跑批时的文件指纹与当前的文件内容：**91 条全部仍然成立**（验证器与被改动的源文件都和跑批时一致）。
+> 逐条比对了跑批时的文件指纹与当前的文件内容：**91 条全部仍然成立**（验证器、被改动的源文件与数据依赖都和跑批时一致）。
 
 #### 2.4.2 现在还跑得起来吗
 
@@ -1842,15 +1919,26 @@ EVD-GOV-002
 | DOM 垫片只实现尺寸与文件名，PNG/JPG 像素内容未验证 | AC-EXP-003 只覆盖分辨率倍率，不覆盖实际渲染结果 | 是 | 像素级验收交给人工目视或后续接入真实 Canvas 实现 |
 | Oracle 中 self-derived 的判据无法独立证明实现正确 | AC-QLT-010（元素 ID 重排规则）只能防回归 | 是 —— 已显式标注，且该条款 risk 不为 high | 等 SPEC-GOV-001 的版本化存储落地后，用真实快照基线替换 |
 
+### 2.7 发布闸门：这批结论能不能放行
+
+矩阵是**一份报告**：它记下每条条款的 PASS / FAIL / INCONCLUSIVE，但报告本身**不拦人**。这一节是那个出口 —— 判据不满足、或者给不出结论又没登记为已知欠账，就**不放行**：生成这份矩阵的流水线会以退出码 1 收场（「有结论，结论是不通过」）。
+
+> ✅ **可以放行** —— 2 条给不出结论或没有判据的条款，但都**有明账**（已登记为已知欠账，或条款自己已经降级）。
+
+| 条款 | 判定 | 为什么没挡住放行 |
+|---|---|---|
+| SPEC-GOV-003 | INCONCLUSIVE | 没有判据，但条款状态是「blocked」—— 已经明说这条暂时不做 |
+| SPEC-NFR-001 | INCONCLUSIVE | 给不出结论，但已登记为已知欠账（spec.yaml 的 known_gaps）—— 欠账是明账 |
+
 ---
 
 ## 三、汇报口径
 
 ### 生成了什么
 
-- `spec/spec.yaml` —— 68 条条款 / 101 条判据的机器可读契约
+- `spec/spec.yaml` —— 70 条条款 / 106 条判据的机器可读契约
 - `spec/spec.schema.json` —— Spec 自身的结构约束（JSON Schema 2020-12）
-- `spec/verify/*.test.ts` —— 22 个验证器文件（Spec 自检 + 领域内核 + 导出 + 质量引擎 + 渲染）
+- `spec/verify/*.test.ts` —— 24 个验证器文件（Spec 自检 + 领域内核 + 导出 + 质量引擎 + 渲染）
 - `packages/core/tests/` —— 领域内核（@ppt/core）的版式快照与补丁应用测试
 - `apps/api/tests/` —— 后端的契约 / 集成 / 安全 / AI / 混沌 / 性能测试
 - `e2e/` —— 13 条前后端集成链（Playwright 真实浏览器 + 真实服务端），断言落在服务端状态上：`e2e/auth.e2e.ts`、`e2e/errors.e2e.ts`、`e2e/exports.e2e.ts`、`e2e/library.e2e.ts`、`e2e/navigation.e2e.ts`、`e2e/offline.e2e.ts`、`e2e/presentation.e2e.ts`、`e2e/projects.e2e.ts`、`e2e/quality.e2e.ts`、`e2e/templates.e2e.ts`、`e2e/workbench-editing.e2e.ts`、`e2e/workbench-pages.e2e.ts`、`e2e/workbench.e2e.ts`
@@ -1868,22 +1956,22 @@ EVD-GOV-002
 ### 覆盖了什么
 
 - 源文档：`docs/backend-design.md`、`docs/backend-features.md`、`docs/architecture.md`、`docs/testing-strategy.md`、`docs/test-cases.md`、`docs/quality-rules.md`
-- 条款 68 条（business/technical/quality/governance），判据 101 条 —— 其中 101 条判据指向可执行验证器
-- 成熟度分布：automated 67 / planned 0 / none 1
+- 条款 70 条（business/technical/quality/governance），判据 106 条 —— 其中 106 条判据指向可执行验证器
+- 成熟度分布：automated 69 / planned 0 / none 1
 
 ### 实际验证了什么
 
-- 真的跑了证据集（`bun test spec/verify/ packages/core/tests/ apps/api/tests/ ./scripts/check-coverage.check.ts ./apps/api/tests/perf/export-latency.bench.ts`）：**342 个用例，0 失败，342 通过**，覆盖 39 个测试文件
+- 真的跑了证据集（`bun test spec/verify/ packages/core/tests/ apps/api/tests/ ./scripts/check-coverage.check.ts ./apps/api/tests/perf/export-latency.bench.ts`）：**401 个用例，0 失败，401 通过**，覆盖 43 个测试文件
 - 真的跑了前后端集成 E2E（`bun test ./e2e/auth.e2e.ts ./e2e/errors.e2e.ts ./e2e/exports.e2e.ts ./e2e/library.e2e.ts ./e2e/navigation.e2e.ts ./e2e/offline.e2e.ts ./e2e/presentation.e2e.ts ./e2e/projects.e2e.ts ./e2e/quality.e2e.ts ./e2e/templates.e2e.ts ./e2e/workbench-editing.e2e.ts ./e2e/workbench-pages.e2e.ts ./e2e/workbench.e2e.ts`，Playwright 驱动真实 Chromium + 真实服务端）：**98 个用例，0 失败**
-- 证据集对账：两层证据共 **440 个用例**，其中 **100 个挂了判据**、340 个没挂；没挂判据的用例里 **0 个失败** —— 「失败明细」里那个「（无）」不是漏报
-- 真的跑了 `python3 spec/verify/spec-schema.py`：Spec 结构校验通过（68 条条款 / 101 条判据引用完整）
+- 证据集对账：两层证据共 **499 个用例**，其中 **105 个挂了判据**、394 个没挂；没挂判据的用例里 **0 个失败** —— 「失败明细」里那个「（无）」不是漏报
+- 真的跑了 `python3 spec/verify/spec-schema.py`：Spec 结构校验通过（70 条条款 / 106 条判据引用完整）
 - 真的跑了 `npx tsc --noEmit`：类型检查通过
 - 真的跑了 `bun run spec/verify/mutation-check.ts`：**91 个注入用例，不合格 0 个** —— 每个用例走「基线 PASS → 注入必须 FAIL → 还原后重新 PASS」三步，源文件已全部还原 —— 其中对**当前代码**仍然成立 **91** 条、已过期 **0** 条（见 §2.4.1）
-- 领域内核行覆盖率：**93.42% ≥ 90%**（2358/2524 行，证据落盘在 `spec/evidence/coverage.json`）
+- 领域内核行覆盖率：**94.29% ≥ 90%**（2380/2524 行，证据落盘在 `spec/evidence/coverage.json`）
 
 ### 哪些结论仍不可信
 
-- **23 条判据没有做注入错误检查**（AC-CORE-014、AC-CORE-015、AC-CORE-016、AC-CORE-017、AC-QLT-011、AC-QLT-012、AC-QLT-013、AC-QLT-014、AC-QLT-015、AC-QLT-016、AC-QLT-017、AC-QLT-018、AC-QLT-019、AC-QLT-020、AC-QLT-021、AC-EXP-007、AC-EXP-008、AC-RND-007、AC-RND-008、AC-E2E-023、AC-E2E-024、AC-E2E-025、AC-NFR-001）—— 它们的 PASS 只来自「测试跑过了」，没有被元验证证明「抓得住错」
+- **28 条判据没有做注入错误检查**（AC-CORE-014、AC-CORE-015、AC-CORE-016、AC-CORE-017、AC-CORE-018、AC-CORE-019、AC-CORE-020、AC-QLT-011、AC-QLT-012、AC-QLT-013、AC-QLT-014、AC-QLT-015、AC-QLT-016、AC-QLT-017、AC-QLT-018、AC-QLT-019、AC-QLT-020、AC-QLT-021、AC-EXP-007、AC-EXP-008、AC-RND-007、AC-RND-008、AC-E2E-023、AC-E2E-024、AC-E2E-025、AC-NFR-001、AC-GOV-003、AC-GOV-004）—— 它们的 PASS 只来自「测试跑过了」，没有被元验证证明「抓得住错」
 - **SPEC-NFR-001 —— 真实模型下的 P95 从未测过**。验证器已建成，但本轮只跑了降级模式（.env 里的 GEMINI_API_KEY 是占位符），模型往返延迟根本没被采样到
 - **SPEC-GOV-003 —— 质量门禁分数线从未在文档中给出**，判据无法存在（AMB-001 未裁决）
 - **AC-QLT-010 —— self-derived oracle**，只能防回归，不能证明正确

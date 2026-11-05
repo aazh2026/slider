@@ -2,15 +2,15 @@
   "directory": "packages/core/src/engine",
   "threshold": 90,
   "found": 2524,
-  "hit": 2358,
-  "percent": 93.42,
+  "hit": 2380,
+  "percent": 94.29,
   "passed": true,
   "files": [
     {
       "file": "packages/core/src/engine/contentBinding.ts",
       "found": 274,
-      "hit": 245,
-      "percent": 89.42
+      "hit": 262,
+      "percent": 95.62
     },
     {
       "file": "packages/core/src/engine/elementVariant.ts",
@@ -51,8 +51,8 @@
     {
       "file": "packages/core/src/engine/svgRenderer.ts",
       "found": 302,
-      "hit": 252,
-      "percent": 83.44
+      "hit": 257,
+      "percent": 85.1
     },
     {
       "file": "packages/core/src/engine/textMetrics.ts",
