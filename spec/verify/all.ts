@@ -43,6 +43,12 @@ import { startServers } from './servers';
 import { discoverChains, runE2eChains } from './run-e2e';
 import { failureBreakdown as failureBreakdownOf, parseJunitCases } from './junit';
 import {
+  acquireRunLock,
+  explainLockWait,
+  runLockPath,
+  RUN_LOCK_HELD_ENV,
+} from './runLock';
+import {
   artifactFresh,
   artifactStamp,
   EXIT_CODE_MEANING,
@@ -405,21 +411,62 @@ export async function runPipeline(
 async function main(): Promise<number> {
   mkdirSync(EVIDENCE_DIR, { recursive: true });
 
-  const verdict = await runPipeline(STEPS);
+  // **机器级跑批锁** —— 见 spec/verify/runLock.ts 的文件头。
+  //
+  // 为什么整条流水线都要持锁：这份流水线是机器上最重的一件事，
+  // 而「证据要对齐要推的那一版」这条规矩**要求**它在隔离镜像里跑 ——
+  // 同一个项目上还有另一条循环也在跑自己的隔离镜像。
+  // 两份一起跑，后跑的那份会被抢到超时（**超时是假的**），
+  // 那一轮就什么结论都没产出。
+  //
+  // 拿不到锁就**等**：另一份跑批跑完就接着跑 ——
+  // 拒绝启动会白费一整轮，而等是安全的（两棵不同的树不会互相改源码）。
+  let lastWaitNotice = 0;
+  const lock = await acquireRunLock({
+    lockPath: runLockPath(),
+    holder: {
+      pid: process.pid,
+      startedAt: new Date().toISOString(),
+      root: ROOT,
+      what: '全链路流水线',
+    },
+    onWait: ({ holder, waitedMs }) => {
+      if (waitedMs > 0 && waitedMs - lastWaitNotice < 60_000) return;
+      lastWaitNotice = waitedMs;
+      console.log(`  ⏳ ${explainLockWait(holder, waitedMs)}`);
+    },
+  });
 
-  console.log(`\n${verdict.headline}`);
-  if (verdict.exitCode === 1) {
-    console.log('   逐条根因见 spec/traceability.md §2.2「失败明细」。');
-  } else if (verdict.exitCode === 2) {
-    console.log(
-      '   没有结论的环节**不能**算通过 —— 修好环境（或让这一步真的产出证据）再跑一次。'
-    );
+  if (!lock.ok) {
+    console.error(`\n❌ ${explainLockWait(lock.holder, lock.waitedMs)}`);
+    console.error('   两份重跑批同时跑会互相抢 CPU —— 超时是假的，结论不可信。');
+    console.error('   这一轮不启动（退出码 2 = 没跑出结论，不是「不通过」）。');
+    return 2;
   }
-  console.log(
-    `   退出码 ${verdict.exitCode} —— ${EXIT_CODE_MEANING[verdict.exitCode]}`
-  );
 
-  return verdict.exitCode;
+  // 让子进程知道「父进程替我持着锁」——
+  // 注入检查是流水线起的子进程，它不该跟自己的父进程抢同一把锁。
+  process.env[RUN_LOCK_HELD_ENV] = String(process.pid);
+
+  try {
+    const verdict = await runPipeline(STEPS);
+
+    console.log(`\n${verdict.headline}`);
+    if (verdict.exitCode === 1) {
+      console.log('   逐条根因见 spec/traceability.md §2.2「失败明细」。');
+    } else if (verdict.exitCode === 2) {
+      console.log(
+        '   没有结论的环节**不能**算通过 —— 修好环境（或让这一步真的产出证据）再跑一次。'
+      );
+    }
+    console.log(
+      `   退出码 ${verdict.exitCode} —— ${EXIT_CODE_MEANING[verdict.exitCode]}`
+    );
+
+    return verdict.exitCode;
+  } finally {
+    lock.release();
+  }
 }
 
 if (import.meta.main) {

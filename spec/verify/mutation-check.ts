@@ -37,7 +37,14 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { startServers, type ServerHandle } from './servers';
-import { acquireMutationLock } from './mutationLock';
+import {
+  acquireRunLock,
+  explainLockWait,
+  inheritedLockHolder,
+  runLockPath,
+  STANDALONE_WAIT_MS,
+  waitBudgetMs,
+} from './runLock';
 import { restoreFiles } from './mutationRestore';
 import { sha256Of } from './evidenceFreshness';
 import { dataDepsOfFile } from './dataDeps';
@@ -58,11 +65,15 @@ const ROOT = resolve(HERE, '../..');
 const REPORT_PATH = resolve(ROOT, 'spec/evidence/mutation-report.json');
 
 /**
- * 跑批互斥锁 —— 见 `spec/verify/mutationLock.ts` 的文件头。
+ * 跑批互斥锁 —— 见 `spec/verify/runLock.ts` 的文件头。
  *
- * 锁放在**工作树里**，不是 /tmp：要防的正是「同一个工作树里两个跑批互相踩」。
+ * 锁放在**机器上**（`~/.cache/slider/run.lock`），不在工作树里：
+ * 要防的不只是「同一个工作树里两个跑批互相踩」，
+ * 还有「不同工作树（主仓 + 隔离镜像）里两个跑批互相抢 CPU」。
+ * 后者更要紧 —— 规矩要求流水线在隔离镜像里跑，
+ * 而同一个项目上还有另一条循环也在跑，两边天然会同时跑。
  */
-const LOCK_PATH = resolve(ROOT, 'spec/evidence/.mutation-check.lock');
+const LOCK_PATH = runLockPath();
 
 /**
  * 子集跑的落盘位置 —— **绝不能盖掉全量报告**。
@@ -2529,18 +2540,37 @@ async function runChecks(): Promise<number> {
  *   拿不到锁就退出（退出码 2），并说清楚是谁占着、什么时候开始的。
  */
 async function main(): Promise<number> {
-  const lock = acquireMutationLock(LOCK_PATH, {
-    pid: process.pid,
-    startedAt: new Date().toISOString(),
+  // 父进程（流水线）替我持着锁 —— 那就不该再抢一次（会跟自己的父进程死等）。
+  // 认不认的依据是**锁文件里记的 pid**，不是环境变量说什么。
+  const inherited = inheritedLockHolder(LOCK_PATH);
+  if (inherited) {
+    console.log(`🔒 机器级跑批锁由父进程持有（pid ${inherited.pid}）—— 这一轮不再抢锁。`);
+    return await runChecks();
+  }
+
+  // 拿不到锁就**等**（不同树的两份跑批等前一份跑完是安全的）；
+  // 等到预算用完还拿不到，这一轮不启动（退出码 2 = 没跑出结论）。
+  let lastWaitNotice = 0;
+  const lock = await acquireRunLock({
+    lockPath: LOCK_PATH,
+    holder: {
+      pid: process.pid,
+      startedAt: new Date().toISOString(),
+      root: ROOT,
+      what: '注入错误检查',
+    },
+    waitMs: waitBudgetMs(process.env, STANDALONE_WAIT_MS),
+    onWait: ({ holder, waitedMs }) => {
+      if (waitedMs > 0 && waitedMs - lastWaitNotice < 30_000) return;
+      lastWaitNotice = waitedMs;
+      console.log(`  ⏳ ${explainLockWait(holder, waitedMs)}`);
+    },
   });
 
   if (!lock.ok) {
-    console.error('\n❌ 同一个工作树里已经有另一个注入检查在跑 —— 这一轮不启动。');
-    if (lock.holder) {
-      console.error(`   占锁的是 pid ${lock.holder.pid}，开始于 ${lock.holder.startedAt || '未知时间'}。`);
-    }
-    console.error('   两个跑批会互相改源码又互相还原，两边的结论都不可信。');
-    console.error('   等它跑完再来；或者在另一个工作树里跑（那才是正解）。');
+    console.error(`\n❌ ${explainLockWait(lock.holder, lock.waitedMs)}`);
+    console.error('   两份重跑批同时跑会互相抢 CPU —— 超时是假的，结论不可信。');
+    console.error('   这一轮不启动（退出码 2 = 没跑出结论，不是「不通过」）。');
     console.error(`   锁文件：${LOCK_PATH}\n`);
     return 2;
   }
