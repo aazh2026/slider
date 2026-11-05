@@ -96,7 +96,7 @@ const NON_COVER_VARIANTS: ElementVariant[] = ['background', ...MASTER_VARIANTS, 
 /**
  * 版式 → 槽位契约表
  * ---------------------------------------------------------------------------
- * **每一行都必须有** —— 少一行就是一处「这个版式要什么」���隐式约定。
+ * **每一行都必须有** —— 少一行就是一处「这个版式要什么」的隐式约定。
  */
 export const LAYOUT_SLOT_CONTRACTS: Record<SlideLayoutType, LayoutSlotContract> = {
   title_cover: {

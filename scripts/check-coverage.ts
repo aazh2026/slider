@@ -101,7 +101,7 @@ function toRepoRelative(absolute: string): string {
   return rel.split(sep).join('/');
 }
 
-/** 取领域内核目录下���文件 */
+/** 取领域内核目录下的文件 */
 export function selectCoreEngine(files: FileCoverage[]): FileCoverage[] {
   const prefix = `${CORE_ENGINE_DIR}/`;
   return files.filter((f) => f.file.startsWith(prefix));

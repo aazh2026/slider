@@ -22,7 +22,7 @@
  *   · **全角字符**（CJK / 全角标点 / 韩文）—— 1em。各家 CJK 字体都是等宽
  *     1em，这一路不需要查表。
  *   · **半角字符** —— 查一张**标准西文 advance width 表**（单位 1/1000 em）。
- *     表取 Helvetica/Arial 的字形宽度：这���主题字体（Manrope / Inter / 思源）
+ *     表取 Helvetica/Arial 的字形宽度：这些主题字体（Manrope / Inter / 思源）
  *     都与它同源，且是最保守的一档（见下）。
  *
  * **保守性**：主题字体比 Helvetica 更宽，所以半角部分统一乘一个安全系数
