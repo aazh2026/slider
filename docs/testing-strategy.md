@@ -86,11 +86,32 @@
 | 项 | 配置 | 门禁 |
 |---|---|---|
 | 类型检查 | `tsc --noEmit`（strict + `exactOptionalPropertyTypes`） | 必须零错误 |
-| 领域层零依赖检查 | 自定义脚本扫描 `packages/core` 不得 import 模型 SDK / IO | 违规即失败 |
+| 领域层零依赖检查 | `bun run scripts/check-domain-deps.ts` 扫 `packages/core/src`：import 的模型 SDK / IO 库 / 网络库 / DOM 模拟器 / Node 运行时，以及**没有 import 也照样依赖**的主机全局（`document` / `fetch` / `process` …） | 新增违规即失败 |
 | 未使用导出检查 | `knip` / `tsc --noUnusedLocals` | 零警告 |
 | 依赖漏洞 | `bun audit` | 高危零容忍 |
 
 > **"领域层零依赖"是一条可执行的架构约束**，必须由 CI 强制，否则架构会在无人察觉时腐化。
+
+**这条门禁已经落地**（SPEC-GOV-005）：
+
+| 零件 | 位置 |
+|---|---|
+| 门禁本体 | `scripts/check-domain-deps.ts` |
+| 可执行判据（进 junit 证据集） | `scripts/check-domain-deps.check.ts` |
+| 欠账账本 | `spec/domain-deps-baseline.json` |
+| 结论证据 | `spec/evidence/domain-deps.json` |
+| 流水线里的那一步 | `spec/verify/all.ts` →「领域层零依赖检查」 |
+
+**它拦的是「债在长大」，不是「债必须为零」**。领域层现在确实有一笔债：
+`exportEngine.ts` 引了 `pptxgenjs` / `jspdf`（导出属于 IO），
+还直接用了 `document` / `Image`（浏览器依赖）。这 4 笔登记在账本里 ——
+正确的位置是 adapters 层，而 adapters 层还没建。账本规则三个方向都失败：
+
+- **账本里没有的违规** = 新债 → 失败；
+- **次数超过账本记的上限** = 债在涨 → 失败（上限不是精确值：少用不红，多用必红）；
+- **账本里有、现在却找不到了** = 债还清了 → 失败（必须把那条删掉）。
+
+账本因此不会烂成一张万能赦免状 —— 这正是「门禁」与「写个文档提醒一下」的区别。
 
 ### L1 · 单元测试
 
@@ -817,6 +838,7 @@ CI 在 PR 上自动评论：
 | 指标 | 目标 | 测量方式 | 不达标处理 |
 |---|---|---|---|
 | 领域层行覆盖率 | ≥ 90% | `bun test --coverage` | 阻断 |
+| 领域层宿主依赖 | 新增 0 笔 | `bun run scripts/check-domain-deps.ts` | 阻断 |
 | 应用层行覆盖率 | ≥ 75% | 同上 | 阻断 |
 | 编排层行覆盖率 | ≥ 70% | 同上（靠回放） | 阻断 |
 | 快照一致率 | 100% | CI | 阻断 |

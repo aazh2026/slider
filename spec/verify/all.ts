@@ -130,16 +130,17 @@ export const STEPS: Step[] = [
   {
     // 证据集 = 判据真正被执行到的全部测试。
     //
-    // 两个文件必须用 `./` 路径形式点名（*.bench.ts / *.check.ts 不匹配 Bun 的
+    // 三个文件必须用 `./` 路径形式点名（*.bench.ts / *.check.ts 不匹配 Bun 的
     // 默认测试规则，不带前缀会被当成**过滤器**，一个用例都跑不到）：
     //   · ./scripts/check-coverage.check.ts            —— SPEC-GOV-001 覆盖率门禁
+    //   · ./scripts/check-domain-deps.check.ts          —— SPEC-GOV-005 领域层零依赖
     //   · ./apps/api/tests/perf/export-latency.bench.ts —— SPEC-NFR-002 导出延迟
     //
     // **大纲延迟基准刻意不在这里**（./apps/api/tests/perf/outline-latency.bench.ts）：
     // 它依赖真实模型，本轮只跑了降级模式 —— 降级模式下的通过**不构成**
     // AC-NFR-001 的通过证据。把它混进证据集会让追溯矩阵给出一条站不住的 PASS。
     // 该条的结论保持 INCONCLUSIVE，理由见 spec/spec.yaml 的 known_gaps。
-    name: '判据执行（spec/verify + packages/core + apps/api + 前端 + 覆盖率门禁 + 导出基准）',
+    name: '判据执行（spec/verify + packages/core + apps/api + 前端 + 覆盖率门禁 + 零依赖门禁 + 导出基准）',
     cmd: [
       'bun',
       'test',
@@ -148,6 +149,7 @@ export const STEPS: Step[] = [
       'apps/api/tests/',
       './src/',
       './scripts/check-coverage.check.ts',
+      './scripts/check-domain-deps.check.ts',
       './apps/api/tests/perf/export-latency.bench.ts',
     ],
     tolerateFailure: true,
@@ -178,6 +180,22 @@ export const STEPS: Step[] = [
     // 结论证据 —— 报告里有「不合格 N 个」的判定；
     // 跑崩了报告就不会更新 → 「没跑出结论」
     artifact: 'spec/evidence/mutation-report.json',
+  },
+  {
+    // 领域层零依赖门禁（SPEC-GOV-005）—— docs/testing-strategy.md §3 里
+    // 承诺过、但一直没有脚本的那条 L0 门禁。
+    //
+    // 放在类型检查之后、判据执行之前：它只读 packages/core/src 的源码，
+    // 几毫秒就出结论 —— 架构上的债越早报越好，别等跑完一整轮测试才知道。
+    //
+    // 结论证据是 spec/evidence/domain-deps.json：
+    // 门禁失败（退出码 1）时文件照样会更新（它写的是「实际发现了什么」），
+    // 所以这一步永远是「跑出了结论」，不会退化成「没跑出结论」。
+    name: '领域层零依赖检查（packages/core 不得依赖宿主环境）',
+    cmd: ['bun', 'run', 'scripts/check-domain-deps.ts'],
+    tolerateFailure: false,
+    stderrFile: 'step-domain-deps.txt',
+    artifact: 'spec/evidence/domain-deps.json',
   },
   {
     // 这一步**不只是一份报告** —— 它末尾带**发布闸门**：

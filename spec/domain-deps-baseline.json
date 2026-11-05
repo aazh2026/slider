@@ -1,0 +1,34 @@
+{
+  "scannedRoot": "packages/core/src",
+  "note": "领域层零依赖门禁（SPEC-GOV-005）的欠账账本。门禁比对的是「现在实际有多少」与「这里允许多少」：账本里没有的违规 = 新债（失败）；超过上限 = 债在长大（失败）；账本里有而现在没有的 = 债还清了（失败，必须删掉条目）。三个方向都失败，账本才不会烂成一张万能赦免状。maxCount 是上限不是精确值 —— 少用不红，多用必红。",
+  "entries": [
+    {
+      "file": "packages/core/src/engine/exportEngine.ts",
+      "kind": "io",
+      "symbol": "pptxgenjs",
+      "maxCount": 1,
+      "reason": "导出引擎直接引 PPTX 生成库（会写文件）。导出属于 IO，正确的位置是 adapters 层 —— adapters 层还没建（见 docs/architecture.md）。"
+    },
+    {
+      "file": "packages/core/src/engine/exportEngine.ts",
+      "kind": "io",
+      "symbol": "jspdf",
+      "maxCount": 1,
+      "reason": "同上：PDF 导出库会落盘，属于 IO。"
+    },
+    {
+      "file": "packages/core/src/engine/exportEngine.ts",
+      "kind": "dom",
+      "symbol": "document",
+      "maxCount": 10,
+      "reason": "PNG/JPG 导出靠 document.createElement('a') 触发下载、document.createElement('canvas') 取像素。浏览器依赖，不是 import 进来的 —— 所以门禁除了查 import 还要查自由使用的主机全局。"
+    },
+    {
+      "file": "packages/core/src/engine/exportEngine.ts",
+      "kind": "dom",
+      "symbol": "Image",
+      "maxCount": 1,
+      "reason": "SVG 转位图靠 new Image() 解码。同一笔债的另一半。"
+    }
+  ]
+}
