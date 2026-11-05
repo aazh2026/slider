@@ -1430,6 +1430,230 @@ export const MUTATIONS: Mutation[] = [
     testFile: 'packages/core/tests/layoutInvariants.test.ts',
     testName: 'no-quality-issue-in-any-combo',
   },
+  // =======================================================================
+  // 波 3 新增的十五族判据 —— 元素语义（SPEC-CORE-010）与质量规则族（SPEC-QLT-011~014）
+  // =======================================================================
+  //
+  // 2026-11-05 接着上一轮往下补：追溯矩阵里「没有做注入错误检查」的那 23 条，
+  // 这一轮吃掉 15 条 —— AC-CORE-014~017（元素语义住在字段里）与
+  // AC-QLT-011~021（自动修复与质量规则族）。
+  //
+  // 每条都对着判据文本里的**主语**下手：
+  //   · 引擎给元素标 variant（AC-CORE-014）→ 改版式引擎：不再标
+  //   · ID 修复的前缀来自 variant（AC-CORE-015）→ 改前缀来源：又从旧 ID 抠
+  //   · 渲染与主题重映射只读字段（AC-CORE-016）→ 改渲染器：改看 ID 前缀
+  //   · 全仓零处解析元素 ID（AC-CORE-017）→ 造一个这样的消费方
+  //   · 修复只动真越界的元素（AC-QLT-011）→ 去掉那道守卫
+  //   · 修复不得让文稿更糟（AC-QLT-012）→ 把守卫判反
+  //   · 诊断声明可否自动修复（AC-QLT-013）→ 让 fixableOf 一律返回 true
+  //   · 规则表与文档逐行对齐（AC-QLT-014）→ 让表里的扣分幅度漂掉
+  //   · 每条规则都有文档锚点（AC-QLT-015）→ 让表里多一条没写进文档的规则
+  //   · 诊断能追溯到规则（AC-QLT-016）→ 换一个对不上的诊断 id
+  //   · 扣分幅度来自规则表（AC-QLT-017）→ 让引擎把幅度写死
+  //   · 空页扣内容分（AC-QLT-018）→ 让「空页」判据不触发
+  //   · 跨页结论重复扣分（AC-QLT-019）→ 把重复门槛抬到 3
+  //   · 内容稀疏扣视觉分（AC-QLT-020）→ 把阈值放宽到 5%
+  //   · 同一页不重复扣两次（AC-QLT-021）→ 让空页也按稀疏再扣一次
+  {
+    criterion: 'AC-CORE-014',
+    description: '版式引擎不再给元素标 variant —— 字段缺失，语义只能靠猜 ID',
+    file: 'packages/core/src/engine/layoutEngine.ts',
+    find:
+      '        variant: \'grid_card\',\n',
+    replace: '',
+    testFile: 'spec/verify/element-variant.test.ts',
+    testName: 'layout-engine-sets-variant-on-every-element',
+  },
+  {
+    criterion: 'AC-CORE-015',
+    description: 'ID 修复改回从旧 ID 里抠语义前缀 —— 洗过的 ID 再也修不回语义',
+    file: 'packages/core/src/engine/elementVariant.ts',
+    find:
+      '  return ELEMENT_VARIANTS[variantOf(el)].idPrefix;\n',
+    replace:
+      '  return el.id.split(\'_\')[0] ?? \'card\';\n',
+    testFile: 'spec/verify/element-variant.test.ts',
+    testName: 'id-repair-derives-prefix-from-variant',
+  },
+  {
+    criterion: 'AC-CORE-016',
+    description: '渲染分层改回按 ID 前缀判断 —— ID 一洗，母版层就空了',
+    file: 'packages/core/src/engine/svgRenderer.ts',
+    find:
+      '    const templateElements = slide.elements.filter((el) => layerOf(el) === \'template\');\n',
+    replace:
+      '    const templateElements = slide.elements.filter((el) => el.id.startsWith(\'header_\') || el.id.startsWith(\'pagenum_\') || el.id.startsWith(\'footernote_\'));\n',
+    testFile: 'spec/verify/element-variant.test.ts',
+    testName: 'render-and-theme-follow-variant-not-id',
+  },
+  {
+    criterion: 'AC-CORE-017',
+    description: '全仓多了一个解析元素 ID 的消费方 —— 「零处解析」这条不变量破了',
+    file: 'packages/core/src/engine/svgRenderer.ts',
+    find:
+      '    const contentElements = slide.elements.filter((el) => layerOf(el) === \'content\');\n',
+    replace:
+      '    const contentElements = slide.elements.filter((el) => layerOf(el) === \'content\' || el.id.startsWith(\'keymsg_\'));\n',
+    testFile: 'spec/verify/element-variant.test.ts',
+    testName: 'no-consumer-parses-element-ids',
+  },
+  {
+    criterion: 'AC-QLT-011',
+    description: '自动修复不再只动真越界的元素 —— 母版页码与页脚被一起挪进安全区',
+    file: 'packages/core/src/engine/qualityEngine.ts',
+    find:
+      '        if (!isOutOfCanvas(el)) return;\n',
+    replace: '',
+    testFile: 'spec/verify/quality-engine.test.ts',
+    testName: 'autofix-leaves-master-elements-alone',
+  },
+  {
+    criterion: 'AC-QLT-012',
+    description: '「修复不得让文稿更糟」的守卫被判反了 —— 修好了反而回退',
+    file: 'packages/core/src/engine/qualityEngine.ts',
+    find:
+      '    if (after.overallScore < before.overallScore) {\n',
+    replace:
+      '    if (after.overallScore > before.overallScore) {\n',
+    testFile: 'spec/verify/quality-engine.test.ts',
+    testName: 'autofix-never-lowers-score',
+  },
+  {
+    criterion: 'AC-QLT-013',
+    description: '所有诊断都说「能一键修」 —— 不可修的缺陷也挂了 fixable=true',
+    file: 'packages/core/src/engine/qualityRules.ts',
+    find:
+      '  return ruleById(id).fixable;\n',
+    replace:
+      '  return true;\n',
+    testFile: 'spec/verify/quality-engine.test.ts',
+    testName: 'issues-declare-fixability',
+  },
+  {
+    criterion: 'AC-QLT-014',
+    description: '规则表的扣分幅度与文档漂了 —— 真相源和它的机器副本对不上',
+    file: 'packages/core/src/engine/qualityRules.ts',
+    find:
+      '    id: \'struct_dim\',\n' +
+      '    dimension: \'structure\',\n' +
+      '    penalty: 15,\n',
+    replace:
+      '    id: \'struct_dim\',\n' +
+      '    dimension: \'structure\',\n' +
+      '    penalty: 16,\n',
+    testFile: 'spec/verify/quality-rules.test.ts',
+    testName: 'rule-table-matches-doc',
+  },
+  {
+    criterion: 'AC-QLT-015',
+    description: '规则表里多了一条规则 —— 文档里没有对应的锚点',
+    file: 'packages/core/src/engine/qualityRules.ts',
+    find:
+      '  },\n' +
+      '];\n',
+    replace:
+      '  },\n' +
+      '  {\n' +
+      '    id: \'content_overflow\',\n' +
+      '    dimension: \'content\',\n' +
+      '    penalty: 5,\n' +
+      '    fixable: false,\n' +
+      '    description: \'单页内容不得溢出内容安全区\',\n' +
+      '    basis: \'docs/quality-rules.md#content_overflow\',\n' +
+      '  },\n' +
+      '];\n',
+    testFile: 'spec/verify/quality-rules.test.ts',
+    testName: 'every-rule-has-doc-anchor',
+  },
+  {
+    criterion: 'AC-QLT-016',
+    description: '诊断的 id 与规则表对不上 —— 追溯不到任何一条规则',
+    file: 'packages/core/src/engine/qualityEngine.ts',
+    find:
+      '          id: `struct_dim_${slide.slideId}`,\n',
+    replace:
+      '          id: `canvas_ratio_${slide.slideId}`,\n',
+    testFile: 'spec/verify/quality-rules.test.ts',
+    testName: 'diagnostic-ids-map-to-rules',
+  },
+  {
+    criterion: 'AC-QLT-017',
+    description: '引擎把扣分幅度写死了 —— 不再读规则表，规则表改了分数也不动',
+    file: 'packages/core/src/engine/qualityEngine.ts',
+    find:
+      '        totalStructurePenalties += penaltyOf(\'struct_dim\');\n',
+    replace:
+      '        totalStructurePenalties += 10;\n',
+    testFile: 'spec/verify/quality-rules.test.ts',
+    testName: 'penalties-come-from-rule-table',
+  },
+  {
+    criterion: 'AC-QLT-018',
+    description: '「空页」判据整个不触发 —— 只有标题的页面不再扣内容分',
+    file: 'packages/core/src/engine/qualityEngine.ts',
+    find:
+      '      const isThin = !isCover && contentCount === 0;\n',
+    replace:
+      '      const isThin = false;\n',
+    testFile: 'spec/verify/quality-engine.test.ts',
+    testName: 'thin-page-penalty',
+  },
+  {
+    criterion: 'AC-QLT-019',
+    description: '跨页结论重复的门槛抬高到 3 —— 两页重复不再算重复',
+    file: 'packages/core/src/engine/qualityEngine.ts',
+    find:
+      '      if (group.length < 2) return;\n',
+    replace:
+      '      if (group.length < 3) return;\n',
+    testFile: 'spec/verify/quality-engine.test.ts',
+    testName: 'duplicate-keymessage-penalty',
+  },
+  {
+    criterion: 'AC-QLT-020',
+    description: '稀疏判定的阈值放宽到 5% —— 版心一角的内容也算撑满了',
+    file: 'packages/core/src/engine/qualityEngine.ts',
+    find:
+      'const MIN_CONTENT_AREA_RATIO = 0.2;\n',
+    replace:
+      'const MIN_CONTENT_AREA_RATIO = 0.05;\n',
+    testFile: 'spec/verify/quality-engine.test.ts',
+    testName: 'sparse-page-penalty',
+  },
+  {
+    criterion: 'AC-QLT-021',
+    description: '空页也按稀疏再扣一次分 —— 同一页被扣了两次',
+    file: 'packages/core/src/engine/qualityEngine.ts',
+    find:
+      '      if (!isThin) {\n',
+    replace:
+      '      if (true) {\n',
+    testFile: 'spec/verify/quality-engine.test.ts',
+    testName: 'thin-page-not-double-charged',
+  },
+  {
+    criterion: 'AC-RND-007',
+    description: '半角字符一律按 0.56em 计宽 —— 「半角一个宽度」的老口径回来了',
+    file: 'packages/core/src/engine/textMetrics.ts',
+    find:
+      '  const advance = LATIN_ADVANCE[ch] ?? UNKNOWN_ADVANCE;\n' +
+      '  return (advance / 1000) * fontSize * LATIN_SAFETY;\n',
+    replace:
+      '  return 0.56 * fontSize;\n',
+    testFile: 'spec/verify/text-metrics.test.ts',
+    testName: 'text-width-model-is-calibrated',
+  },
+  {
+    criterion: 'AC-RND-008',
+    description: '空格断行不再检查尾段是否超宽 —— 折出来的行溢出可用宽度',
+    file: 'packages/core/src/engine/textMetrics.ts',
+    find:
+      '        if (estimateTextWidth(candidate, fontSize) <= limit) {\n',
+    replace:
+      '        if (true) {\n',
+    testFile: 'spec/verify/text-metrics.test.ts',
+    testName: 'wrapped-lines-never-exceed-the-available-width',
+  },
 ];
 
 interface RunResult {
