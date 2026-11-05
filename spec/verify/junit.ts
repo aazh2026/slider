@@ -31,6 +31,17 @@ export interface JunitCase {
   file: string;
   failed: boolean;
   /**
+   * 这一条被**跳过**了（`-t` 过滤没匹配上，或用例本身标了 skip）。
+   *
+   * 「跳过的用例」**不算跑过** —— Bun 实测（2026-11-05）：
+   * `bun test a.test.ts -t "不存在的名字"` 会写出 junit，里面**每一条**都是
+   * `<skipped/>`，而**退出码是 1**。
+   *
+   * 只看退出码的话，「一条都没跑」与「有东西坏了」长得一模一样。
+   * 差分判定要分清这两件事，所以这个标记不能丢。
+   */
+  skipped?: boolean;
+  /**
    * Bun 的 junit 把失败类型写进 `<failure type="..."/>` —— 这里原样保留。
    *
    * 实测：`TimeoutError`（超时）/ `AssertionError`（断言不通过）。
@@ -123,6 +134,7 @@ export function parseJunitCases(xml: string, label: string): JunitCase[] {
       'spec/'
     );
     const failed = /<failure\b/.test(m[0]);
+    const skipped = /<skipped\b/.test(m[0]);
     const failureType = m[0].match(/<failure\b[^>]*\btype="([^"]*)"/)?.[1];
     const rawTime = tag.match(/\btime="([^"]*)"/)?.[1];
     const durationSeconds = rawTime === undefined ? undefined : Number(rawTime);
@@ -130,6 +142,7 @@ export function parseJunitCases(xml: string, label: string): JunitCase[] {
       name,
       file,
       failed,
+      skipped,
       failureType,
       durationSeconds: Number.isFinite(durationSeconds) ? durationSeconds : undefined,
       evidence: label,

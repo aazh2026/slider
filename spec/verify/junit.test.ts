@@ -169,3 +169,39 @@ describe('失败的构成 —— 两种红分开数', () => {
     expect(failureBreakdown(parseJunitCases(xml, 'j'))).toEqual({ asserted: 0, timedOut: 0 });
   });
 });
+
+// ---------------------------------------------------------------------------
+// 跳过的用例 —— **不算跑过**
+// ---------------------------------------------------------------------------
+
+describe('junit 解析 —— 跳过的用例不算跑过', () => {
+  // 实测产出（`bun test a.test.ts -t "不存在的名字"`，2026-11-05）：
+  //   退出码 **1**，而 junit 里每一条都是 `<skipped/>`。
+  //
+  // 这跟「有东西坏了」长得一模一样（都是退出码 1），
+  // 但它其实**什么都没跑** —— 只看退出码就会把
+  // 「一条都没跑」当成「验证器扛住了注入」。
+  const ALL_SKIPPED =
+    '<testcase name="a" file="/x/y.ts" assertions="0"><skipped /></testcase>' +
+    '<testcase name="b" file="/x/y.ts" assertions="0"><skipped /></testcase>';
+
+  test('skipped-is-marked', () => {
+    const cases = parseJunitCases(ALL_SKIPPED, 'j');
+    expect(cases.every((c) => c.skipped)).toBe(true);
+  });
+
+  test('skipped-cases-are-not-failures', () => {
+    // 跳过的用例**既没失败也没通过** —— 它压根没跑
+    const cases = parseJunitCases(ALL_SKIPPED, 'j');
+    expect(cases.every((c) => c.failed)).toBe(false);
+  });
+
+  test('a-run-case-is-not-skipped', () => {
+    const xml =
+      '<testcase name="跑了的" file="/x/y.ts" assertions="1" />' +
+      '<testcase name="被过滤的" file="/x/y.ts" assertions="0"><skipped /></testcase>';
+    const cases = parseJunitCases(xml, 'j');
+    expect(cases[0]!.skipped).toBe(false);
+    expect(cases[1]!.skipped).toBe(true);
+  });
+});

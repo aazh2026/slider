@@ -31,7 +31,10 @@ import {
   worstOf,
   type Verdict,
 } from './verdict.ts';
-import { mutationVerdictOf, summarizeMutationCases } from './mutationVerdict.ts';
+import {
+  reportCaseVerdict,
+  summarizeVerdicts as summarizeMutationVerdicts,
+} from './mutationVerdict.ts';
 import {
   currentFingerprints,
   freshnessQualifier,
@@ -337,12 +340,24 @@ function readMutation(): {
     data_deps?: string[];
     /** 跑批时记下的数据依赖指纹：路径 → sha256 */
     data_sha256?: Record<string, string | null>;
-    baseline_pass: boolean;
-    caught: boolean;
-    restored_pass: boolean;
-    /** 这一条的三档结论（老报告没有 —— 现场从三个布尔量推） */
+    /**
+     * 新格式：三轮各自失败了哪几条用例 —— **差分判定靠它**。
+     *
+     * 老报告没有这三项（只有下面三个布尔量）。
+     */
+    baseline?: { failed: string[]; no_verdict?: boolean };
+    mutated?: { failed: string[]; no_verdict?: boolean };
+    restored?: { failed: string[]; no_verdict?: boolean };
+    /** 旧格式：三轮整体绿不绿 —— 新报告不再写，老报告只有这三个 */
+    baseline_pass?: boolean;
+    caught?: boolean;
+    restored_pass?: boolean;
+    /** 这一条的三档结论（老报告没有 —— 现场推） */
     verdict?: string;
-    note: string;
+    /** 这一条为什么是这一档（新报告才有） */
+    reason?: string;
+    /** 老报告的备注字段 —— 新报告不再写（理由挪到 `reason`） */
+    note?: string;
   }>;
 } {
   if (!existsSync(MUTATION_PATH)) {
@@ -1151,50 +1166,92 @@ function main(): void {
   // ---- 2.4 注入错误检查 ----
   P('### 2.4 注入错误检查（验证器的元验证）');
   P();
-  // 三档结论 —— 基线自己就没过的那些是「没跑出结论」，不是「验证器弱」。
-  // 计数现场算（老报告没有 inconclusive 字段），规则见 spec/verify/mutationVerdict.ts。
-  const mutationSummary = summarizeMutationCases(
-    mutation.cases.map((c) => ({
-      baseline_pass: c.baseline_pass,
-      caught: c.caught,
-      restored_pass: c.restored_pass,
-    }))
-  );
+  // 三档结论 —— **差分**判定，规则见 spec/verify/mutationVerdict.ts。
+  //
+  // 每一行的结论都由 `reportCaseVerdict` 现场算：
+  //   · 新报告 → 差分（只看「注入带来了哪些**新的**失败」）
+  //   · 老报告 → 旧判定（它只有三个布尔量）
+  // 两种格式可能并存（老报告不会因为新代码上线而消失），所以两种都要能读。
+  const caseVerdicts = mutation.cases.map((c) => reportCaseVerdict(c));
+  const mutationSummary = summarizeMutationVerdicts(caseVerdicts.map((v) => v.verdict));
+  const legacyReport = caseVerdicts.some((v) => v.legacy);
+  const legacyCount = caseVerdicts.filter((v) => v.legacy).length;
+  // 结论「怎么来的」要说对 —— 全是老格式的报告不能说成「由差分给出」。
+  const verdictHow =
+    legacyCount > 0 && legacyCount === caseVerdicts.length
+      ? '结论按**旧规则**给出（这份报告只记了「三轮各自绿不绿」，没有失败清单）。'
+      : legacyCount > 0
+        ? '结论由**差分**给出（新格式的条目）或**旧规则**（旧格式的条目）。'
+        : '结论由**差分**给出：只看「注入带来了哪些**新的**失败」与「还原之后还多出哪些失败」。';
   P(
     `共 ${mutation.total} 个注入用例，**不合格 ${mutationSummary.fail} 个**` +
       (mutationSummary.inconclusive > 0
-        ? `，**另有 ${mutationSummary.inconclusive} 个没跑出结论**（基线自己就没过）`
+        ? `，**另有 ${mutationSummary.inconclusive} 个没跑出结论**`
         : '') +
-      `。每个用例走「基线 PASS → 注入必须 FAIL → 还原后重新 PASS」三步。`
+      `。每个用例走「基线 → 注入 → 还原」三步，${verdictHow}`
   );
   P();
-  P('| 判据 | 注入的错误 | 改动的文件 | 检出者 | 基线 | 检出 | 还原 | 结论 |');
+  P('| 判据 | 注入的错误 | 改动的文件 | 检出者 | 基线失败 | 注入新增 | 还原新增 | 结论 |');
   P('|---|---|---|---|---|---|---|---|');
-  for (const c of mutation.cases) {
-    const yn = (b: boolean) => (b ? '✅' : '**MISSED**');
-    const v = mutationVerdictOf({
-      baseline_pass: c.baseline_pass,
-      caught: c.caught,
-      restored_pass: c.restored_pass,
-    });
+  for (let i = 0; i < mutation.cases.length; i++) {
+    const c = mutation.cases[i]!;
+    const cv = caseVerdicts[i]!;
     const verdictCell =
-      v === 'PASS' ? '通过' : v === 'FAIL' ? '**不通过**' : '**没跑出结论**';
+      cv.verdict === 'PASS' ? '通过' : cv.verdict === 'FAIL' ? '**不通过**' : '**没跑出结论**';
+    // 老报告没有失败清单 —— 差分算不了，三列显示 `—`（不猜）
+    const d = cv.diff;
+    const cells = d
+      ? `${d.baselineFailed.length} | ${d.caused.length} | ${d.leftover.length}`
+      : '— | — | —';
     P(
-      `| ${c.criterion} | ${c.description} | \`${c.mutated_file}\` | \`${c.verifier}\` | ${yn(c.baseline_pass)} | ${yn(c.caught)} | ${yn(c.restored_pass)} | ${verdictCell} |`
+      `| ${c.criterion} | ${c.description} | \`${c.mutated_file}\` | \`${c.verifier}\` | ${cells} | ${verdictCell} |`
     );
   }
   P();
+  // 没跑出结论 / 不通过的那些，**逐条说清楚** ——
+  // 表格给的是**数字**，这里给的是**哪几条红了**与**为什么是这一档**。
+  //
+  // 「哪几条红了」是这一轮的关键：它让读者能自己核对
+  // 「基线红的是不是跟我有关」—— 差分的全部价值都在这一行。
+  const notClean = caseVerdicts
+    .map((cv, i) => ({ cv, c: mutation.cases[i]! }))
+    .filter(({ cv }) => cv.verdict !== 'PASS');
+  if (notClean.length > 0) {
+    P('**没跑出结论 / 不通过的那些，逐条说清楚**：');
+    P();
+    const names = (list: readonly string[]) =>
+      list.length > 0 ? list.map((n) => `\`${n}\``).join('、') : '（无）';
+    for (const { cv, c } of notClean) {
+      const verdictText = cv.verdict === 'FAIL' ? '**不通过**' : '**没跑出结论**';
+      P(`- \`${c.criterion}\` —— ${verdictText}：${cv.reason}`);
+      if (cv.diff) {
+        P(`  - 基线就红着：${names(cv.diff.baselineFailed)}`);
+        P(`  - 注入带来的新失败：${names(cv.diff.caused)}`);
+        P(`  - 还原后仍多出：${names(cv.diff.leftover)}`);
+      }
+    }
+    P();
+  }
+  if (legacyReport) {
+    P(
+      '> ⚠️ 这份注入报告里有**旧格式**的条目 —— 它们只记了「三轮各自绿不绿」，' +
+        '没记「**哪几条**红了」，差分算不了，所以三列显示 `—`。' +
+        '旧格式的结论按老规则给出（**没有**把一份好好跑过的报告说成「没跑出结论」）。'
+    );
+    P();
+  }
   if (mutationSummary.fail > 0) {
-    P('> ⚠️ 存在 MISSED 的行 —— 这些判据的「通过」不构成证据。');
+    P('> ⚠️ 存在不通过的行 —— 这些判据的「通过」不构成证据。');
   } else if (mutationSummary.inconclusive > 0) {
     P(
-      `> ⚠️ 有 ${mutationSummary.inconclusive} 行的**基线自己就没过** —— 这些用例**没跑出结论**。` +
-        '**不能**据此说「验证器抓得住」：注入后的那一轮本来也会因为同样的原因红。' +
+      `> ⚠️ 有 ${mutationSummary.inconclusive} 行**没跑出结论** —— ` +
+        '**不能**据此说「验证器抓得住」：树本来就红的时候，注入后的那一轮本来也会红，' +
+        '跟注入有没有被抓住无关。' +
         '（这类红多半是环境抖了 —— 别的跑批在抢、或者机器睡了；隔离复跑一次再判。）'
     );
   } else {
     P(
-      '> 全部注入错误都被对应验证器抓到。**没有 MISSED 行** —— 上表的 PASS 因此不是自证。**但那是跑批那一刻的结论**：这些用例现在还跑不跑得起来，见 §2.4.2。'
+      '> 全部注入错误都被对应验证器抓到 —— 上表的 PASS 因此不是自证。**但那是跑批那一刻的结论**：这些用例现在还跑不跑得起来，见 §2.4.2。'
     );
   }
   P();
@@ -1224,7 +1281,14 @@ function main(): void {
   );
   P();
   P(
-    '> **E2E 的注入跑整个文件而不是单个用例** —— E2E 是一条顺序流程，单独跑一个用例会因为「前置没做」而失败。那种失败跟「抓到了注入的错误」是两回事，混在一起就是假阳性。'
+    '> **E2E 的注入曾经要跑整个文件** —— 那时 E2E 是一条顺序流程，单独跑一个用例会因为「前置没做」而失败。那种失败跟「抓到了注入的错误」是两回事，混在一起就是假阳性。' +
+      '现在 E2E 已拆成**各自完备**的独立链（每条链自己建项目、自己收尾），按用例名过滤是安全的 —— `wholeFile` 这个选项还留着，**当前没有一条注入用例用它**。'
+  );
+  P();
+  P(
+    '> **「注入那轮红了」不等于「注入被抓住了」** —— 以前「抓到注入」那一列记的是「注入那一轮红不红」：树本来就红的时候它照样是 ✓，等于给一个什么都没证明的验证器**记了功**。' +
+      '现在记的是**差分**：注入**带来了哪些新的失败**（`M \\ B`），以及还原之后还多出哪些（`R \\ B`）。' +
+      '差别不是措辞 —— 前者会把「树本来就坏」说成「验证器抓得住」，后者说「没跑出结论」。'
   );
   P();
   P(
@@ -1402,9 +1466,9 @@ function main(): void {
   P(
     `- 真的跑了 \`bun run spec/verify/mutation-check.ts\`：**${mutation.total} 个注入用例，不合格 ${mutationSummary.fail} 个**` +
       (mutationSummary.inconclusive > 0
-        ? `，另有 ${mutationSummary.inconclusive} 个没跑出结论（基线自己就没过）`
+        ? `，另有 ${mutationSummary.inconclusive} 个没跑出结论（树本来就红 / 有一轮没跑起来）`
         : '') +
-      ` —— 每个用例走「基线 PASS → 注入必须 FAIL → 还原后重新 PASS」三步，源文件已全部还原` +
+      ` —— 每个用例走「基线 → 注入 → 还原」三步，结论由**差分**给出（只看注入带来了哪些新的失败），源文件已全部还原` +
       freshnessQualifier(freshness) +
       reconciliationQualifier(reconciliation)
   );
@@ -1479,7 +1543,7 @@ function main(): void {
   console.log(
     `注入检查：${mutation.total} 个用例，不合格 ${mutationSummary.fail} 个` +
       (mutationSummary.inconclusive > 0
-        ? `，另有 ${mutationSummary.inconclusive} 个没跑出结论（基线没过）`
+        ? `，另有 ${mutationSummary.inconclusive} 个没跑出结论（树本来就红 / 有一轮没跑起来）`
         : '')
   );
   console.log(

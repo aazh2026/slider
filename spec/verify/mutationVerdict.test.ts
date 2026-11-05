@@ -1,172 +1,365 @@
 /**
- * 注入用例结论的缺陷回放 —— **基线红不能报成「验证器弱」**
+ * 注入用例三档结论的单元测试 —— **纯逻辑，无 IO**
  * ---------------------------------------------------------------------------
- * 这里断言的是**结论怎么说**，不是「注入检查跑得好不好」。
+ * 这套判定以前只看退出码，于是「树本来就是红的」会把结论说反：
+ *   · 把「树坏了」说成「验证器抓不住」（冤枉验证器）
+ *   · 把「注入那轮红」说成「抓到了」（冤枉验证器的反面 —— 给没证明过的事记功）
  *
- * ---------------------------------------------------------------------------
- * **缺陷回放（实测 2026-11-05，第 14 轮那次流水线）**
+ * 现在改成**差分**：只看「注入带来了哪些**新的**失败」。
  *
- * 注入用例走三步：基线 PASS → 注入必须 FAIL → 还原后重新 PASS。
- * 以前这三步只有两档结论：`!baseline || !caught || !restored` 一律算「不合格」，
- * 然后整轮报：
- *
- *   > ❌ 存在抓不到注入错误的验证器 —— 需要补强后才能声称这些判据有效。
- *
- * 那次流水线里 AC-GOV-001 那一行是：
- *
- *   | 判据 | 基线 | 抓到注入 | 还原后 |
- *   |---|---|---|---|
- *   | AC-GOV-001 | ✗ | ✓ | ✓ |
- *
- * 验证器**确实抓到了**注入，源文件**确实还原干净了**；
- * 只是**基线那一轮**里 `apps/api/tests` 有 19 条用例没过（抖的）——
- * 于是这条注入用例被判「不合格」，流水线退出码 1，
- * 终端上写着「需要补强验证器」。
- *
- * 同一份代码隔离复跑 → **91 个用例全过、不合格 0 个**。
- *
- * 也就是说：**基线红的时候，报告把「环境抖了」说成「验证器太弱」**。
- * 读的人（和下一轮的我）会去补强一个没毛病的验证器 ——
- * 而那正是「假结论最贵的地方」：它会把你带去修一个没问题的东西。
- *
- * ---------------------------------------------------------------------------
- * **这一组钉住的规则**
- *
- *   · 基线红 → **INCONCLUSIVE**（没跑出结论），不是 FAIL；
- *   · 基线红时，「抓到注入」那一栏**不可信**（注入后的那一轮本来也会红）；
- *   · 基线绿但没抓到 → 仍然是 FAIL（验证器弱，照旧要拦）；
- *   · 抓到但没还原干净 → 仍然是 FAIL（源文件被改坏了）；
- *   · 退出码：确定的坏结论优先报 1；只有「没跑出结论」才报 2。
- *
- * **不是弱化校验**：基线红的用例**照样挡住放行**（退出码 2 = 没跑出结论，
- * 流水线不放行）。变的只是**结论的说法**：从「验证器弱」改成「还不知道」。
+ * 下面钉住三件事：
+ *   ① 每一条判定分支；
+ *   ② **等值性**：树是绿的时候，新旧两套判定逐条相同 —— **这不是弱化校验**；
+ *   ③ 缺陷重放：第 14 轮那次真实的误判，现在必须判成「没跑出结论」。
  */
 
 import { describe, expect, test } from 'bun:test';
 
 import {
+  legacyMutationVerdictOf,
+  mutationDiffOf,
   mutationExitCode,
+  mutationRoundsOf,
   mutationVerdictOf,
   mutationVerdictReason,
+  reportCaseVerdict,
+  RUN_LEVEL_FAILURE,
   summarizeMutationCases,
+  summarizeVerdicts,
   type MutationCaseLike,
+  type MutationRound,
 } from './mutationVerdict.ts';
 
-/** 一条注入用例（只给判定用得上的字段） */
-function mutationCase(over: Partial<MutationCaseLike> = {}): MutationCaseLike {
-  return { baseline_pass: true, caught: true, restored_pass: true, ...over };
+/** 一轮观察 —— 失败的是哪几条用例 */
+function round(failed: string[], noVerdict = false): MutationRound {
+  return { failed, noVerdict };
 }
 
-describe('注入用例的结论 —— 三档', () => {
-  test('三步全过 → PASS', () => {
-    expect(mutationVerdictOf(mutationCase())).toBe('PASS');
+/** 三轮观察 */
+function caseOf(
+  baseline: string[],
+  mutated: string[],
+  restored: string[],
+  noVerdict = false
+): MutationCaseLike {
+  return {
+    baseline: round(baseline, noVerdict),
+    mutated: round(mutated, noVerdict),
+    restored: round(restored, noVerdict),
+  };
+}
+
+describe('差分判定', () => {
+  test('树是绿的：注入被抓到且还原干净 → PASS', () => {
+    const c = caseOf([], ['被注入弄坏的用例'], []);
+    expect(mutationVerdictOf(c)).toBe('PASS');
+    expect(mutationVerdictReason(c)).toContain('抓得住这个错');
   });
 
-  test('基线绿但没抓到注入 → FAIL（验证器弱）', () => {
-    expect(mutationVerdictOf(mutationCase({ caught: false }))).toBe('FAIL');
+  test('树是绿的：注入之后仍然全部通过 → FAIL（验证器抓不住）', () => {
+    const c = caseOf([], [], []);
+    expect(mutationVerdictOf(c)).toBe('FAIL');
+    expect(mutationVerdictReason(c)).toContain('抓不住这个错');
   });
 
-  test('抓到了但没还原干净 → FAIL（源文件被改坏了）', () => {
-    expect(mutationVerdictOf(mutationCase({ restored_pass: false }))).toBe('FAIL');
+  test('树是绿的：抓到了但还原之后仍多出失败 → FAIL（没还原干净）', () => {
+    const c = caseOf([], ['被注入弄坏的用例'], ['被注入弄坏的用例']);
+    expect(mutationVerdictOf(c)).toBe('FAIL');
+    expect(mutationVerdictReason(c)).toContain('还原之后仍然多出');
   });
 
-  test('基线红 → INCONCLUSIVE（不是 FAIL）', () => {
-    expect(mutationVerdictOf(mutationCase({ baseline_pass: false }))).toBe('INCONCLUSIVE');
+  test('有一轮没跑出结论 → INCONCLUSIVE', () => {
+    const c = caseOf([], ['x'], []);
+    c.mutated.noVerdict = true;
+    expect(mutationVerdictOf(c)).toBe('INCONCLUSIVE');
+    expect(mutationVerdictReason(c)).toContain('没跑出结论');
   });
 });
 
-describe('缺陷回放：第 14 轮那次流水线的 AC-GOV-001 那一行', () => {
-  // 报告里原样的一行：基线 ✗ / 抓到 ✓ / 还原 ✓
-  const observed = mutationCase({ baseline_pass: false, caught: true, restored_pass: true });
-
-  test('结论是 INCONCLUSIVE —— 不是「抓不住」', () => {
-    expect(mutationVerdictOf(observed)).toBe('INCONCLUSIVE');
+describe('树本来就红的时候（这一轮修的核心）', () => {
+  test('基线红 + 注入带来新的失败 + 还原后与基线一致 → PASS', () => {
+    // 第 14 轮那次的真实形状：别人的在途改动让 19 条 api 用例失败，
+    // 注入另外弄坏了一条 —— 注入**确实**被抓到了。
+    const baseline = Array.from({ length: 19 }, (_, i) => `别人的用例${i}`);
+    const c = caseOf(baseline, [...baseline, '被注入弄坏的用例'], baseline);
+    expect(mutationVerdictOf(c)).toBe('PASS');
+    expect(mutationVerdictReason(c)).toContain('抓得住这个错');
   });
 
-  test('说法里不许出现「验证器抓不住」', () => {
-    const reason = mutationVerdictReason(observed);
+  test('基线红 + 注入没带来新的失败 → INCONCLUSIVE（不是「验证器抓不住」）', () => {
+    const baseline = ['别人的用例'];
+    const c = caseOf(baseline, baseline, baseline);
+    expect(mutationVerdictOf(c)).toBe('INCONCLUSIVE');
+    const reason = mutationVerdictReason(c);
     expect(reason).toContain('没跑出结论');
     expect(reason).not.toContain('抓不住');
   });
 
-  test('基线红时「抓到注入」这一栏不可信 —— 注入后的那一轮本来也会红', () => {
-    // 基线红 + 注入后红（caught=true 只是因为它也红了）
-    const red = mutationCase({ baseline_pass: false, caught: true, restored_pass: true });
-    // 基线红 + 注入后绿（这次抖动没赶上）
-    const green = mutationCase({ baseline_pass: false, caught: false, restored_pass: true });
-    // 两种情况**都不许**被判成 FAIL —— 抖的是环境，不是验证器
-    expect(mutationVerdictOf(red)).toBe('INCONCLUSIVE');
-    expect(mutationVerdictOf(green)).toBe('INCONCLUSIVE');
+  test('基线红 + 注入带来新的失败 + 还原后仍多出 → FAIL（还原不干净）', () => {
+    const baseline = ['别人的用例'];
+    const c = caseOf(baseline, [...baseline, '被注入弄坏的用例'], [...baseline, '残留']);
+    expect(mutationVerdictOf(c)).toBe('FAIL');
+    expect(mutationVerdictReason(c)).toContain('还原之后仍然多出');
   });
 
-  test('整批汇总：不计入「不合格」，单独计进「没跑出结论」', () => {
-    const summary = summarizeMutationCases([
-      mutationCase(),
-      mutationCase(),
-      observed,
-    ]);
-    expect(summary.total).toBe(3);
-    expect(summary.pass).toBe(2);
-    expect(summary.fail).toBe(0);
-    expect(summary.inconclusive).toBe(1);
-    expect(summary.verdict).toBe('INCONCLUSIVE');
+  test('基线红 + 注入那轮红得一模一样 → 不能记成「抓到了」（不给没证明过的事记功）', () => {
+    // 旧逻辑：caught = !mutated.passed → 这一行会显示「抓到 ✓」——
+    // 可它红的原因跟注入毫无关系。这是**冤枉验证器的反面**。
+    const baseline = ['别人的用例'];
+    const c = caseOf(baseline, baseline, baseline);
+    expect(mutationVerdictOf(c)).not.toBe('PASS');
+    expect(mutationDiffOf(c).caused).toEqual([]);
+  });
+});
+
+describe('等值性 —— 树是绿的时候，新旧判定逐条相同（这不是弱化校验）', () => {
+  // 旧协议：baseline_pass / caught / restored_pass 三个布尔量
+  const combos: Array<[boolean, boolean, boolean]> = [
+    [true, true, true],
+    [true, true, false],
+    [true, false, true],
+    [true, false, false],
+    [false, true, true],
+    [false, true, false],
+    [false, false, true],
+    [false, false, false],
+  ];
+
+  test('基线是绿的四种组合，新旧判定完全相同', () => {
+    for (const [baselinePass, caught, restoredPass] of combos) {
+      if (!baselinePass) continue;
+      // 旧协议的三个布尔量 → 三轮观察
+      const c: MutationCaseLike = {
+        baseline: round(baselinePass ? [] : ['x']),
+        mutated: round(caught ? ['被注入弄坏的用例'] : []),
+        restored: round(restoredPass ? [] : ['残留']),
+      };
+      const legacy = legacyMutationVerdictOf({
+        baseline_pass: baselinePass,
+        caught,
+        restored_pass: restoredPass,
+      });
+      expect({ combo: [baselinePass, caught, restoredPass], v: mutationVerdictOf(c) }).toEqual({
+        combo: [baselinePass, caught, restoredPass],
+        v: legacy,
+      });
+    }
+  });
+
+  test('基线红的时候：新的判定只可能因为「有确定发现」才给 FAIL', () => {
+    for (const [baselinePass, caught, restoredPass] of combos) {
+      if (baselinePass) continue;
+      const c: MutationCaseLike = {
+        baseline: round(['别人的用例']),
+        mutated: round(caught ? ['别人的用例', '被注入弄坏的用例'] : ['别人的用例']),
+        restored: round(restoredPass ? ['别人的用例'] : ['别人的用例', '残留']),
+      };
+      const v = mutationVerdictOf(c);
+      const d = mutationDiffOf(c);
+      // FAIL 只在「还原之后仍多出失败」时出现 —— 那是一条**确定的**发现
+      if (v === 'FAIL') expect(d.leftover.length).toBeGreaterThan(0);
+      // PASS 只在「注入确实带来了新的失败」时出现
+      if (v === 'PASS') expect(d.caused.length).toBeGreaterThan(0);
+      // 绝不因为「基线红」就报 FAIL（那正是第 14 轮的冤枉）
+      if (d.caused.length === 0 && d.leftover.length === 0) expect(v).not.toBe('FAIL');
+    }
+  });
+});
+
+describe('缺陷重放：第 14 轮那次真实的误判', () => {
+  // 当时 AC-GOV-001 那一行的三个格子是 `基线 ✗ / 抓到 ✓ / 还原 ✓`，
+  // 旧逻辑把它记成「不合格」，整轮报「存在抓不到注入错误的验证器」。
+  //
+  // 把它还原成「三轮各自失败了哪几条用例」：
+  //   基线   = 19 条 api 用例（**别的作者的在途改动**弄红的）
+  //   注入后 = 那 19 条 + 覆盖率门禁自己那条（注入把门槛抬到 99，门禁真的拦住了）
+  //   还原后 = 那 19 条
+  const baseline = Array.from({ length: 19 }, (_, i) => `api 用例${i}`);
+  const observed = caseOf(baseline, [...baseline, '覆盖率门禁那条'], baseline);
+
+  test('现在判成 PASS —— 注入确实被抓到了，而且归因说得清', () => {
+    expect(mutationVerdictOf(observed)).toBe('PASS');
+    expect(mutationVerdictReason(observed)).toContain('抓得住这个错');
+  });
+
+  test('差分把「归因于注入」和「树本来就红」分开了', () => {
+    const d = mutationDiffOf(observed);
+    expect(d.baselineFailed).toHaveLength(19);
+    expect(d.caused).toEqual(['覆盖率门禁那条']);
+    expect(d.leftover).toEqual([]);
+  });
+
+  test('基线红 + 注入那轮红得一模一样 → 判成 INCONCLUSIVE，不是「抓到了」', () => {
+    // 这一条钉的是**冤枉验证器的反面**：旧逻辑 `caught = !mutated.passed`
+    // 会给一个「其实什么都没证明」的验证器**记功**。
+    const same = caseOf(baseline, baseline, baseline);
+    expect(mutationVerdictOf(same)).toBe('INCONCLUSIVE');
+    const reason = mutationVerdictReason(same);
+    expect(reason).toContain('没跑出结论');
+    expect(reason).not.toContain('抓不住');
+  });
+
+  test('旧协议对同一份观察给的是「不合格」—— 这条用例钉住了那个误判', () => {
+    // 旧协议：基线红 → INCONCLUSIVE（第 15 轮的修法，把误判从 FAIL 降成「没结论」）
+    expect(
+      legacyMutationVerdictOf({ baseline_pass: false, caught: true, restored_pass: false })
+    ).toBe('INCONCLUSIVE');
+  });
+});
+
+describe('差分的中间量', () => {
+  test('caused = 注入带来的新失败；leftover = 还原后仍多出的失败', () => {
+    const c = caseOf(['a'], ['a', 'b'], ['a', 'b']);
+    const d = mutationDiffOf(c);
+    expect(d.baselineFailed).toEqual(['a']);
+    expect(d.caused).toEqual(['b']);
+    expect(d.leftover).toEqual(['b']);
+  });
+
+  test('整轮失败也算一条失败（测试文件加载不了时 Bun 根本不写 junit）', () => {
+    const c = caseOf([], [RUN_LEVEL_FAILURE], []);
+    expect(mutationVerdictOf(c)).toBe('PASS');
   });
 });
 
 describe('汇总与退出码', () => {
+  const green = caseOf([], ['x'], []);
+  const weak = caseOf([], [], []);
+  const dirty = caseOf(['别人的用例'], ['别人的用例'], ['别人的用例']);
+
   test('全过 → 退出码 0', () => {
-    const summary = summarizeMutationCases([mutationCase(), mutationCase()]);
-    expect(summary.verdict).toBe('PASS');
-    expect(mutationExitCode(summary)).toBe(0);
+    expect(mutationExitCode(summarizeMutationCases([green, green]))).toBe(0);
   });
 
-  test('有确定的坏结论 → 退出码 1（要修的东西不能被「没跑出结论」盖掉）', () => {
-    const summary = summarizeMutationCases([mutationCase({ caught: false })]);
-    expect(summary.verdict).toBe('FAIL');
-    expect(mutationExitCode(summary)).toBe(1);
+  test('有确定的 FAIL → 退出码 1', () => {
+    expect(mutationExitCode(summarizeMutationCases([green, weak]))).toBe(1);
   });
 
-  test('只有没跑出结论 → 退出码 2（这一层的结论一律不算数）', () => {
-    const summary = summarizeMutationCases([mutationCase({ baseline_pass: false })]);
-    expect(summary.verdict).toBe('INCONCLUSIVE');
-    expect(mutationExitCode(summary)).toBe(2);
+  test('只有 INCONCLUSIVE → 退出码 2（没跑出结论 → 挡住放行）', () => {
+    expect(mutationExitCode(summarizeMutationCases([green, dirty]))).toBe(2);
   });
 
-  test('既有坏结论又有没跑出结论 → 退出码 1（确切的发现优先）', () => {
-    const summary = summarizeMutationCases([
-      mutationCase({ caught: false }),
-      mutationCase({ baseline_pass: false }),
-    ]);
-    expect(summary.fail).toBe(1);
-    expect(summary.inconclusive).toBe(1);
-    expect(mutationExitCode(summary)).toBe(1);
+  test('FAIL 与 INCONCLUSIVE 混在一起 → 退出码 1（确切的坏结论优先报）', () => {
+    expect(mutationExitCode(summarizeMutationCases([weak, dirty]))).toBe(1);
   });
 
-  test('一个用例都没有 → INCONCLUSIVE（「没验过」不是「验过了」）', () => {
-    const summary = summarizeMutationCases([]);
-    expect(summary.total).toBe(0);
-    expect(summary.verdict).toBe('INCONCLUSIVE');
-    expect(mutationExitCode(summary)).toBe(2);
+  test('一个用例都没有 → 退出码 2（没验过不是验过了）', () => {
+    expect(mutationExitCode(summarizeMutationCases([]))).toBe(2);
+  });
+
+  test('汇总的计数与整体结论', () => {
+    const s = summarizeMutationCases([green, weak, dirty]);
+    expect(s.total).toBe(3);
+    expect(s.pass).toBe(1);
+    expect(s.fail).toBe(1);
+    expect(s.inconclusive).toBe(1);
+    expect(s.verdict).toBe('FAIL');
   });
 });
 
-describe('说法 —— 三档各说各的话', () => {
-  test('PASS：验证器抓得住，源文件也还原了', () => {
-    expect(mutationVerdictReason(mutationCase())).toContain('抓得住');
+describe('老报告的兜底', () => {
+  test('老报告只有三个布尔量 → 走旧判定，不是「没跑出结论」', () => {
+    const legacy = {
+      criterion: 'AC-X',
+      description: '',
+      mutated_file: 'a.ts',
+      verifier: 'a.test.ts',
+      baseline_pass: true,
+      caught: true,
+      restored_pass: true,
+    };
+    expect(mutationRoundsOf(legacy)).toBeNull();
+    expect(legacyMutationVerdictOf(legacy)).toBe('PASS');
   });
 
-  test('FAIL（没抓到）：直说验证器抓不住', () => {
-    expect(mutationVerdictReason(mutationCase({ caught: false }))).toContain('抓不住');
+  test('新报告带三轮失败清单 → 走差分', () => {
+    const modern = {
+      criterion: 'AC-X',
+      description: '',
+      mutated_file: 'a.ts',
+      verifier: 'a.test.ts',
+      baseline: { failed: [] },
+      mutated: { failed: ['x'] },
+      restored: { failed: [] },
+    };
+    const rounds = mutationRoundsOf(modern);
+    expect(rounds).not.toBeNull();
+    expect(mutationVerdictOf(rounds!)).toBe('PASS');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 读报告 —— 两种格式并存
+// ---------------------------------------------------------------------------
+
+describe('读报告 —— 新旧两种格式并存', () => {
+  const base = {
+    criterion: 'AC-X',
+    description: '',
+    mutated_file: 'a.ts',
+    verifier: 'a.test.ts',
+  };
+
+  test('新格式 → 走差分，并给出中间量', () => {
+    const r = reportCaseVerdict({
+      ...base,
+      baseline: { failed: ['别人的用例'] },
+      mutated: { failed: ['别人的用例', '被注入弄坏的'] },
+      restored: { failed: ['别人的用例'] },
+    });
+    expect(r.legacy).toBe(false);
+    expect(r.verdict).toBe('PASS');
+    expect(r.diff?.caused).toEqual(['被注入弄坏的']);
+    expect(r.reason).toContain('抓得住这个错');
   });
 
-  test('FAIL（没还原）：直说源文件被改坏了', () => {
-    expect(mutationVerdictReason(mutationCase({ restored_pass: false }))).toContain('改坏');
+  test('老格式 → 走旧判定，并标出「这是老格式」', () => {
+    const r = reportCaseVerdict({
+      ...base,
+      baseline_pass: true,
+      caught: true,
+      restored_pass: true,
+    });
+    expect(r.legacy).toBe(true);
+    expect(r.verdict).toBe('PASS');
+    expect(r.diff).toBeNull();
+    // 老报告是**跑过**的 —— 不许把它说成「没跑出结论」
+    expect(r.reason).not.toContain('没跑出结论');
   });
 
-  test('INCONCLUSIVE：说「没跑出结论」，并且说清为什么不能算「抓不住」', () => {
-    const reason = mutationVerdictReason(mutationCase({ baseline_pass: false }));
-    expect(reason).toContain('基线');
-    expect(reason).toContain('没跑出结论');
-    expect(reason).toContain('本来也会');
+  test('老格式里基线红的 → 还是「没跑出结论」，但**不**说成「验证器弱」', () => {
+    const r = reportCaseVerdict({
+      ...base,
+      baseline_pass: false,
+      caught: true,
+      restored_pass: true,
+    });
+    expect(r.verdict).toBe('INCONCLUSIVE');
+    expect(r.reason).toContain('没跑出结论');
+    expect(r.reason).not.toContain('验证器弱');
+  });
+
+  test('既没有清单也没有布尔量 → 无从判定，不许猜', () => {
+    const r = reportCaseVerdict({ ...base });
+    expect(r.verdict).toBe('INCONCLUSIVE');
+    expect(r.reason).toContain('无从判定');
+  });
+});
+
+describe('汇总一批结论 —— 混着两种格式也能汇', () => {
+  test('总数 / 通过 / 不通过 / 没结论 分别计数', () => {
+    const s = summarizeVerdicts(['PASS', 'PASS', 'FAIL', 'INCONCLUSIVE']);
+    expect(s.total).toBe(4);
+    expect(s.pass).toBe(2);
+    expect(s.fail).toBe(1);
+    expect(s.inconclusive).toBe(1);
+    expect(s.verdict).toBe('FAIL');
+  });
+
+  test('一个结论都没有 → 「没验过」不是「验过了」', () => {
+    const s = summarizeVerdicts([]);
+    expect(s.total).toBe(0);
+    expect(s.verdict).toBe('INCONCLUSIVE');
+    expect(mutationExitCode(s)).toBe(2);
   });
 });
