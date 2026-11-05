@@ -35,12 +35,13 @@
  */
 
 import { spawn } from 'node:child_process';
-import { mkdirSync, statSync, writeFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { startServers } from './servers';
 import { discoverChains, runE2eChains } from './run-e2e';
+import { failureBreakdown as failureBreakdownOf, parseJunitCases } from './junit';
 import {
   artifactFresh,
   artifactStamp,
@@ -294,11 +295,38 @@ async function runE2e(): Promise<number> {
  */
 
 /**
+ * 这一步产出的 junit 里，失败是怎么构成的。
+ *
+ * **为什么要分两种红**：超时与断言不通过是**两种结论**。
+ * 超时 = 「没跑出结论」（可能是环境被抢、机器睡眠，也可能是实现卡死）；
+ * 断言不通过 = 「实现不满足判据」。以前这两种红都只体现为一个非零退出码，
+ * 于是措辞一律写成「是实现不满足判据」—— 超时的时候那句话是**假的**
+ * （实测：同一个文件在流水线里 906.903 秒超时，隔离复跑 3.2 秒全过）。
+ *
+ * 不是 junit 的证据（矩阵 / 注入报告）不适用 → 返回 undefined。
+ */
+function failureBreakdown(
+  artifactPath: string | undefined
+): { asserted: number; timedOut: number } | undefined {
+  if (!artifactPath || !artifactPath.endsWith('.xml')) return undefined;
+  let xml: string;
+  try {
+    xml = readFileSync(artifactPath, 'utf-8');
+  } catch {
+    return undefined;
+  }
+  const breakdown = failureBreakdownOf(parseJunitCases(xml, basename(artifactPath)));
+  // 一条都没失败 → 没有「两种红」要说，不给这个字段
+  if (breakdown.asserted === 0 && breakdown.timedOut === 0) return undefined;
+  return breakdown;
+}
+
+/**
  * 跑一个步骤，返回它的退出码与「结论证据是不是本轮产出的」。
  */
 export async function runStep(
   step: Step
-): Promise<{ code: number; artifactFresh: boolean }> {
+): Promise<{ code: number; artifactFresh: boolean; failures?: { asserted: number; timedOut: number } }> {
   const artifactPath = step.artifact ? resolve(ROOT, step.artifact) : undefined;
   // 跑之前拍一张快照 —— 跑完再拍一张，两张不一样才说明证据是新的
   const before = artifactPath ? artifactStamp(mtimeRepo, artifactPath) : 0;
@@ -327,7 +355,11 @@ export async function runStep(
   }
 
   const after = artifactPath ? artifactStamp(mtimeRepo, artifactPath) : 0;
-  return { code, artifactFresh: artifactPath ? artifactFresh(before, after) : false };
+  return {
+    code,
+    artifactFresh: artifactPath ? artifactFresh(before, after) : false,
+    failures: failureBreakdown(artifactPath),
+  };
 }
 
 /**
@@ -348,7 +380,7 @@ export async function runPipeline(
       console.log(`\n${'='.repeat(72)}\n▶ ${step.name}\n${'='.repeat(72)}`);
     }
 
-    const { code, artifactFresh } = await runStep(step);
+    const { code, artifactFresh, failures } = await runStep(step);
 
     results.push({
       name: step.name,
@@ -356,6 +388,7 @@ export async function runPipeline(
       artifact: step.artifact,
       artifactFresh,
       tolerateFailure: step.tolerateFailure,
+      failures,
     });
   }
 

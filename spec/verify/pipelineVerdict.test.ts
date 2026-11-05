@@ -123,6 +123,88 @@ describe('退出码', () => {
   });
 });
 
+describe('两种红 —— 超时与断言不通过（2026-11-05）', () => {
+  test('只有超时时，措辞不能说「实现不满足判据」', () => {
+    // 实测：同一个文件在流水线里 906.903 秒超时，隔离复跑 3.2 秒全过。
+    // 报成「实现不满足判据」是**假的确定结论** —— 下一轮会去修一个没毛病的验证器。
+    const v = pipelineVerdict([
+      step({
+        name: '判据执行',
+        code: 1,
+        artifact: 'spec/evidence/junit.xml',
+        artifactFresh: true,
+        tolerateFailure: true,
+        failures: { asserted: 0, timedOut: 3 },
+      }),
+    ]);
+    const reason = v.steps[0]!.reason;
+    expect(reason).toContain('超时');
+    expect(reason).toContain('没跑出结论');
+    expect(reason).not.toContain('实现不满足判据');
+  });
+
+  test('两种红都有时，两件事都要说清', () => {
+    const v = pipelineVerdict([
+      step({
+        name: '判据执行',
+        code: 1,
+        artifact: 'spec/evidence/junit.xml',
+        artifactFresh: true,
+        tolerateFailure: true,
+        failures: { asserted: 2, timedOut: 3 },
+      }),
+    ]);
+    const reason = v.steps[0]!.reason;
+    expect(reason).toContain('2 条断言不通过');
+    expect(reason).toContain('3 条**超时**');
+  });
+
+  test('全是断言不通过时，措辞回到「实现不满足判据」', () => {
+    const v = pipelineVerdict([
+      step({
+        name: '判据执行',
+        code: 1,
+        artifact: 'spec/evidence/junit.xml',
+        artifactFresh: true,
+        tolerateFailure: true,
+        failures: { asserted: 2, timedOut: 0 },
+      }),
+    ]);
+    expect(v.steps[0]!.reason).toContain('实现不满足判据');
+  });
+
+  test('超时不改变退出码 —— 它照样不放行', () => {
+    // 这不是弱化校验：超时照样是「没通过」，退出码 1。
+    const v = pipelineVerdict([
+      step({
+        name: '判据执行',
+        code: 1,
+        artifact: 'spec/evidence/junit.xml',
+        artifactFresh: true,
+        tolerateFailure: true,
+        failures: { asserted: 0, timedOut: 3 },
+      }),
+    ]);
+    expect(v.exitCode).toBe(1);
+    expect(v.counts.failed).toBe(1);
+  });
+
+  test('汇总那句话要点名「含超时」的环节', () => {
+    const v = pipelineVerdict([
+      step({
+        name: '判据执行',
+        code: 1,
+        artifact: 'spec/evidence/junit.xml',
+        artifactFresh: true,
+        tolerateFailure: true,
+        failures: { asserted: 0, timedOut: 3 },
+      }),
+    ]);
+    expect(v.headline).toContain('超时');
+    expect(v.headline).toContain('判据执行');
+  });
+});
+
 describe('措辞', () => {
   test('有环节没跑出结论时，不许出现「全绿」这种话', () => {
     const v = pipelineVerdict([

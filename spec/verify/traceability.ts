@@ -25,6 +25,13 @@ import { fileURLToPath } from 'node:url';
 
 import { parseJunitCases, type JunitCase } from './junit.ts';
 import {
+  junitHitOf,
+  timeoutHitOf,
+  verdictOf,
+  worstOf,
+  type Verdict,
+} from './verdict.ts';
+import {
   currentFingerprints,
   freshnessQualifier,
   renderFreshnessSection,
@@ -96,8 +103,6 @@ interface Spec {
   decisions: Array<{ id: string; applies_to: string[]; decision?: string }>;
   known_gaps: Array<{ clause: string; reason: string; plan?: string }>;
 }
-
-type Verdict = 'PASS' | 'FAIL' | 'INCONCLUSIVE';
 
 // ---------------------------------------------------------------------------
 // 人工分析：这些是「为什么」，机器推不出来
@@ -371,22 +376,23 @@ function readCoverage(): {
 
 // ---------------------------------------------------------------------------
 // 结论推导
+//
+// 规则住在 `spec/verify/verdict.ts` —— 纯逻辑、可被测试。
+// 这里只负责**把结论写出来**。
 // ---------------------------------------------------------------------------
 
-function verdictOf(a: Acceptance, junit: JunitCase[]): Verdict {
-  if (a.maturity !== 'automated') return 'INCONCLUSIVE';
-  const [file, caseName] = a.verification.target.split('::');
-  if (!caseName) return 'INCONCLUSIVE';
-  const hit = junit.find((c) => c.name === caseName && c.file === file);
-  if (!hit) return 'INCONCLUSIVE'; // 验证未执行 —— 不能报 PASS
-  return hit.failed ? 'FAIL' : 'PASS';
-}
-
-function worstOf(verdicts: Verdict[]): Verdict {
-  if (verdicts.length === 0) return 'INCONCLUSIVE'; // 没有判据 = 无法判定，不是通过
-  if (verdicts.includes('FAIL')) return 'FAIL';
-  if (verdicts.includes('INCONCLUSIVE')) return 'INCONCLUSIVE';
-  return 'PASS';
+/** 一条「超时」的判据 —— 报告要说清：哪条、超时多久、来自哪份证据 */
+interface TimeoutHit {
+  /** 判据 ID */
+  criterion: string;
+  /** 用例名 */
+  caseName: string;
+  /** 用例所在文件 */
+  file: string;
+  /** 实际用时（秒） */
+  durationSeconds?: number;
+  /** 来自哪份 junit */
+  evidence: string;
 }
 
 /**
@@ -535,13 +541,6 @@ function dataDepsOf(verifierFile: string): string[] {
   return deps;
 }
 
-/** 一条判据对应的那次执行（junit 用例） */
-function junitHitOf(a: Acceptance, junit: JunitCase[]): JunitCase | undefined {
-  const [file, caseName] = a.verification.target.split('::');
-  if (!caseName) return undefined;
-  return junit.find((c) => c.name === caseName && c.file === file);
-}
-
 // ---------------------------------------------------------------------------
 // 主流程
 // ---------------------------------------------------------------------------
@@ -664,10 +663,24 @@ function main(): void {
     criteria: Acceptance[];
     verdicts: Verdict[];
     verdict: Verdict;
+    /** 这条条款里**超时**的判据 —— 超时不是断言不通过，报告要分开说 */
+    timeouts: TimeoutHit[];
   }> = spec.clauses.map((clause) => {
     const criteria = clause.acceptance;
     const verdicts = criteria.map((a) => verdictOf(a, junit));
-    return { clause, criteria, verdicts, verdict: worstOf(verdicts) };
+    const timeouts: TimeoutHit[] = [];
+    for (const a of criteria) {
+      const hit = timeoutHitOf(a, junit);
+      if (!hit) continue;
+      timeouts.push({
+        criterion: a.id,
+        caseName: hit.name,
+        file: hit.file,
+        durationSeconds: hit.durationSeconds,
+        evidence: hit.evidence,
+      });
+    }
+    return { clause, criteria, verdicts, verdict: worstOf(verdicts), timeouts };
   });
 
   // --- 主证据的新鲜度 ---
@@ -840,6 +853,11 @@ function main(): void {
   const failCrit = criteriaVerdicts.filter((v) => v === 'FAIL').length;
   const incCrit = criteriaVerdicts.filter((v) => v === 'INCONCLUSIVE').length;
 
+  // 超时的判据 —— 它们落在 INCONCLUSIVE 那一档里（「没跑出结论」），
+  // 但要单独数一遍：报告与流水线的措辞都靠它分清「红的是实现」还是「还不知道」。
+  const timeoutHits = judgedRows.flatMap((r) => r.timeouts);
+  const timeoutCrit = timeoutHits.length;
+
   // --- 渲染 ---
   const L: string[] = [];
   const P = (s = '') => L.push(s);
@@ -888,7 +906,9 @@ function main(): void {
           ? '**PASS**'
           : r.verdict === 'FAIL'
             ? '**FAIL**'
-            : 'INCONCLUSIVE';
+            : r.timeouts.length > 0
+              ? 'INCONCLUSIVE（超时）'
+              : 'INCONCLUSIVE';
     P(
       `| ${section} | ${c.id} | ${c.type} | ${c.risk} | ${criteria} | ${verifiers} | ${tiers} | ${evidence} | ${verdict} |`
     );
@@ -1056,6 +1076,31 @@ function main(): void {
     );
   }
   P();
+  P('#### 超时的用例（不是断言不通过）');
+  P();
+  const timeoutRows = rows.filter((r) => r.timeouts.length > 0);
+  if (timeoutRows.length === 0) {
+    P('（无）—— 本轮没有任何用例以超时收场。');
+  } else {
+    P('| Spec ID | 判据 | 用例 | 实际用时 | 结论 |');
+    P('|---|---|---|---|---|');
+    for (const r of timeoutRows) {
+      for (const t of r.timeouts) {
+        const used = t.durationSeconds === undefined ? '—' : `${t.durationSeconds} 秒`;
+        P(`| ${r.clause.id} | ${t.criterion} | \`${t.file}::${t.caseName}\` | ${used} | **INCONCLUSIVE**（没跑出结论） |`);
+      }
+    }
+    P();
+    P(
+      '> **超时不是「实现不满足判据」** —— 它是「**没跑出结论**」：可能是环境被抢' +
+        '（别的跑批同时在跑，CPU 不够）、机器进了 Maintenance Sleep（计时器不跑），' +
+        '也可能是实现真的卡死了。' +
+        '所以这些条款的结论是 **INCONCLUSIVE** 而不是 FAIL —— ' +
+        '**但它们照样挡住放行**（发布闸门对没登记的 INCONCLUSIVE 一律不放行，见 §2.7）。' +
+        '判据：判据级结论见 §1.1 的「结论」列；这一节是「哪些用例超时了」的明细。'
+    );
+  }
+  P();
   P('#### 未挂判据的失败');
   P();
   for (const line of renderUnmappedFailures(ledger)) P(line);
@@ -1203,19 +1248,29 @@ function main(): void {
   P('|---|---|---|');
   for (const r of noEvidenceRows) {
     const reason =
-      gapReasons.get(r.clause.id)?.join('<br>') ??
-      INCONCLUSIVE_NOTES[r.clause.id] ??
-      INCONCLUSIVE_FALLBACK;
+      r.timeouts.length > 0
+        ? `**超时**（不是断言不通过）—— ${r.timeouts
+            .map(
+              (t) =>
+                `${t.criterion}（${t.caseName}，用时 ${t.durationSeconds === undefined ? '—' : `${t.durationSeconds} 秒`}）`
+            )
+            .join('、')}：没跑出结论，可能是环境被抢或机器睡眠，也可能是实现卡死`
+        : (gapReasons.get(r.clause.id)?.join('<br>') ??
+          INCONCLUSIVE_NOTES[r.clause.id] ??
+          INCONCLUSIVE_FALLBACK);
     const why =
-      r.clause.acceptance.length === 0
-        ? '判据本身不存在，无法判定 —— 连要测什么都没确定'
-        : r.clause.maturity === 'none'
+      r.timeouts.length > 0
+        ? '**没跑出结论，不是「实现不满足判据」** —— 超时说的是「还不知道」，不是「做错了」。' +
+          '它照样挡住放行（发布闸门，见 §2.7）；隔离复跑一次就能分清是环境还是实现'
+        : r.clause.acceptance.length === 0
           ? '判据本身不存在，无法判定 —— 连要测什么都没确定'
-          : r.clause.acceptance.some((a) => a.oracle.tier === 'self-derived')
-            ? '判据来自实现反推 —— 实现不能证明自己正确'
-            : r.clause.acceptance.every((a) => a.maturity === 'automated')
-              ? '验证器存在但**本次未执行**（用例未出现在证据集中）—— 没跑过的验证不是通过'
-              : '验证未执行 —— 没跑过的验证不是通过';
+          : r.clause.maturity === 'none'
+            ? '判据本身不存在，无法判定 —— 连要测什么都没确定'
+            : r.clause.acceptance.some((a) => a.oracle.tier === 'self-derived')
+              ? '判据来自实现反推 —— 实现不能证明自己正确'
+              : r.clause.acceptance.every((a) => a.maturity === 'automated')
+                ? '验证器存在但**本次未执行**（用例未出现在证据集中）—— 没跑过的验证不是通过'
+                : '验证未执行 —— 没跑过的验证不是通过';
     P(`| ${r.clause.id} | ${reason} | ${why} |`);
   }
   P();
@@ -1381,6 +1436,11 @@ function main(): void {
   console.log(
     `条款 ${spec.clauses.length} / 判据 ${totalCriteria}　PASS ${passClauses}　FAIL ${failClauses}　INCONCLUSIVE ${incClauses}`
   );
+  if (timeoutCrit > 0) {
+    console.log(
+      `超时 ${timeoutCrit} 条判据 —— **没跑出结论**，不是断言不通过（多半是环境被抢或机器睡眠；隔离复跑一次再判）`
+    );
+  }
   console.log(`注入检查：${mutation.total} 个用例，不合格 ${mutation.unqualified} 个`);
   console.log(
     `注入对账：定义 ${reconciliation.defined} / 报告 ${reconciliation.reported} / 跑不起来 ${reconciliation.broken.length} / 缺报告 ${reconciliation.notInReport.length} / 孤儿 ${reconciliation.orphanInReport.length}`

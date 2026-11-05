@@ -30,8 +30,64 @@ export interface JunitCase {
   name: string;
   file: string;
   failed: boolean;
+  /**
+   * Bun 的 junit 把失败类型写进 `<failure type="..."/>` —— 这里原样保留。
+   *
+   * 实测：`TimeoutError`（超时）/ `AssertionError`（断言不通过）。
+   * **这个类型不能丢** —— 见 `isTimeout()`。
+   */
+  failureType?: string;
+  /** 这条用例跑了多久（秒）—— 超时的时候要说清「用时多久」 */
+  durationSeconds?: number;
   /** 这条证据来自哪个 junit 文件 */
   evidence: string;
+}
+
+/**
+ * Bun 把「超时」写成这种 failure type。
+ *
+ * 实测（`bun test --reporter=junit`，2026-11-05）：
+ *   超时       → `<failure type="TimeoutError" />`
+ *   断言不通过 → `<failure type="AssertionError" />`
+ */
+export const TIMEOUT_FAILURE_TYPE = 'TimeoutError';
+
+/**
+ * 这条用例是不是「超时」。
+ *
+ * **超时不是断言不通过**：
+ *   · 断言不通过 = 「实现不对」—— 那是一条**确定的**结论；
+ *   · 超时       = 「没跑出结论」—— 可能是环境被抢（别的跑批在跑）、
+ *                  机器进了睡眠、也可能是实现卡死。
+ *
+ * 实测（2026-11-05）这两件事都被当成「实现不满足判据」报了出去：
+ *   · `apps/api/tests/security/session-cookie.test.ts` 在流水线里耗时 **906.903 秒**、
+ *     用例超时（限 5 秒）；隔离复跑 **5 条用例 3.2 秒全过** —— 环境被抢；
+ *   · E2E 链的 180 秒超时一次性报成 **916 秒** —— 机器进了 Maintenance Sleep。
+ * 两起都不是实现缺陷，却都按「实现不满足判据」记账 ——
+ * 下一轮就会去修一个没毛病的验证器。
+ */
+export function isTimeout(c: Pick<JunitCase, 'failed' | 'failureType'>): boolean {
+  return c.failed && c.failureType === TIMEOUT_FAILURE_TYPE;
+}
+
+/**
+ * 一份证据集里的失败是怎么构成的 —— **「断言不通过」与「超时」是两种红**。
+ *
+ * 流水线的措辞靠它分清「红的是实现」与「还没跑出结论」：
+ * 以前这两种红都只体现为一个非零退出码，于是措辞一律写成
+ * 「是实现不满足判据」—— 超时的时候那句话是**假的**
+ * （实测：同一个文件在流水线里 906.903 秒超时，隔离复跑 3.2 秒全过）。
+ */
+export function failureBreakdown(cases: readonly JunitCase[]): {
+  asserted: number;
+  timedOut: number;
+} {
+  const failed = cases.filter((c) => c.failed);
+  return {
+    asserted: failed.filter((c) => !isTimeout(c)).length,
+    timedOut: failed.filter((c) => isTimeout(c)).length,
+  };
 }
 
 /**
@@ -52,19 +108,32 @@ export function decodeXmlEntities(s: string): string {
 /**
  * 解析一段 junit XML，取出全部 `<testcase>`。
  *
- * 块内出现 `<failure>` 即视为失败。
+ * 块内出现 `<failure>` 即视为失败；**失败类型与用时一并留下** ——
+ * 「超时」与「断言不通过」是两种结论，报告要能分开说（见 `isTimeout()`）。
  */
 export function parseJunitCases(xml: string, label: string): JunitCase[] {
   const cases: JunitCase[] = [];
   for (const m of xml.matchAll(/<testcase\b([\s\S]*?)(?:\/>|<\/testcase>)/g)) {
-    const attrs = m[1] ?? '';
-    const name = decodeXmlEntities(attrs.match(/name="([^"]*)"/)?.[1] ?? '');
-    const file = decodeXmlEntities(attrs.match(/file="([^"]*)"/)?.[1] ?? '').replace(
+    // 属性只在**开始标签**里 —— 上面那个正则会把 `<failure .../>` 也吃进 m[1]，
+    // 所以先把标签截出来，再从标签里取属性。
+    const tag = m[0].slice(0, m[0].indexOf('>') + 1);
+    const name = decodeXmlEntities(tag.match(/name="([^"]*)"/)?.[1] ?? '');
+    const file = decodeXmlEntities(tag.match(/file="([^"]*)"/)?.[1] ?? '').replace(
       /^.*\/spec\//,
       'spec/'
     );
     const failed = /<failure\b/.test(m[0]);
-    cases.push({ name, file, failed, evidence: label });
+    const failureType = m[0].match(/<failure\b[^>]*\btype="([^"]*)"/)?.[1];
+    const rawTime = tag.match(/\btime="([^"]*)"/)?.[1];
+    const durationSeconds = rawTime === undefined ? undefined : Number(rawTime);
+    cases.push({
+      name,
+      file,
+      failed,
+      failureType,
+      durationSeconds: Number.isFinite(durationSeconds) ? durationSeconds : undefined,
+      evidence: label,
+    });
   }
   return cases;
 }

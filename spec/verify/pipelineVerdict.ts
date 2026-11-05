@@ -49,6 +49,22 @@ export interface StepInput {
    * 它**不影响退出码** —— 判据不满足就是要阻断 —— 只影响措辞。
    */
   tolerateFailure?: boolean;
+  /**
+   * 这一步里失败的构成 —— 「断言不通过」与「超时」是**两种红**。
+   *
+   * 以前这两种红都只体现为一个非零退出码，措辞只能写成
+   * 「是**实现不满足判据**」—— 超时的时候这句话是**假的**：
+   * 实测（2026-11-05）同一个文件在流水线里耗时 **906.903 秒**而用例超时，
+   * 隔离复跑 **3.2 秒全过** —— 环境被抢，不是实现坏了；
+   * 另一次 E2E 的 180 秒超时一次性报成 **916 秒** —— 机器进了 Maintenance Sleep。
+   *
+   * 两次都被记成「实现不满足判据」—— 那是**假的确定结论**，
+   * 下一轮就会去修一个没毛病的验证器。
+   *
+   * 所以这里把两种红分开数：超时的判据级结论是 **INCONCLUSIVE**（没跑出结论），
+   * 但这一步**照样不放行**（退出码不变）—— 变的只是**说法**。
+   */
+  failures?: { asserted: number; timedOut: number };
 }
 
 export interface StepVerdict extends StepInput {
@@ -94,6 +110,22 @@ export function stepState(step: StepInput): StepState {
 export function stepReason(step: StepInput, state: StepState): string {
   if (state === 'passed') return '跑完了，结论是通过';
   if (state === 'failed') {
+    const f = step.failures;
+    // 超时与断言不通过是两种红 —— 措辞不能混。
+    // 「是实现不满足判据」这句话在超时的时候是**假的**（见 StepInput.failures）。
+    if (f && f.timedOut > 0 && f.asserted === 0) {
+      return (
+        `跑完了，产出了结论 —— ${f.timedOut} 条**超时**（**没跑出结论**，不是断言不通过）：` +
+        '多半是环境被抢（别的跑批在跑）或机器进了睡眠 —— 隔离复跑一次再判'
+      );
+    }
+    if (f && f.timedOut > 0) {
+      return (
+        `跑完了，产出了结论 —— ${f.asserted} 条断言不通过（实现不满足判据），` +
+        `${f.timedOut} 条**超时**（**没跑出结论**，不是断言不通过）：` +
+        '超时的多半是环境被抢或机器睡眠 —— 隔离复跑一次再判'
+      );
+    }
     return step.tolerateFailure
       ? '跑完了，产出了结论 —— 是**实现不满足判据**，不是工具链坏了'
       : '跑完了，产出了结论 —— 结论是不通过';
@@ -133,7 +165,15 @@ export function pipelineVerdict(steps: StepInput[]): PipelineVerdict {
   } else {
     headline =
       `❌ ${failed.length} 个环节没通过：${failed.map((v) => v.name).join('；')}` +
-      ` —— 判据不满足，**不该放行**。`;
+      ` —— **不该放行**。`;
+    // 超时的环节要说清楚：红的是「还没跑出结论」，不是「实现坏了」
+    const timeoutSteps = failed.filter((v) => (v.failures?.timedOut ?? 0) > 0);
+    if (timeoutSteps.length > 0) {
+      headline +=
+        `其中 ${timeoutSteps.length} 个环节含**超时**（没跑出结论，不是断言不通过）：` +
+        timeoutSteps.map((v) => `${v.name}（${v.failures?.timedOut} 条）`).join('；') +
+        ' —— 多半是环境被抢或机器睡眠，隔离复跑一次再判。';
+    }
   }
 
   const lines = verdicts.map((v) => {

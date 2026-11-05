@@ -24,7 +24,7 @@
 
 import { describe, expect, test } from 'bun:test';
 
-import { decodeXmlEntities, parseJunitCases } from './junit.ts';
+import { decodeXmlEntities, failureBreakdown, isTimeout, parseJunitCases } from './junit.ts';
 
 /** 当时真实产出的那一行 —— 逐字照抄，不做任何"更好看"的改写 */
 const REAL_E2E_TESTCASE =
@@ -101,5 +101,71 @@ describe('junit 解析 —— 缺陷回放', () => {
     const cases = parseJunitCases(REAL_E2E_TESTCASE, 'spec/evidence/junit-e2e.xml');
     const wanted = '导出提交失败 → 界面显示"导出失败"，绝不显示"导出成功"';
     expect(cases.find((c) => c.name === wanted)).toBeDefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 失败类型 —— 「超时」与「断言不通过」是两种结论
+// ---------------------------------------------------------------------------
+
+describe('junit 解析 —— 失败类型', () => {
+  test('timeout-keeps-its-failure-type', () => {
+    // 实测产出（bun test --reporter=junit，2026-11-05）：
+    //   <testcase ...><failure type="TimeoutError" /></testcase>
+    const xml =
+      '<testcase name="慢" file="/x/y.ts" time="906.903"><failure type="TimeoutError" /></testcase>';
+    const c = parseJunitCases(xml, 'spec/evidence/junit.xml')[0]!;
+    expect(c.failed).toBe(true);
+    expect(c.failureType).toBe('TimeoutError');
+    expect(isTimeout(c)).toBe(true);
+  });
+
+  test('assertion-failure-keeps-its-failure-type', () => {
+    const xml =
+      '<testcase name="错" file="/x/y.ts" time="0.1"><failure type="AssertionError" /></testcase>';
+    const c = parseJunitCases(xml, 'spec/evidence/junit.xml')[0]!;
+    expect(c.failed).toBe(true);
+    expect(c.failureType).toBe('AssertionError');
+    // 断言不通过**不是**超时 —— 它是「实现不满足判据」
+    expect(isTimeout(c)).toBe(false);
+  });
+
+  test('duration-is-kept', () => {
+    const xml = '<testcase name="x" file="/x/y.ts" time="12.5" />';
+    expect(parseJunitCases(xml, 'spec/evidence/junit.xml')[0]!.durationSeconds).toBe(12.5);
+  });
+
+  test('a-passing-case-has-no-failure-type', () => {
+    const c = parseJunitCases('<testcase name="x" file="/x/y.ts" time="0.1" />', 'j')[0]!;
+    expect(c.failed).toBe(false);
+    expect(c.failureType).toBeUndefined();
+    expect(isTimeout(c)).toBe(false);
+  });
+
+  test('attributes-are-read-from-the-start-tag-only', () => {
+    // 解析用的正则会把 <failure .../> 一并吃进「属性」那部分 ——
+    // 属性必须只在开始标签里取，否则 name/file/time 会取到子元素的头上。
+    const xml =
+      '<testcase name="真名字" file="/x/y.ts" time="0.25"><failure type="TimeoutError" /></testcase>';
+    const c = parseJunitCases(xml, 'j')[0]!;
+    expect(c.name).toBe('真名字');
+    expect(c.file).toBe('/x/y.ts');
+    expect(c.durationSeconds).toBe(0.25);
+  });
+});
+
+describe('失败的构成 —— 两种红分开数', () => {
+  test('timeouts-and-assertions-are-counted-apart', () => {
+    const xml =
+      '<testcase name="a" file="/x/y.ts"><failure type="TimeoutError" /></testcase>' +
+      '<testcase name="b" file="/x/y.ts"><failure type="TimeoutError" /></testcase>' +
+      '<testcase name="c" file="/x/y.ts"><failure type="AssertionError" /></testcase>' +
+      '<testcase name="d" file="/x/y.ts" />';
+    expect(failureBreakdown(parseJunitCases(xml, 'j'))).toEqual({ asserted: 1, timedOut: 2 });
+  });
+
+  test('all-green-has-no-breakdown', () => {
+    const xml = '<testcase name="d" file="/x/y.ts" />';
+    expect(failureBreakdown(parseJunitCases(xml, 'j'))).toEqual({ asserted: 0, timedOut: 0 });
   });
 });

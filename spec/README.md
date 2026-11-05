@@ -59,8 +59,8 @@ MUTATION_CHECK_ONLY=AC-E2E-011 bun run spec/verify/mutation-check.ts   # 只跑�
 | `spec.schema.json` | Spec 自身的结构约束（JSON Schema 2020-12） | 手写 |
 | `verify/spec-schema.py` | 结构校验器 | 手写 |
 | `verify/spec-structure.test.ts` | 引用完整性（悬空 ID、判据与验证器对不上、成熟度自洽） | 手写 |
-| `verify/junit.ts` | junit 解析的**纯函数**（含 XML 实体解码）—— 抽出来是为了能给它写测试 | 手写 |
-| `verify/junit.test.ts` | junit 解析的**缺陷回放**（曾把真跑过的用例判成「验证未执行」） | 手写 |
+| `verify/junit.ts` | junit 解析的**纯函数**（含 XML 实体解码、失败类型、**超时判定**）—— 抽出来是为了能给它写测试 | 手写 |
+| `verify/junit.test.ts` | junit 解析的**缺陷回放**（曾把真跑过的用例判成「验证未执行」；曾把超时报成「断言不通过」） | 手写 |
 | `verify/helpers.ts` | 夹具与取文本的公共工具 —— 只搭台子，判定逻辑一律写在各自的 test 里 | 手写 |
 | `verify/core-layout.test.ts` | 版式引擎契约（画布、越界、ID 唯一、纯函数、母版） | 手写 |
 | `verify/core-content.test.ts` | 内容绑定契约（版式是否真的消费 outline） | 手写 |
@@ -95,6 +95,8 @@ MUTATION_CHECK_ONLY=AC-E2E-011 bun run spec/verify/mutation-check.ts   # 只跑�
 | `verify/traceability.ts` | 追溯矩阵与验证报告生成器 | 手写 |
 | `verify/pipelineVerdict.ts` | 流水线**退出码的判定** —— 0 通过 / 1 没通过 / 2 没跑出结论 | 手写 |
 | `verify/pipelineVerdict.test.ts` | 退出码语义的**缺陷回放**（曾把「判据不满足」与「压根没跑」都算成通过） | 手写 |
+| `verify/verdict.ts` | **结论怎么推导**的纯函数 —— PASS / FAIL / INCONCLUSIVE 三档（**超时不是不通过**） | 手写 |
+| `verify/verdict.test.ts` | 结论推导的**缺陷回放**（曾把两起假超时都报成「实现不满足判据」） | 手写 |
 | `verify/all.ts` | 全链路入口 | 手写 |
 | `traceability.md` | 追溯矩阵 + 验证报告 | **生成** —— 不要手改 |
 | `evidence/junit.xml` | 单元 / 集成判据执行的原始证据 | 生成 |
@@ -615,6 +617,38 @@ bun run test:e2e:visible
   矩阵里多出 **§2.7 发布闸门**，逐条写明谁挡住了放行、为什么。
   （`spec/verify/releaseGate.test.ts` 是这一条的缺陷回放：
   它复现的正是「矩阵写着 FAIL 2 / INCONCLUSIVE 1，而欠账只登记了其中一族」那一轮。）
+- **「超时」不能报成「不通过」（2026-11-05，第 14 轮）** ——
+  前面几条治的都是**证据**与**出口**。这次治的是**结论的说法**。
+  追溯矩阵一直只有两档能用：「跑过」落进 PASS 或 FAIL。于是**超时也被报成 FAIL** ——
+  也就是「实现不满足判据」。
+  这条**假的确定结论**真出现过两次：
+  ① `apps/api/tests/security/session-cookie.test.ts` 在流水线里耗时 **906.903 秒**、
+  用例超时（限 5 秒）；隔离复跑 **5 条用例 3.2 秒全过** —— 环境被抢，不是实现坏了；
+  ② E2E 链的 180 秒超时一次性报成 **916 秒** —— 机器进了 Maintenance Sleep
+  （计时器不跑），也不是实现坏了。
+  两次都被记成「实现不满足判据」——
+  读的人（和下一轮的我）会去修一个**没毛病的验证器**。
+  修法三处：
+  ①`spec/verify/junit.ts` 读出 `<failure type="..."/>`（Bun 实测：
+  超时 → `TimeoutError`，断言不通过 → `AssertionError`）与用时，
+  并提供 `isTimeout()` / `failureBreakdown()` —— **两种红分开数**；
+  ②`spec/verify/verdict.ts` 给出三档结论：
+  **超时 → INCONCLUSIVE**（没跑出结论）、断言不通过 → FAIL、
+  没跑过 / 不是 automated → INCONCLUSIVE；条款取最坏的一档
+  （FAIL > INCONCLUSIVE > PASS）；
+  ③流水线的措辞跟着分：只有超时时不再说「实现不满足判据」，
+  改说「没跑出结论 —— 多半是环境被抢或机器睡眠，隔离复跑一次再判」。
+  两条边界要说清：
+  · **不是弱化校验** —— 超时的条款**照样挡住放行**：
+    发布闸门对没登记的 INCONCLUSIVE 一律不放行（上一条）；
+    流水线退出码仍然是 1。变的只是**结论的说法**：
+    从「实现错了」改成「还不知道」。
+  · **失败但没有类型 → 按断言不通过处理** ——
+    判不出是超时就按最保守的一档记账，不许靠「说不清」蒙混过关。
+  矩阵里多出 **§2.2「超时的用例（不是断言不通过）」**，
+  逐条写明用时；不超时的段落照旧。
+  （`spec/verify/verdict.test.ts` 与 `spec/verify/junit.test.ts` 是这一条的缺陷回放：
+  里面原样重放了上面那两起假超时。）
 - **页序基线是 1-based，写在 `DEC-012` 里** ——
   五份设计文档**从未规定**页码从几开始；
   能定住它的是领域内核的形式化契约
