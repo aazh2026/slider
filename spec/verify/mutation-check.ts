@@ -1660,6 +1660,143 @@ export const MUTATIONS: Mutation[] = [
     testFile: 'spec/verify/text-metrics.test.ts',
     testName: 'wrapped-lines-never-exceed-the-available-width',
   },
+  // =======================================================================
+  // 波 4 —— 字体 fallback 链（SPEC-EXP-006）与「当前页」三族
+  // =======================================================================
+  //
+  // 追溯矩阵里「没有做注入错误检查」的判据还剩 6 条，这一轮吃掉 5 条：
+  //   · AC-EXP-007 —— 64 组 SVG 的字体栈必须显式带 CJK 族（SPEC-EXP-006）
+  //   · AC-EXP-008 —— PPTX 的拉丁字形与东亚字形必须同一个 CJK 字体名
+  //   · AC-E2E-023 —— PNG/SVG 导出任务的 scope 只含当前页
+  //   · AC-E2E-024 —— 导出弹窗那句「当前第 N 页」必须跟着当前页走
+  //   · AC-E2E-025 —— 放映从当前页开始，不是恒定的第一页
+  //
+  // 每条都对着判据文本里的**主语**下手：
+  //   · 字体栈里有 CJK 族（007①）→ 让链不再插入
+  //   · CJK 族排在 generic 之前（007②）→ 让插入位置排到后面
+  //   · 渲染走的是 fallback 链（007③）→ 让渲染器绕过它
+  //   · PPTX 跟着字体常量走（008①）→ 让它写死成 Arial
+  //   · PPTX 不透传主题字体栈（008②）→ 让文本运行直接透传 CSS 栈
+  //   · scope 由当前页推导（023）→ 让 scope 带上全部页
+  //   · 文案如实回显当前页码（024）→ 让页码写死第 1 页
+  //   · 放映起点是当前页（025）→ 让起点恒为第 1 页
+  //
+  // 注意 007①② 与 008① 的期望值**取自同一张常量表** ——
+  // 改常量表是空转（两边一起动），所以注入全部落在「读」的那一侧。
+  {
+    criterion: 'AC-EXP-007',
+    description: 'fallback 链不再插入 CJK 族 —— 字体栈里一个 CJK 族都没有，中文只能靠操作系统兜底',
+    file: 'packages/core/src/engine/typography.ts',
+    find:
+      '  return [...head, ...CJK_FALLBACK_FAMILIES, ...tail].join(\', \');\n',
+    replace:
+      '  return parts.join(\', \');\n',
+    testFile: 'spec/verify/font-fallback.test.ts',
+    testName: 'svg-font-stack-has-cjk-fallback',
+  },
+  {
+    criterion: 'AC-EXP-007',
+    description: 'CJK 族被排到 generic 族之后 —— generic 一旦命中就轮不到 CJK 了',
+    file: 'packages/core/src/engine/typography.ts',
+    find:
+      '  return [...head, ...CJK_FALLBACK_FAMILIES, ...tail].join(\', \');\n',
+    replace:
+      '  return [...head, ...tail, ...CJK_FALLBACK_FAMILIES].join(\', \');\n',
+    testFile: 'spec/verify/font-fallback.test.ts',
+    testName: 'svg-font-stack-has-cjk-fallback',
+  },
+  {
+    criterion: 'AC-EXP-007',
+    description: '渲染器绕过 fallback 链 —— 主题字体栈原样写进 SVG，中文全靠操作系统兜底',
+    file: 'packages/core/src/engine/svgRenderer.ts',
+    find:
+      '        font-family: ${withCjkFallback(theme.fontFamily)};\n',
+    replace:
+      '        font-family: ${theme.fontFamily};\n',
+    testFile: 'spec/verify/font-fallback.test.ts',
+    testName: 'svg-font-stack-has-cjk-fallback',
+  },
+  {
+    criterion: 'AC-EXP-008',
+    description: 'PPTX 侧不再跟着字体常量走 —— 写死成 Arial，拉丁字形与东亚字形都指向它',
+    file: 'packages/core/src/engine/exportEngine.ts',
+    find:
+      'const PPTX_FONT = PPTX_FONT_NAME;\n',
+    replace:
+      'const PPTX_FONT = \'Arial\';\n',
+    testFile: 'spec/verify/font-fallback.test.ts',
+    testName: 'pptx-uses-cjk-capable-font',
+  },
+  {
+    criterion: 'AC-EXP-008',
+    description: '文本运行直接透传主题的 CSS 字体栈 —— 「主题字体栈直接透传」的旧写法回来了',
+    file: 'packages/core/src/engine/exportEngine.ts',
+    find:
+      '            fontFace: PPTX_FONT,\n' +
+      '            color: textColor,',
+    replace:
+      '            fontFace: theme.fontFamily,\n' +
+      '            color: textColor,',
+    extraEdits: [
+      {
+        find:
+          '            fontFace: PPTX_FONT,\n' +
+          '            bold: true,',
+        replace:
+          '            fontFace: theme.fontFamily,\n' +
+          '            bold: true,',
+      },
+      {
+        find:
+          '              fontFace: PPTX_FONT,\n' +
+          '              color: hex6(el.style.color',
+        replace:
+          '              fontFace: theme.fontFamily,\n' +
+          '              color: hex6(el.style.color',
+      },
+      {
+        find:
+          '              valign: \'top\',\n' +
+          '              fontFace: PPTX_FONT,',
+        replace:
+          '              valign: \'top\',\n' +
+          '              fontFace: theme.fontFamily,',
+      },
+    ],
+    testFile: 'spec/verify/font-fallback.test.ts',
+    testName: 'pptx-uses-cjk-capable-font',
+  },
+  {
+    criterion: 'AC-E2E-023',
+    description: 'PNG/SVG 导出的 scope 带上全部页 —— 第 1 页混了进来',
+    file: 'src/components/ExportModal.tsx',
+    find:
+      '          ? { slideIds: currentSlide ? [currentSlide.slideId] : [] }\n',
+    replace:
+      '          ? { slideIds: project.slides.map((s) => s.slideId) }\n',
+    testFile: 'e2e/navigation.e2e.ts',
+    testName: 'AC-E2E-023 PNG/SVG 导出 → scope 只含当前页',
+  },
+  {
+    criterion: 'AC-E2E-024',
+    description: '导出弹窗的页码写死第 1 页 —— 停在第 2 页也写着「当前第 1 页」',
+    file: 'src/components/ExportModal.tsx',
+    find: '当前第 {currentSlideIndex + 1} 页超清渲染图',
+    replace: '当前第 1 页超清渲染图',
+    testFile: 'e2e/navigation.e2e.ts',
+    testName: 'AC-E2E-024 导出弹窗的 PNG 说明 → 页码跟着当前页走',
+  },
+  {
+    criterion: 'AC-E2E-025',
+    description: '放映的起点恒为第 1 页 —— 停在第 2 页点放映还是从第 1 页开始',
+    file: 'src/components/PresentationMode.tsx',
+    find:
+      '  const [currentIndex, setCurrentIndex] = useState(initialSlideIndex);\n',
+    replace:
+      '  const [currentIndex, setCurrentIndex] = useState(0);\n',
+    testFile: 'e2e/navigation.e2e.ts',
+    testName: 'AC-E2E-025 工作台第 2 页点放映 → 从第 2 页开始',
+  },
 ];
 
 interface RunResult {
