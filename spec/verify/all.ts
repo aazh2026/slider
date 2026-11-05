@@ -173,7 +173,11 @@ export const STEPS: Step[] = [
     artifact: 'spec/evidence/mutation-report.json',
   },
   {
-    name: '生成追溯矩阵',
+    // 这一步**不只是一份报告** —— 它末尾带**发布闸门**：
+    // 矩阵里若有条款挡住放行（判据不满足 / 给不出结论又没登记为已知欠账），
+    // 它以退出码 1 收场 → 流水线的退出码也跟着变成 1（「有结论，结论是不通过」）。
+    // 矩阵里的坏结论从此**有出口**。
+    name: '生成追溯矩阵（结论不通过即阻断放行）',
     cmd: ['bun', 'run', 'spec/verify/traceability.ts'],
     tolerateFailure: false,
     stderrFile: 'step-traceability.txt',

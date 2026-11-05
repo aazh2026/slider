@@ -17,6 +17,8 @@
  */
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+
+import { evaluateReleaseGate, renderGateSection } from './releaseGate.ts';
 import type { Dirent } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -811,6 +813,23 @@ function main(): void {
     ...uncoveredRows,
   ];
 
+  // --- 发布闸门 ---
+  //
+  // 矩阵是**报告**：它记下每条条款的结论，但报告本身不拦人。
+  // 闸门给那些结论一个**出口** —— 判据不满足、或者给不出结论且没登记为已知欠账，
+  // 就不放行（退出码 1）。
+  //
+  // 已知欠账登记表 = `spec.yaml` 的 `known_gaps` —— 那里写清了「为什么没做、打算什么时候做」。
+  const gate = evaluateReleaseGate({
+    clauses: rows.map((r) => ({
+      id: r.clause.id,
+      verdict: r.verdict,
+      hasCriteria: r.clause.acceptance.length > 0,
+      status: r.clause.status,
+    })),
+    knownGapClauses: spec.known_gaps.map((g) => g.clause),
+  });
+
   const passClauses = judgedRows.filter((r) => r.verdict === 'PASS').length;
   const failClauses = judgedRows.filter((r) => r.verdict === 'FAIL').length;
   const incClauses = judgedRows.filter((r) => r.verdict === 'INCONCLUSIVE').length;
@@ -1211,6 +1230,18 @@ function main(): void {
   }
   P();
 
+  // ---- 2.7 发布闸门 ----
+  P('### 2.7 发布闸门：这批结论能不能放行');
+  P();
+  P(
+    '矩阵是**一份报告**：它记下每条条款的 PASS / FAIL / INCONCLUSIVE，但报告本身**不拦人**。' +
+      '这一节是那个出口 —— 判据不满足、或者给不出结论又没登记为已知欠账，就**不放行**：' +
+      '生成这份矩阵的流水线会以退出码 1 收场（「有结论，结论是不通过」）。'
+  );
+  P();
+  for (const line of renderGateSection(gate)) P(line);
+  P();
+
   // ---- 三、汇报口径 ----
   P('---');
   P();
@@ -1357,6 +1388,21 @@ function main(): void {
   console.log(
     `主证据新鲜度：结论 ${verdictFreshness.total} 条 —— 仍然成立 ${verdictFreshness.fresh} / 已过期 ${verdictFreshness.stale} / 说清不了 ${verdictFreshness.unknown} / 文件已不在 ${verdictFreshness.missing}`
   );
+
+  // ---- 发布闸门的出口 ----
+  //
+  // 矩阵写完了，**结论也要有出口**：有条款挡住放行时，这一步以退出码 1 收场，
+  // 流水线的退出码随之变成 1（「有结论，结论是不通过」）。
+  if (!gate.canRelease) {
+    console.log('');
+    console.log(
+      `❌ 发布闸门不放行：${gate.blocking.length} 条条款挡住放行 —— ` +
+        gate.blocking.map((b) => `${b.id}（${b.verdict}）`).join('、')
+    );
+    for (const b of gate.blocking) console.log(`   · ${b.id}：${b.reason}`);
+    process.exit(1);
+  }
+  console.log(`发布闸门：放行（${gate.tolerated.length} 条已知欠账已登记）`);
 }
 
 main();
