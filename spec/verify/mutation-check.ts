@@ -1350,6 +1350,86 @@ export const MUTATIONS: Mutation[] = [
     testFile: 'e2e/offline.e2e.ts',
     testName: '应用 HTML → 没有会阻塞渲染的外部样式表',
   },
+  // =======================================================================
+  // 波 2 新增的两族条款 —— 槽位契约（SPEC-CORE-011）与版式不变量（SPEC-GOV-004）
+  // =======================================================================
+  //
+  // 2026-11-05 查出来的洞：下面这五族判据（AC-CORE-018~020 / AC-GOV-003~004）
+  // 在此前的注入用例里**一条都没有**。也就是说 —— 它们的验证器从来没有被
+  // 试着「改坏一次看看抓不抓得住」。「测试通过」在这里等于「没人验过它有效」。
+  //
+  // 每一条都对着判据文本里的**主语**注入，不是对着实现细节乱捅：
+  //   · 契约裁剪（AC-CORE-018）→ 改绑定器：不再按契约裁剪
+  //   · 校验器三档结论（AC-CORE-019）→ 改校验器：缺槽位不再报 error
+  //   · 降级规则来自契约表（AC-CORE-020）→ 改表（少一条声明）/ 改引擎（判反了）
+  //   · 层归属由 variant 决定（AC-GOV-003）→ 改渲染器：不再按变体表分层
+  //   · 质量引擎对 64 组零命中（AC-GOV-004）→ 改跨页结论的归一化：归过头了
+  {
+    criterion: 'AC-CORE-018',
+    description: '绑定不再按契约裁剪 —— 什么槽位都带进这一页',
+    file: 'packages/core/src/engine/contentBinding.ts',
+    find: '  return pickConsumedSlots(merged, slotContractOf(outline.layoutPreference).consumes);',
+    replace: '  return merged;',
+    testFile: 'packages/core/tests/contentBinding.test.ts',
+    testName: 'slots-not-consumed-by-layout-are-dropped',
+  },
+  {
+    criterion: 'AC-CORE-019',
+    description: '缺契约要求的槽位时不再报 error（降级成 warning）—— ok 永远为真',
+    file: 'packages/core/src/engine/contentBinding.ts',
+    find:
+      '        slot: req.slot,\n' +
+      '        level: \'error\',\n' +
+      '        message: `版式「${layout}」需要至少 ${req.min} 个「${req.slot}」，实际只有 ${items.length} 个`,',
+    replace:
+      '        slot: req.slot,\n' +
+      '        level: \'warning\',\n' +
+      '        message: `版式「${layout}」需要至少 ${req.min} 个「${req.slot}」，实际只有 ${items.length} 个`,',
+    testFile: 'packages/core/tests/contentBinding.test.ts',
+    testName: 'missing-required-slot-is-an-error',
+  },
+  {
+    criterion: 'AC-CORE-020',
+    description: '契约表里少了一条降级声明 —— 指标页没有数字时也降不了级',
+    file: 'packages/core/src/data/layoutIntents.ts',
+    find:
+      '    // 整页没有数字时降级为 cards_grid（版式引擎唯一的一条降级规则）\n' +
+      '    degradesTo: \'cards_grid\',',
+    replace:
+      '    // 整页没有数字时降级为 cards_grid（版式引擎唯一的一条降级规则）',
+    testFile: 'packages/core/tests/contentBinding.test.ts',
+    testName: 'stats-kpi-without-number-degrades-to-cards-grid',
+  },
+  {
+    criterion: 'AC-CORE-020',
+    description: '引擎把「契约声明了降级」判反了 —— 声明了反而**不**降级',
+    file: 'packages/core/src/engine/layoutEngine.ts',
+    find: '    if (!contract.degradesTo) return preferred;',
+    replace: '    if (contract.degradesTo) return preferred;',
+    testFile: 'packages/core/tests/contentBinding.test.ts',
+    testName: 'stats-kpi-without-number-degrades-to-cards-grid',
+  },
+  {
+    criterion: 'AC-GOV-003',
+    description: '渲染器不再按变体表分层 —— 母版槽位被塞进内容层',
+    file: 'packages/core/src/engine/svgRenderer.ts',
+    find: '    const templateElements = slide.elements.filter((el) => layerOf(el) === \'template\');',
+    replace: '    const templateElements = slide.elements.filter((el) => layerOf(el) === \'content\');',
+    testFile: 'packages/core/tests/layoutInvariants.test.ts',
+    testName: 'elements-belong-to-declared-layers',
+  },
+  {
+    criterion: 'AC-GOV-004',
+    description: '跨页结论的归一化把数字也去掉了 —— 64 页的结论被归成同一句，于是 62 条重复误报',
+    file: 'packages/core/src/engine/qualityEngine.ts',
+    find:
+      '    .replace(/[，。！？、；：,.!?;:"\'（）()【】\\[\\]《》〈〉<>—\\-_~·…]/g, \'\');',
+    replace:
+      '    .replace(/[，。！？、；：,.!?;:"\'（）()【】\\[\\]《》〈〉<>—\\-_~·…]/g, \'\');\n' +
+      '    .replace(/\\d/g, \'\');',
+    testFile: 'packages/core/tests/layoutInvariants.test.ts',
+    testName: 'no-quality-issue-in-any-combo',
+  },
 ];
 
 interface RunResult {
