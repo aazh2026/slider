@@ -33,6 +33,7 @@ import { startServers, type ServerHandle } from './servers';
 import { acquireMutationLock } from './mutationLock';
 import { restoreFiles } from './mutationRestore';
 import { sha256Of } from './evidenceFreshness';
+import { dataDepsOfFile } from './dataDeps';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '../..');
@@ -1777,7 +1778,10 @@ async function runChecks(): Promise<number> {
           generated_at: new Date().toISOString(),
           total: results.length,
           unqualified: broken,
-          cases: results.map((r) => ({
+          cases: results.map((r) => {
+            // 这个验证器还依赖哪些数据文件 —— 声明在它自己文件里的 `@verdict-deps:`
+            const dataDeps = dataDepsOfFile(ROOT, r.testFile);
+            return {
             criterion: r.criterion,
             description: r.description,
             mutated_file: r.file,
@@ -1804,12 +1808,30 @@ async function runChecks(): Promise<number> {
             // 指纹会跟当前文件对得上 —— 一份自己给自己作证的死报告。
             verifier_sha256: sha256OfFile(r.testFile),
             source_sha256: r.sourceSha256,
+            // ---- 数据依赖的指纹 ----
+            //
+            // 「验证器抓得住这个错」不只是「验证器」与「被改的源文件」之间的事 ——
+            // 有些验证器还依赖**运行时从磁盘读的数据文件**
+            // （最典型：黄金快照基线 `packages/core/tests/__snapshots__/*.json`）。
+            //
+            // 实测（2026-11-05）：改了**一个**黄金快照基线之后，
+            //   · 主证据侧（§2.1.1）判 stale —— 它看得见数据依赖；
+            //   · 注入侧（§2.4.1）却判 fresh —— 它只比代码，**看不见数据**。
+            // 同一个改动，两个地方说两套话。而 `AC-GOV-002` 那条注入用例
+            // **正是靠这 64 个基线抓住错误的** —— 基线被动过之后，
+            // 「验证器抓得住这个错」可能已经不成立，注入侧却说「仍然成立」。
+            //
+            // 所以这里把数据依赖的指纹也记下来
+            // （声明规则见 spec/verify/dataDeps.ts —— 与主证据侧共用同一套）。
+            data_deps: dataDeps.files,
+            data_sha256: Object.fromEntries(dataDeps.files.map((f) => [f, sha256OfFile(f)])),
             // 只有失败时才留输出 —— 报告是给人看的，不是日志转储
             output_tail:
               r.baseline && r.caught && r.restored
                 ? ''
                 : r.outputTail,
-          })),
+            };
+          }),
         },
         null,
         2

@@ -35,13 +35,12 @@ import {
   renderLedgerSummary,
   renderUnmappedFailures,
 } from './evidenceLedger.ts';
+import { dataDepsOfFile, expandDataDeps, parseDataDeps } from './dataDeps.ts';
 import {
   assessVerdict,
   dependencyClosure,
-  expandDataDeps,
   groupStale,
   listFiles,
-  parseDataDeps,
   renderVerdictFreshnessSection,
   summarizeVerdicts,
   verdictFreshnessQualifier,
@@ -324,6 +323,10 @@ function readMutation(): {
     verifier_file?: string;
     verifier_sha256?: string | null;
     source_sha256?: string | null;
+    /** 跑批时记下的数据依赖文件清单（仓库相对） */
+    data_deps?: string[];
+    /** 跑批时记下的数据依赖指纹：路径 → sha256 */
+    data_sha256?: Record<string, string | null>;
     baseline_pass: boolean;
     caught: boolean;
     restored_pass: boolean;
@@ -567,20 +570,36 @@ function main(): void {
   // 而报告里只写着「不合格 0 个」。
   //
   // 报告里留了文件指纹，这里逐条比对（见 spec/verify/evidenceFreshness.ts）。
-  const freshnessCases: FingerprintedCase[] = mutation.cases.map((c) => ({
-    criterion: c.criterion,
+  const freshnessCases: FingerprintedCase[] = mutation.cases.map((c) => {
     // 老报告没有 verifier_file → 从 `文件::用例名` 里拆出来
-    verifierFile:
-      c.verifier_file ?? c.verifier.split('::')[0]!.replace('（整文件）', '').trim(),
-    sourceFile: c.mutated_file,
-    verifierSha256: c.verifier_sha256 ?? null,
-    sourceSha256: c.source_sha256 ?? null,
-  }));
+    const verifierFile =
+      c.verifier_file ?? c.verifier.split('::')[0]!.replace('（整文件）', '').trim();
+    return {
+      criterion: c.criterion,
+      verifierFile,
+      sourceFile: c.mutated_file,
+      verifierSha256: c.verifier_sha256 ?? null,
+      sourceSha256: c.source_sha256 ?? null,
+      // 验证器**现在**依赖哪些数据文件 —— 规则与主证据侧共用
+      // （spec/verify/dataDeps.ts）。少了这一项，注入侧就看不见数据依赖 ——
+      // 实测 2026-11-05：改了**一个**黄金快照基线，主证据侧判 stale、
+      // 注入侧却判 fresh，同一个改动两个地方说两套话。
+      dataDepFiles: dataDepsOfFile(ROOT, verifierFile).files,
+      // 跑批时记下的数据依赖指纹（旧报告没有这个字段 → undefined）
+      dataSha256: c.data_sha256,
+    };
+  });
   const freshness = summarize(
     freshnessCases,
     currentFingerprints(
       ROOT,
-      new Set(freshnessCases.flatMap((c) => [c.verifierFile, c.sourceFile]))
+      new Set(
+        freshnessCases.flatMap((c) => [
+          c.verifierFile,
+          c.sourceFile,
+          ...(c.dataDepFiles ?? []),
+        ])
+      )
     )
   );
 

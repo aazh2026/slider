@@ -22,6 +22,27 @@
  *
  * **unknown 不等于 fresh** —— 说不出新鲜度，就不能说它成立。
  *
+ * ── 数据依赖：光比代码是不够的 ─────────────────────────────────────────────
+ *
+ * 上面比的是「验证器」与「被改的源文件」两份**代码**。
+ * 可有些验证器还依赖**运行时从磁盘读的数据文件** ——
+ * 最典型的是黄金快照基线（`packages/core/tests/__snapshots__/*.json`）。
+ *
+ * 实测（2026-11-05）：改了**一个**黄金快照基线之后，
+ *   · 主证据侧（§2.1.1，`verdictFreshness.ts`）判 **stale** —— 它看得见数据依赖；
+ *   · 注入侧（本文件）判 **fresh**  —— 它只比代码，**看不见数据**。
+ *
+ * 同一个改动，两个地方说两套话。而 `AC-GOV-002` 那条注入用例
+ * **正是靠这 64 个基线抓住错误的** —— 基线被动过之后，
+ * 「验证器抓得住这个错」可能已经不成立，注入侧却说「仍然成立」。
+ *
+ * 所以报告里也要记下**数据依赖**的指纹，判定时一并比：
+ *   · 数据依赖变了     → stale     （跟代码一样，是确定的）
+ *   · 报告没记数据依赖 → unknown   （说清不了，就不能说它成立）
+ *
+ * 「怎么找数据依赖」的规则住在 `spec/verify/dataDeps.ts` —— 主证据侧共用同一套，
+ * 否则同一个改动两边又会漂开。
+ *
  * 纯逻辑与文件读写分开：判定函数只吃「当前指纹表」，
  * 于是整套语义可以在临时目录里被完整测一遍。
  */
@@ -42,14 +63,26 @@ export interface FingerprintedCase {
   verifierSha256?: string | null;
   /** 跑批时被改源文件的 sha256（旧报告没有 → null） */
   sourceSha256?: string | null;
+  /**
+   * 验证器**现在**依赖的数据文件清单（由调用方解析 `// @verdict-deps:` 并展开目录得到）。
+   * 空数组 / 不给 = 这个验证器没有声明数据依赖。
+   */
+  dataDepFiles?: string[];
+  /**
+   * 跑批时记下的**数据依赖**指纹：路径 → sha256。
+   *
+   * `undefined` = 报告是旧格式，没记过数据依赖 —— 此时只要验证器**声明了**
+   * 数据依赖，这条结论就判 **unknown**（说清不了），不能当成 fresh。
+   */
+  dataSha256?: Record<string, string | null>;
 }
 
 export type FreshnessVerdict = 'fresh' | 'stale' | 'file-missing' | 'unknown';
 
 export interface Freshness {
   verdict: FreshnessVerdict;
-  /** 变了的那些边：验证器 / 被改的源文件 */
-  changed: Array<'verifier' | 'source'>;
+  /** 变了的那些边：验证器 / 被改的源文件 / 数据依赖 */
+  changed: Array<'verifier' | 'source' | 'data'>;
   /** 说人话的理由 */
   reason: string;
 }
@@ -117,23 +150,79 @@ export function assessCase(
     };
   }
 
-  const changed: Array<'verifier' | 'source'> = [];
+  const changed: Array<'verifier' | 'source' | 'data'> = [];
   if (verifierNow !== c.verifierSha256) changed.push('verifier');
   if (sourceNow !== c.sourceSha256) changed.push('source');
 
-  if (changed.length === 0) {
+  // ---- 数据依赖 ----
+  //
+  // 验证器运行时读的文件（黄金快照基线之类）也是它的依赖 ——
+  // 那些文件被动过之后，「验证器抓得住这个错」可能已经不成立。
+  //
+  // 比的是**当前声明 ∩ 跑批时记过**的那些：
+  //   · 两边都有 → 比指纹，变了就是 stale
+  //   · 跑批时没记 → unknown（报告是旧格式，说清不了）
+  //   · 现在不声明了 → 验证器已经不读它了，不影响结论，不算过期
+  const declared = c.dataDepFiles ?? [];
+  const dataChanged: string[] = [];
+  const dataUnknown: string[] = [];
+
+  if (declared.length > 0 && c.dataSha256 === undefined) {
+    // 报告没记数据依赖的指纹 —— 说清不了它对应的是哪一版数据。
     return {
-      verdict: 'fresh',
-      changed: [],
-      reason: '验证器与被改动的源文件都和跑批时一致',
+      verdict: 'unknown',
+      changed,
+      reason:
+        '报告没有记录数据依赖的指纹 —— 这条结论还依赖 ' +
+        `${declared.join('、')}，说清它对应的是哪一版数据`,
     };
   }
 
-  const what = changed.map((k) => (k === 'verifier' ? '验证器' : '被改动的源文件')).join('与');
+  for (const dep of declared) {
+    const recorded = c.dataSha256?.[dep];
+    if (recorded === undefined) {
+      dataUnknown.push(dep);
+      continue;
+    }
+    const now = current.get(dep);
+    if (now === null || now === undefined) {
+      return {
+        verdict: 'file-missing',
+        changed,
+        reason: `数据依赖文件不在树里了：${dep}`,
+      };
+    }
+    if (now !== recorded) dataChanged.push(dep);
+  }
+
+  if (dataChanged.length > 0) changed.push('data');
+
+  if (changed.length > 0) {
+    const what = changed
+      .map((k) =>
+        k === 'verifier' ? '验证器' : k === 'source' ? '被改动的源文件' : '数据依赖'
+      )
+      .join('与');
+    const extra = dataChanged.length > 0 ? `（${dataChanged.join('、')}）` : '';
+    return {
+      verdict: 'stale',
+      changed,
+      reason: `${what}在跑批之后被改过${extra} —— 这条结论对应的是旧版本`,
+    };
+  }
+
+  if (dataUnknown.length > 0) {
+    return {
+      verdict: 'unknown',
+      changed: [],
+      reason: `报告没有记录这些数据依赖的指纹：${dataUnknown.join('、')} —— 说清不了`,
+    };
+  }
+
   return {
-    verdict: 'stale',
-    changed,
-    reason: `${what}在跑批之后被改过 —— 这条结论对应的是旧版本`,
+    verdict: 'fresh',
+    changed: [],
+    reason: '验证器、被改动的源文件与数据依赖都和跑批时一致',
   };
 }
 
@@ -153,7 +242,7 @@ export interface FreshnessSummary {
     criterion: string;
     verifierFile: string;
     sourceFile: string;
-    changed: Array<'verifier' | 'source'>;
+    changed: Array<'verifier' | 'source' | 'data'>;
     reason: string;
   }>;
 }
@@ -239,7 +328,7 @@ export function renderFreshnessSection(f: FreshnessSummary, generatedAt: string)
   } else if (f.stale > 0 || f.missing > 0) {
     out.push(
       `> 逐条比对了跑批时的文件指纹与当前的文件内容：**${f.fresh} 条仍然成立**，` +
-        `**${f.stale} 条已过期**（验证器或被改的源文件在跑批之后被改过），` +
+        `**${f.stale} 条已过期**（验证器、被改的源文件或数据依赖在跑批之后被改过），` +
         `${f.missing} 条指向的文件已经不在树里。` +
         (f.unknown > 0 ? `另有 ${f.unknown} 条说清不了（报告没记指纹）。` : '')
     );
@@ -248,7 +337,9 @@ export function renderFreshnessSection(f: FreshnessSummary, generatedAt: string)
       out.push('| 判据 | 验证器 | 被改动的源文件 | 变了哪边 |');
       out.push('|---|---|---|---|');
       for (const d of f.staleDetails) {
-        const side = d.changed.map((c) => (c === 'verifier' ? '验证器' : '源文件')).join('、');
+        const side = d.changed
+          .map((c) => (c === 'verifier' ? '验证器' : c === 'source' ? '源文件' : '数据依赖'))
+          .join('、');
         out.push(`| ${d.criterion} | \`${d.verifierFile}\` | \`${d.sourceFile}\` | ${side} |`);
       }
       out.push('');
@@ -260,7 +351,7 @@ export function renderFreshnessSection(f: FreshnessSummary, generatedAt: string)
   } else {
     out.push(
       `> 逐条比对了跑批时的文件指纹与当前的文件内容：**${f.fresh} 条全部仍然成立**` +
-        '（验证器与被改动的源文件都和跑批时一致）。'
+        '（验证器、被改动的源文件与数据依赖都和跑批时一致）。'
     );
   }
 

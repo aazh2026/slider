@@ -267,66 +267,10 @@ export function dependencyClosure(
 //
 // 路径是**仓库相对路径**，可以是文件，也可以是目录（目录取其下所有文件）。
 // 声明写在**读它的那份代码旁边** —— 不写在别处，就不会忘记更新。
-
-/** 数据依赖的声明前缀 */
-const DATA_DEP_DIRECTIVE = '@verdict-deps:';
-
-/**
- * 声明行的形状 —— **必须是注释，而且注释在行首**。
- *
- * 为什么卡这么严：说明文档、测试用例里经常会出现 `@verdict-deps:` 这个**字符串**。
- * 宽松匹配会把那些字符串当成声明 —— 于是「这个验证器依赖 64 个基线」凭空冒出来，
- * 基线一被动过，那条结论就**假过期**。那是刚修掉的那个失败模式，换个方向又犯一遍。
- */
-const DATA_DEP_LINE = new RegExp(`^\\s*(?:\\/\\/|\\*)\\s*${DATA_DEP_DIRECTIVE}\\s*(.*)$`);
-
-/**
- * 抽出验证器文件里声明的数据依赖。
- *
- * 一行可以写多个（逗号分隔）；行尾可能还挂着块注释的收尾符号。
- */
-export function parseDataDeps(content: string): string[] {
-  const out: string[] = [];
-  for (const line of content.split('\n')) {
-    const m = DATA_DEP_LINE.exec(line);
-    if (!m) continue;
-    const rest = (m[1] ?? '').replace(/\*\/\s*$/, '');
-    for (const part of rest.split(',')) {
-      const p = part.trim();
-      if (p) out.push(p);
-    }
-  }
-  return out;
-}
-
-/**
- * 把声明的路径展开成**文件清单**。
- *
- * 目录 → 其下所有文件（递归）；文件 → 它自己；
- * 声明的路径在树里不存在 → 原样带出去 ——
- * 让调用方能说清「声明了、但找不到」，而不是悄悄少一个依赖。
- *
- * @param declared 声明的路径（仓库相对）
- * @param exists   判断路径在不在树里
- * @param listDir  列目录下的文件（仓库相对路径）；不是目录就返回空数组
- */
-export function expandDataDeps(
-  declared: readonly string[],
-  exists: (rel: string) => boolean,
-  listDir: (rel: string) => string[]
-): string[] {
-  const out = new Set<string>();
-  for (const d of declared) {
-    if (!exists(d)) {
-      out.add(d);
-      continue;
-    }
-    const files = listDir(d);
-    if (files.length > 0) for (const f of files) out.add(f);
-    else out.add(d);
-  }
-  return [...out].sort();
-}
+//
+// 「怎么找数据依赖」的规则住在 `spec/verify/dataDeps.ts` ——
+// 新鲜度判定有主证据侧与注入侧**两处**，两边必须用**同一套**规则，
+// 否则同一个改动两边会给出两套话（实测 2026-11-05 就是这么漂开的）。
 
 // ---------------------------------------------------------------------------
 // 四、判定一条结论的新鲜度

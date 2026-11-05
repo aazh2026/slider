@@ -23,14 +23,13 @@ import { describe, expect, test } from 'bun:test';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { expandDataDeps, parseDataDeps } from './dataDeps';
 import {
   assessVerdict,
   dependencyClosure,
-  expandDataDeps,
   groupStale,
   importSpecifiers,
   looksLocal,
-  parseDataDeps,
   renderVerdictFreshnessSection,
   resolveLocalPath,
   summarizeVerdicts,

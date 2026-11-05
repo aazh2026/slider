@@ -117,6 +117,153 @@ describe('注入结论的新鲜度', () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// 数据依赖 —— 光比代码是不够的
+// ---------------------------------------------------------------------------
+//
+// 缺陷回放（实测 2026-11-05）：改了**一个**黄金快照基线之后，
+//   · 主证据侧（§2.1.1）判 **stale** —— 它看得见数据依赖；
+//   · 注入侧（本文件）判 **fresh**  —— 它只比代码，**看不见数据**。
+//
+// 同一个改动，两个地方说两套话。而 `AC-GOV-002` 那条注入用例
+// **正是靠那 64 个基线抓住错误的** —— 基线被动过之后，
+// 「验证器抓得住这个错」可能已经不成立，注入侧却说「仍然成立」。
+//
+// 这一组把那个洞钉住：数据依赖是**依赖**，不是附注。
+
+/** 黄金快照基线（数据依赖的典型样例） */
+const SNAPSHOT = 'packages/core/tests/__snapshots__/title_cover.json';
+
+describe('注入结论的新鲜度 —— 数据依赖', () => {
+  test('数据依赖被改过 → 过期，并说清是哪一边变了', () => {
+    const current = currentMap({
+      [VERIFIER]: sha256Of('验证器内容'),
+      [SOURCE]: sha256Of('源文件内容'),
+      [SNAPSHOT]: sha256Of('基线内容（被改过了）'),
+    });
+    const f = assessCase(
+      makeCase({
+        dataDepFiles: [SNAPSHOT],
+        dataSha256: { [SNAPSHOT]: sha256Of('基线内容') },
+      }),
+      current
+    );
+    expect(f.verdict).toBe('stale');
+    expect(f.changed).toEqual(['data']);
+    expect(f.reason).toContain('数据依赖');
+    expect(f.reason).toContain(SNAPSHOT);
+  });
+
+  test('数据依赖没变 → 仍然成立', () => {
+    const current = currentMap({
+      [VERIFIER]: sha256Of('验证器内容'),
+      [SOURCE]: sha256Of('源文件内容'),
+      [SNAPSHOT]: sha256Of('基线内容'),
+    });
+    const f = assessCase(
+      makeCase({
+        dataDepFiles: [SNAPSHOT],
+        dataSha256: { [SNAPSHOT]: sha256Of('基线内容') },
+      }),
+      current
+    );
+    expect(f.verdict).toBe('fresh');
+  });
+
+  test('报告没记数据依赖的指纹 → 说清不了，**不能当成 fresh**', () => {
+    // 旧格式的报告：只记了代码的指纹。此时验证器声明了数据依赖，
+    // 那条结论对应的是哪一版数据就**说不清**了 —— 不能算成立。
+    const current = currentMap({
+      [VERIFIER]: sha256Of('验证器内容'),
+      [SOURCE]: sha256Of('源文件内容'),
+      [SNAPSHOT]: sha256Of('基线内容'),
+    });
+    const f = assessCase(makeCase({ dataDepFiles: [SNAPSHOT] }), current);
+    expect(f.verdict).toBe('unknown');
+    expect(f.verdict).not.toBe('fresh');
+    expect(f.reason).toContain('数据依赖');
+  });
+
+  test('报告漏记了其中一个数据依赖 → 说清不了', () => {
+    const current = currentMap({
+      [VERIFIER]: sha256Of('验证器内容'),
+      [SOURCE]: sha256Of('源文件内容'),
+      [SNAPSHOT]: sha256Of('基线内容'),
+      'packages/core/tests/__snapshots__/cards_grid.json': sha256Of('另一份基线'),
+    });
+    const f = assessCase(
+      makeCase({
+        dataDepFiles: [SNAPSHOT, 'packages/core/tests/__snapshots__/cards_grid.json'],
+        dataSha256: { [SNAPSHOT]: sha256Of('基线内容') },
+      }),
+      current
+    );
+    expect(f.verdict).toBe('unknown');
+    expect(f.reason).toContain('cards_grid.json');
+  });
+
+  test('数据依赖文件不在树里了 → 说清是哪一份不见了', () => {
+    const current = currentMap({
+      [VERIFIER]: sha256Of('验证器内容'),
+      [SOURCE]: sha256Of('源文件内容'),
+      [SNAPSHOT]: null,
+    });
+    const f = assessCase(
+      makeCase({
+        dataDepFiles: [SNAPSHOT],
+        dataSha256: { [SNAPSHOT]: sha256Of('基线内容') },
+      }),
+      current
+    );
+    expect(f.verdict).toBe('file-missing');
+    expect(f.reason).toContain(SNAPSHOT);
+  });
+
+  test('验证器已经不声明这个数据依赖了 → 不算过期（它不再读那个文件了）', () => {
+    // 跑批时记过、现在不声明了 → 验证器已经不读它，不可能影响结论。
+    // 拿它判过期是**假过期** —— 那是这个项目刚修掉过的失败模式。
+    const current = currentMap({
+      [VERIFIER]: sha256Of('验证器内容'),
+      [SOURCE]: sha256Of('源文件内容'),
+      [SNAPSHOT]: sha256Of('基线内容（变了）'),
+    });
+    const f = assessCase(
+      makeCase({
+        dataDepFiles: [],
+        dataSha256: { [SNAPSHOT]: sha256Of('基线内容') },
+      }),
+      current
+    );
+    expect(f.verdict).toBe('fresh');
+  });
+
+  test('验证器没声明数据依赖 → 判定跟从前一模一样（老报告不误伤）', () => {
+    const current = currentMap({
+      [VERIFIER]: sha256Of('验证器内容'),
+      [SOURCE]: sha256Of('源文件内容'),
+    });
+    const f = assessCase(makeCase(), current);
+    expect(f.verdict).toBe('fresh');
+  });
+
+  test('代码变了、数据依赖也变了 → 两边都记下来', () => {
+    const current = currentMap({
+      [VERIFIER]: sha256Of('验证器内容（改过了）'),
+      [SOURCE]: sha256Of('源文件内容（改过了）'),
+      [SNAPSHOT]: sha256Of('基线内容（改过了）'),
+    });
+    const f = assessCase(
+      makeCase({
+        dataDepFiles: [SNAPSHOT],
+        dataSha256: { [SNAPSHOT]: sha256Of('基线内容') },
+      }),
+      current
+    );
+    expect(f.verdict).toBe('stale');
+    expect(f.changed).toEqual(['verifier', 'source', 'data']);
+  });
+});
+
 describe('新鲜度汇总', () => {
   test('计数与判据去重', () => {
     const current = currentMap({
