@@ -156,13 +156,13 @@
 
 > 结论为 PASS 的判据共 105 条，每一条都在 §2.3 有对应证据记录（EVD-*）。
 > 「未覆盖（无判据）」的 1 条（SPEC-GOV-003）连判据都不存在，既不是 PASS 也不是 FAIL —— 见 §2.5。
-> **证据集对账**：这轮证据集共 544 个用例（spec/evidence/junit.xml 446 + spec/evidence/junit-e2e.xml 98），其中 105 个被某条判据点名、439 个没有。
-> 没有判据的 439 个用例里 **0 个失败** —— 上表的「FAIL 0」不是漏报：它们也都过了。
+> **证据集对账**：这轮证据集共 560 个用例（spec/evidence/junit.xml 462 + spec/evidence/junit-e2e.xml 98），其中 105 个被某条判据点名、455 个没有。
+> 没有判据的 455 个用例里 **0 个失败** —— 上表的「FAIL 0」不是漏报：它们也都过了。
 > 判据点名的 106 个验证目标里，**1 个在这轮证据集里没找到**（`apps/api/tests/perf/outline-latency.bench.ts::outline-generation-p95-under-threshold`）—— 挂不上验证目标的判据一律 INCONCLUSIVE，绝不按「通过」算（§2.5）。
 
 #### 2.1.1 这批结论对应的是哪一版代码
 
-这些证据生成于：spec/evidence/junit.xml 2026-11-05 17:56:06、spec/evidence/junit-e2e.xml 2026-11-05 17:57:32。每一条 PASS/FAIL 都是**跑批那一刻**的结论 —— 跑完之后动过它依赖的文件，这条结论就不再自动适用于当前代码。下面按「这条结论依赖的文件有没有在证据之后被改过」逐条判定。
+这些证据生成于：spec/evidence/junit.xml 2026-11-05 19:02:00、spec/evidence/junit-e2e.xml 2026-11-05 19:03:25。每一条 PASS/FAIL 都是**跑批那一刻**的结论 —— 跑完之后动过它依赖的文件，这条结论就不再自动适用于当前代码。下面按「这条结论依赖的文件有没有在证据之后被改过」逐条判定。
 
 > **105 条结论全部仍然成立** —— 它们依赖的文件在证据生成之后都没有被改过。
 
@@ -180,7 +180,7 @@
 
 #### 未挂判据的失败
 
-（无）—— 没有判据的 439 个用例也全都过了。这一节存在的意义是：**「没有失败」得说得出依据**，不能靠「没列」来暗示。
+（无）—— 没有判据的 455 个用例也全都过了。这一节存在的意义是：**「没有失败」得说得出依据**，不能靠「没列」来暗示。
 
 ### 2.3 证据清单
 
@@ -1764,144 +1764,154 @@ EVD-GOV-004
 
 ### 2.4 注入错误检查（验证器的元验证）
 
-共 114 个注入用例，**不合格 0 个**。每个用例走「基线 PASS → 注入必须 FAIL → 还原后重新 PASS」三步。
+共 122 个注入用例，**不合格 0 个**。每个用例走「基线 → 注入 → 还原」三步，结论由**差分**给出：只看「注入带来了哪些**新的**失败」与「还原之后还多出哪些失败」。
 
-| 判据 | 注入的错误 | 改动的文件 | 检出者 | 基线 | 检出 | 还原 | 结论 |
+| 判据 | 注入的错误 | 改动的文件 | 检出者 | 基线失败 | 注入新增 | 还原新增 | 结论 |
 |---|---|---|---|---|---|---|---|
-| AC-CORE-001 | 把画布尺寸改成 1600×900 | `packages/core/src/engine/layoutEngine.ts` | `spec/verify/core-layout.test.ts::canvas-is-always-1920x1080` | ✅ | ✅ | ✅ | 通过 |
-| AC-CORE-011 | 画布宽度改成跟着容器走（width: 100%）—— 屏幕上再次变成竖条、出现信箱边 | `src/components/Workbench.tsx` | `e2e/workbench.e2e.ts::AC-CORE-011 工作台画布在屏幕上保持 16:9，不出现信箱边` | ✅ | ✅ | ✅ | 通过 |
-| AC-CORE-012 | 水平方向把 safe center 改回普通 center —— 溢出的一半被推到不可达的左侧 | `src/components/Workbench.tsx` | `e2e/workbench.e2e.ts::AC-CORE-012 画布放大超出可视区后，左右上下都滚得到，不被裁掉` | ✅ | ✅ | ✅ | 通过 |
-| AC-CORE-012 | 垂直方向把 safe center 改回普通 center —— 溢出的一半被推到不可达的顶部 | `src/components/Workbench.tsx` | `e2e/workbench.e2e.ts::AC-CORE-012 画布放大超出可视区后，左右上下都滚得到，不被裁掉` | ✅ | ✅ | ✅ | 通过 |
-| AC-CORE-013 | 不再观察容器尺寸变化 —— 缩放档位停在旧值上，画布不再适配新的可视区 | `src/components/Workbench.tsx` | `e2e/workbench.e2e.ts::AC-CORE-013 容器尺寸变化后缩放档位自动重新适配，画布不被裁掉` | ✅ | ✅ | ✅ | 通过 |
-| AC-CORE-002 | 让页码元素横向越出画布 | `packages/core/src/engine/layoutEngine.ts` | `spec/verify/core-layout.test.ts::no-element-out-of-canvas` | ✅ | ✅ | ✅ | 通过 |
-| AC-CORE-003 | 卡片元素 ID 不带 slideId —— 同版式的两页会撞 ID | `packages/core/src/engine/layoutEngine.ts` | `spec/verify/core-layout.test.ts::element-ids-unique-across-slides` | ✅ | ✅ | ✅ | 通过 |
-| AC-CORE-004 | 卡片元素 ID 不再携带 slideId | `packages/core/src/engine/layoutEngine.ts` | `spec/verify/core-layout.test.ts::layout-element-ids-contain-slide-id` | ✅ | ✅ | ✅ | 通过 |
-| AC-CORE-005 | 在页脚文案里掺入随机数（破坏确定性） | `packages/core/src/engine/layoutEngine.ts` | `spec/verify/core-layout.test.ts::layout-engine-is-pure` | ✅ | ✅ | ✅ | 通过 |
-| AC-CORE-006 | 去掉「封面不渲染母版」的分支判断 | `packages/core/src/engine/layoutEngine.ts` | `spec/verify/core-layout.test.ts::cover-page-has-no-master-elements` | ✅ | ✅ | ✅ | 通过 |
-| AC-CORE-007 | 页码不再补零到两位 | `packages/core/src/engine/layoutEngine.ts` | `spec/verify/core-layout.test.ts::page-number-format` | ✅ | ✅ | ✅ | 通过 |
-| AC-CORE-008 | 卡片标题回落到硬编码演示文案（不再用要点标签） | `packages/core/src/engine/layoutEngine.ts` | `spec/verify/core-content.test.ts::bullet-consuming-layouts-use-outline-bullets` | ✅ | ✅ | ✅ | 通过 |
-| AC-CORE-009 | 封面元信息卡塞入与 outline 无关的固定文案 | `packages/core/src/engine/layoutEngine.ts` | `spec/verify/core-content.test.ts::cover-content-traceable-to-outline` | ✅ | ✅ | ✅ | 通过 |
-| AC-CORE-010 | 要点来源被固定成常量（渲染结果与输入无关） | `packages/core/src/engine/contentBinding.ts` | `spec/verify/core-content.test.ts::render-output-follows-outline-bullets` | ✅ | ✅ | ✅ | 通过 |
-| AC-RND-001 | 文本内容不再转义 | `packages/core/src/engine/svgRenderer.ts` | `spec/verify/render-svg.test.ts::user-content-is-xml-escaped` | ✅ | ✅ | ✅ | 通过 |
-| AC-RND-002 | 卡片渲染重新引入 foreignObject | `packages/core/src/engine/svgRenderer.ts` | `spec/verify/render-svg.test.ts::svg-contains-no-foreignobject` | ✅ | ✅ | ✅ | 通过 |
-| AC-RND-003 | SVG 重新引入 Google Fonts @import | `packages/core/src/engine/svgRenderer.ts` | `spec/verify/render-svg.test.ts::svg-contains-no-external-font-import` | ✅ | ✅ | ✅ | 通过 |
-| AC-RND-004 | 不再输出元素的 id 属性（只留 data-element-id 顶替） | `packages/core/src/engine/svgRenderer.ts` | `spec/verify/render-svg.test.ts::svg-preserves-element-ids` | ✅ | ✅ | ✅ | 通过 |
-| AC-RND-004 | data-element-id 的值与 IR id 不一致 | `packages/core/src/engine/svgRenderer.ts` | `spec/verify/render-svg.test.ts::svg-preserves-element-ids` | ✅ | ✅ | ✅ | 通过 |
-| AC-RND-005 | 把装饰层改名，破坏四层约定 | `packages/core/src/engine/svgRenderer.ts` | `spec/verify/render-svg.test.ts::svg-has-four-layers` | ✅ | ✅ | ✅ | 通过 |
-| AC-RND-006 | 不再截断 —— 装不下的行原样溢出（整段原文直接铺进 SVG） | `packages/core/src/engine/svgRenderer.ts` | `spec/verify/render-svg.test.ts::long-text-is-truncated-with-ellipsis` | ✅ | ✅ | ✅ | 通过 |
-| AC-RND-006 | 截断了但不补省略号 —— 文字被切掉，读者却看不出来 | `packages/core/src/engine/svgRenderer.ts` | `spec/verify/render-svg.test.ts::long-text-is-truncated-with-ellipsis` | ✅ | ✅ | ✅ | 通过 |
-| AC-QLT-001 | 把内容分权重从 0.2 改成 0.4 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::quality-formula-weights` | ✅ | ✅ | ✅ | 通过 |
-| AC-QLT-002 | 画布尺寸不符不再扣 15 分 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::canvas-mismatch-penalty` | ✅ | ✅ | ✅ | 通过 |
-| AC-QLT-003 | 重复元素 ID 不再扣 5 分 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::duplicate-id-penalty` | ✅ | ✅ | ✅ | 通过 |
-| AC-QLT-004 | 几何越界不再扣视觉分 10 分 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::out-of-bounds-penalty` | ✅ | ✅ | ✅ | 通过 |
-| AC-QLT-005 | 卡片碰撞不再扣视觉分 8 分 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::aabb-collision-penalty` | ✅ | ✅ | ✅ | 通过 |
-| AC-QLT-006 | 标题过短不再扣内容分 15 分 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::missing-title-penalty` | ✅ | ✅ | ✅ | 通过 |
-| AC-QLT-007 | 核心结论缺失不再扣内容分 8 分 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::missing-keymessage-penalty` | ✅ | ✅ | ✅ | 通过 |
-| AC-QLT-008 | 页数不足不再扣一致性分 15 分 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::consistency-penalties` | ✅ | ✅ | ✅ | 通过 |
-| AC-QLT-010 | 自动修复不再重排元素 ID（保留重复 ID） | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::autofix-restores-id-uniqueness` | ✅ | ✅ | ✅ | 通过 |
-| AC-EXP-002 | 不再写入演讲者备注 | `packages/core/src/engine/exportEngine.ts` | `spec/verify/export-pptx.test.ts::pptx-includes-speaker-notes` | ✅ | ✅ | ✅ | 通过 |
-| AC-EXP-003 | 服务端 PNG 光栅化改成 1 倍分辨率 | `apps/api/src/services/exportService.ts` | `spec/verify/export-png-resolution.test.ts::server-png-export-is-2x` | ✅ | ✅ | ✅ | 通过 |
-| AC-EXP-003 | 核心库浏览器 canvas 路径的光栅化改成 1 倍分辨率 | `packages/core/src/engine/exportEngine.ts` | `spec/verify/export-pptx.test.ts::png-export-is-2x` | ✅ | ✅ | ✅ | 通过 |
-| AC-EXP-001 | 指标卡的大数字不再导出（正文丢失） | `packages/core/src/engine/exportEngine.ts` | `spec/verify/export-pptx.test.ts::pptx-preserves-ir-text-content` | ✅ | ✅ | ✅ | 通过 |
-| AC-EXP-001 | 两个 IR 字符串被拼进同一个文本运行（串行） | `packages/core/src/engine/exportEngine.ts` | `spec/verify/export-pptx.test.ts::pptx-preserves-ir-text-content` | ✅ | ✅ | ✅ | 通过 |
-| AC-EXP-001 | 导出时凭空追加固定文案（多出非 IR 文本） | `packages/core/src/engine/exportEngine.ts` | `spec/verify/export-pptx.test.ts::pptx-preserves-ir-text-content` | ✅ | ✅ | ✅ | 通过 |
-| AC-EXP-004 | 文件名不再剥离空白与非法字符 | `packages/core/src/engine/exportEngine.ts` | `spec/verify/export-pptx.test.ts::export-filename-sanitized` | ✅ | ✅ | ✅ | 通过 |
-| AC-EXP-004 | SVG 文件名丢掉扩展名 | `packages/core/src/engine/exportEngine.ts` | `spec/verify/export-pptx.test.ts::export-filename-sanitized` | ✅ | ✅ | ✅ | 通过 |
-| AC-EXP-004 | JSON 文件名丢掉扩展名 | `packages/core/src/engine/exportEngine.ts` | `spec/verify/export-pptx.test.ts::export-filename-sanitized` | ✅ | ✅ | ✅ | 通过 |
-| AC-EXP-005 | 导入时把页序整体倒过来 —— 导出去能再导回来，但回来的页序是反的 | `apps/api/src/services/projectService.ts` | `apps/api/tests/integration/import-bundle.test.ts::exported-bundle-round-trips-with-page-order-intact` | ✅ | ✅ | ✅ | 通过 |
-| AC-EXP-006 | orderIndex 的下界校验被拆掉 —— 0 / 负数能落库，违反内核契约 order >= 1 | `apps/api/src/routes/projects.ts` | `apps/api/tests/integration/import-bundle.test.ts::zero-order-index-is-rejected` | ✅ | ✅ | ✅ | 通过 |
-| AC-EXP-006 | orderIndex 唯一性校验被拆掉 —— 排序键重复，页序静默随机化 | `apps/api/src/routes/projects.ts` | `apps/api/tests/integration/import-bundle.test.ts::duplicate-order-index-is-rejected` | ✅ | ✅ | ✅ | 通过 |
-| AC-EXP-006 | slides 字段不再必填 —— 缺 slides 的文件被当成空项目导进去 | `apps/api/src/routes/projects.ts` | `apps/api/tests/integration/import-bundle.test.ts::missing-slides-field-is-rejected` | ✅ | ✅ | ✅ | 通过 |
-| AC-QLT-009 | 自动修复不再把越出画布的元素挪回安全区（修复后仍然越界） | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::autofix-restores-bounds` | ✅ | ✅ | ✅ | 通过 |
-| AC-API-001 | 成功响应不再带 traceId | `apps/api/src/errors.ts` | `apps/api/tests/contract/response-envelope.test.ts::success-response-envelope` | ✅ | ✅ | ✅ | 通过 |
-| AC-API-006 | 失败响应的 error 字段被换成 data | `apps/api/src/errors.ts` | `apps/api/tests/contract/response-envelope.test.ts::failure-response-envelope` | ✅ | ✅ | ✅ | 通过 |
-| AC-API-007 | 错误码枚举被偷偷加了一个 INTERNAL_ERROR | `apps/api/src/errors.ts` | `apps/api/tests/contract/response-envelope.test.ts::error-codes-closed-enum` | ✅ | ✅ | ✅ | 通过 |
-| AC-API-002 | 乐观并发守卫被拆掉（前置检查 + SQL 条件同时失效） | `apps/api/src/services/slideService.ts` | `apps/api/tests/integration/optimistic-lock.test.ts::same-base-version-second-write-conflicts` | ✅ | ✅ | ✅ | 通过 |
-| AC-API-003 | 项目查询不再带 userId 条件（跨租户可读） | `apps/api/src/middleware/auth.ts` | `apps/api/tests/security/cross-tenant-access.test.ts::cross-tenant-resource-read-is-404` | ✅ | ✅ | ✅ | 通过 |
-| AC-API-004 | 模型输出跳过 Schema 校验直接进系统 | `apps/api/src/services/modelRouter.ts` | `apps/api/tests/security/ai-output-validation.test.ts::invalid-model-output-rejected-and-not-persisted` | ✅ | ✅ | ✅ | 通过 |
-| AC-API-005 | 启动失败时以退出码 0 结束（缺密钥也"启动成功"） | `apps/api/src/index.ts` | `apps/api/tests/security/secret-handling.test.ts::missing-api-key-fails-startup` | ✅ | ✅ | ✅ | 通过 |
-| AC-SEC-001 | 密码按明文入库 | `apps/api/src/services/authService.ts` | `apps/api/tests/security/password-hashing.test.ts::password-stored-as-argon2id-hash` | ✅ | ✅ | ✅ | 通过 |
-| AC-SEC-003 | 密码校验永远返回 true（任何密码都登录成功） | `apps/api/src/services/authService.ts` | `apps/api/tests/security/password-hashing.test.ts::password-verify-accepts-correct-and-rejects-wrong` | ✅ | ✅ | ✅ | 通过 |
-| AC-SEC-002 | 会话 Cookie 不再带 HttpOnly | `apps/api/src/services/authService.ts` | `apps/api/tests/security/session-cookie.test.ts::session-cookie-has-security-attributes` | ✅ | ✅ | ✅ | 通过 |
-| AC-SEC-004 | 生产环境也不给 Cookie 加 Secure | `apps/api/src/services/authService.ts` | `apps/api/tests/security/session-cookie.test.ts::session-cookie-secure-in-production` | ✅ | ✅ | ✅ | 通过 |
-| AC-SEC-005 | Session ID 只有 16 字节（熵减半） | `apps/api/src/services/authService.ts` | `apps/api/tests/security/session-cookie.test.ts::session-id-is-32-byte-base64url` | ✅ | ✅ | ✅ | 通过 |
-| AC-NFR-003 | 模型不可用时不再降级（直接把 503 抛给用户） | `apps/api/src/services/agents/outlineAgent.ts` | `apps/api/tests/chaos/model-fallback.test.ts::model-unavailable-falls-back-with-valid-outline` | ✅ | ✅ | ✅ | 通过 |
-| AC-NFR-004 | 降级大纲对所有主题返回同一份（回到旧 fallback 的老毛病） | `apps/api/src/services/agents/localOutline.ts` | `apps/api/tests/chaos/model-fallback.test.ts::fallback-outline-varies-by-topic` | ✅ | ✅ | ✅ | 通过 |
-| AC-NFR-002 | 导出出现长尾（第 19、20 次耗时 46s）—— 判据必须抓长尾，而不是只看中位数 | `apps/api/src/services/exportService.ts` | `apps/api/tests/perf/export-latency.bench.ts::pptx-export-p95-under-threshold` | ✅ | ✅ | ✅ | 通过 |
-| AC-IRP-001 | AI 编辑响应里额外返回 updatedElements（违反「只回增量补丁」的契约） | `apps/api/src/routes/ai.ts` | `apps/api/tests/ai/edit-slide.test.ts::returns-patches-not-full-elements` | ✅ | ✅ | ✅ | 通过 |
-| AC-IRP-002 | add_element 不再对已存在的同 id 元素做幂等处理（施加两次会重复插入） | `packages/core/src/engine/patchApplier.ts` | `packages/core/tests/patchApplier.test.ts::apply-is-idempotent` | ✅ | ✅ | ✅ | 通过 |
-| AC-IRP-003 | remove_element 指向不存在的元素时静默返回（不再报错） | `packages/core/src/engine/patchApplier.ts` | `packages/core/tests/patchApplier.test.ts::remove-missing-element-throws` | ✅ | ✅ | ✅ | 通过 |
-| AC-API-008 | /api/meta/models 把 API Key 原样返回（密钥泄漏到响应体） | `apps/api/src/routes/system.ts` | `apps/api/tests/security/secret-handling.test.ts::secret-never-leaks-into-responses-or-logs` | ✅ | ✅ | ✅ | 通过 |
-| AC-GOV-001 | 把覆盖率门槛从 90 抬到 99（门禁再也拦不住低覆盖率） | `scripts/check-coverage.ts` | `scripts/check-coverage.check.ts::domain-coverage-threshold` | ✅ | ✅ | ✅ | 通过 |
-| AC-GOV-001 | 取消「一个领域内核文件都没采到 → 未通过」的守卫（无法判定被当成通过） | `scripts/check-coverage.ts` | `scripts/check-coverage.check.ts::domain-coverage-threshold` | ✅ | ✅ | ✅ | 通过 |
-| AC-GOV-002 | 版式引擎把标题字号从 38 改成 39（实现与快照基线漂移） | `packages/core/src/engine/layoutEngine.ts` | `packages/core/tests/layoutEngine.snapshot.test.ts::golden-snapshots-all-match` | ✅ | ✅ | ✅ | 通过 |
-| AC-E2E-012 | 重命名时把 name 覆盖回旧值（改名静默不生效） | `apps/api/src/services/projectService.ts` | `e2e/projects.e2e.ts::AC-E2E-012 重命名项目 → 服务端存的是新名字` | ✅ | ✅ | ✅ | 通过 |
-| AC-E2E-013 | 删除项目时不写 deleted_at（软删除没落库） | `apps/api/src/services/projectService.ts` | `e2e/projects.e2e.ts::AC-E2E-013 删除项目 → 服务端真的删掉了（且列表里也没有）` | ✅ | ✅ | ✅ | 通过 |
-| AC-E2E-011 | 项目查询不再带 userId 条件（浏览器链路上跨租户可读） | `apps/api/src/middleware/auth.ts` | `e2e/projects.e2e.ts::AC-E2E-011 跨租户隔离 → 别人的项目拿不到（404 而不是 403）` | ✅ | ✅ | ✅ | 通过 |
-| AC-E2E-001 | 会话不落库（Cookie 签发了，服务端却不认这个会话） | `apps/api/src/services/authService.ts` | `e2e/auth.e2e.ts::AC-E2E-001 注册 → 服务端签发 HttpOnly 会话，前端据此进入工作台` | ✅ | ✅ | ✅ | 通过 |
-| AC-E2E-002 | 新建项目时归属写成了别的用户（项目不落在当前用户名下） | `apps/api/src/services/projectService.ts` | `e2e/projects.e2e.ts::AC-E2E-002 新建项目 → 服务端库里真的有这条项目，且归属当前用户` | ✅ | ✅ | ✅ | 通过 |
-| AC-E2E-003 | 解析主题时忽略用户输入（大纲不再随主题变化） | `apps/api/src/services/agents/topicTerms.ts` | `e2e/workbench.e2e.ts::AC-E2E-003 生成大纲 → 页数、主题、服务端与 UI 一致` | ✅ | ✅ | ✅ | 通过 |
-| AC-E2E-004 | 项目 PATCH 忽略前端提交的大纲（编辑静默不生效） | `apps/api/src/routes/projects.ts` | `e2e/workbench.e2e.ts::AC-E2E-004 改大纲标题 → 服务端存新标题，UI 也显示新标题` | ✅ | ✅ | ✅ | 通过 |
-| AC-E2E-005 | 工作台画布的标题被写死（界面渲染的不是服务端返回的 IR） | `src/components/Workbench.tsx` | `e2e/workbench.e2e.ts::AC-E2E-005 确认大纲并编译 → 画布渲染的正是服务端那份 IR` | ✅ | ✅ | ✅ | 通过 |
-| AC-E2E-006 | 写回时不生成新版本号（乐观锁失效） | `apps/api/src/services/slideService.ts` | `e2e/workbench.e2e.ts::AC-E2E-006 就地改文本 → 防抖写回服务端，并产生新版本号` | ✅ | ✅ | ✅ | 通过 |
-| AC-E2E-007 | 乐观锁守卫被拆掉（前置检查 + SQL 条件同时失效） | `apps/api/src/services/slideService.ts` | `e2e/workbench.e2e.ts::AC-E2E-007 两个会话改同一页 → 后者收到 409，前端提示且没覆盖服务端` | ✅ | ✅ | ✅ | 通过 |
-| AC-E2E-008 | IRPatch 施加时被丢弃（服务端没改内容） | `apps/api/src/services/slideService.ts` | `e2e/workbench.e2e.ts::AC-E2E-008 AI 编辑 → 服务端施加补丁，画布跟着重绘` | ✅ | ✅ | ✅ | 通过 |
-| AC-E2E-009 | PPTX 产物被替换成假字节（不是真的 PPTX） | `apps/api/src/services/exportService.ts` | `e2e/exports.e2e.ts::AC-E2E-009 PPTX 导出 → 产物是真正的 OOXML，而且里面是这份文稿` | ✅ | ✅ | ✅ | 通过 |
-| AC-E2E-010 | PDF 产物被替换成假字节（不是真的 PDF） | `apps/api/src/services/exportService.ts` | `e2e/exports.e2e.ts::AC-E2E-010 PDF 导出 → 产物是真正的 PDF（%PDF 魔数）` | ✅ | ✅ | ✅ | 通过 |
-| AC-E2E-014 | 应用模板时不写回项目（接口说成功，服务端存的还是旧模板） | `apps/api/src/routes/templates.ts` | `e2e/templates.e2e.ts::应用模板 → 服务端存的是新模板，刷新后仍然是它` | ✅ | ✅ | ✅ | 通过 |
-| AC-E2E-014 | 前端应用模板时只改本地 state，不落服务端 | `src/App.tsx` | `e2e/templates.e2e.ts::应用模板 → 服务端存的是新模板，刷新后仍然是它` | ✅ | ✅ | ✅ | 通过 |
-| AC-E2E-020 | 应用模板失败时前端仍然乐观换成本地模板（假成功） | `src/App.tsx` | `e2e/templates.e2e.ts::应用不存在的模板 → 界面如实报错，服务端模板不被改动` | ✅ | ✅ | ✅ | 通过 |
-| AC-E2E-022 | 把外部字体样式表改回渲染阻塞（CDN 不可达时白屏） | `index.html` | `e2e/offline.e2e.ts::外部资源被挂起 → 外壳仍在 8 秒内渲染出来` | ✅ | ✅ | ✅ | 通过 |
-| AC-E2E-008 | 本地降级不再校验补丁能不能画出来（IR 变了但页面没变） | `apps/api/src/services/agents/editAgent.ts` | `e2e/workbench.e2e.ts::AC-E2E-008 AI 编辑 → 服务端施加补丁，画布跟着重绘` | ✅ | ✅ | ✅ | 通过 |
-| AC-E2E-015 | 服务端评估时漏装了 slides（评的是空项目，分数与界面对不上） | `apps/api/src/routes/quality.ts` | `e2e/quality.e2e.ts::质量报告 → 界面分数与服务端权威评分逐项对得上` | ✅ | ✅ | ✅ | 通过 |
-| AC-E2E-016 | 防抖同步只比较文本（修复带来的 ID 与几何改动不落库） | `src/App.tsx` | `e2e/quality.e2e.ts::一键修复 → 服务端的 IR 真的被改写，版本号前进` | ✅ | ✅ | ✅ | 通过 |
-| AC-E2E-017 | 放映模式只渲染背景层（正文元素没画出来） | `src/components/PresentationMode.tsx` | `e2e/presentation.e2e.ts::放映画面上的文字 == 服务端 IR 里的文字` | ✅ | ✅ | ✅ | 通过 |
-| AC-E2E-018 | 翻页一次跳两页（off-by-one，翻到的不是服务端那一页） | `src/components/PresentationMode.tsx` | `e2e/presentation.e2e.ts::翻页 → 换到服务端的后一页，退回后回到第一页` | ✅ | ✅ | ✅ | 通过 |
-| AC-E2E-019 | 导出提交失败被吞掉，界面改报成功（假成功） | `src/components/ExportModal.tsx` | `e2e/errors.e2e.ts::导出提交失败 → 界面显示"导出失败"，绝不显示"导出成功"` | ✅ | ✅ | ✅ | 通过 |
-| AC-E2E-021 | 又加了一张渲染阻塞的外部样式表（CDN 不可达时整页白屏） | `index.html` | `e2e/offline.e2e.ts::应用 HTML → 没有会阻塞渲染的外部样式表` | ✅ | ✅ | ✅ | 通过 |
-| AC-CORE-018 | 绑定不再按契约裁剪 —— 什么槽位都带进这一页 | `packages/core/src/engine/contentBinding.ts` | `packages/core/tests/contentBinding.test.ts::slots-not-consumed-by-layout-are-dropped` | ✅ | ✅ | ✅ | 通过 |
-| AC-CORE-019 | 缺契约要求的槽位时不再报 error（降级成 warning）—— ok 永远为真 | `packages/core/src/engine/contentBinding.ts` | `packages/core/tests/contentBinding.test.ts::missing-required-slot-is-an-error` | ✅ | ✅ | ✅ | 通过 |
-| AC-CORE-020 | 契约表里少了一条降级声明 —— 指标页没有数字时也降不了级 | `packages/core/src/data/layoutIntents.ts` | `packages/core/tests/contentBinding.test.ts::stats-kpi-without-number-degrades-to-cards-grid` | ✅ | ✅ | ✅ | 通过 |
-| AC-CORE-020 | 引擎把「契约声明了降级」判反了 —— 声明了反而**不**降级 | `packages/core/src/engine/layoutEngine.ts` | `packages/core/tests/contentBinding.test.ts::stats-kpi-without-number-degrades-to-cards-grid` | ✅ | ✅ | ✅ | 通过 |
-| AC-GOV-003 | 渲染器不再按变体表分层 —— 母版槽位被塞进内容层 | `packages/core/src/engine/svgRenderer.ts` | `packages/core/tests/layoutInvariants.test.ts::elements-belong-to-declared-layers` | ✅ | ✅ | ✅ | 通过 |
-| AC-GOV-004 | 跨页结论的归一化把数字也去掉了 —— 64 页的结论被归成同一句，于是 62 条重复误报 | `packages/core/src/engine/qualityEngine.ts` | `packages/core/tests/layoutInvariants.test.ts::no-quality-issue-in-any-combo` | ✅ | ✅ | ✅ | 通过 |
-| AC-CORE-014 | 版式引擎不再给元素标 variant —— 字段缺失，语义只能靠猜 ID | `packages/core/src/engine/layoutEngine.ts` | `spec/verify/element-variant.test.ts::layout-engine-sets-variant-on-every-element` | ✅ | ✅ | ✅ | 通过 |
-| AC-CORE-015 | ID 修复改回从旧 ID 里抠语义前缀 —— 洗过的 ID 再也修不回语义 | `packages/core/src/engine/elementVariant.ts` | `spec/verify/element-variant.test.ts::id-repair-derives-prefix-from-variant` | ✅ | ✅ | ✅ | 通过 |
-| AC-CORE-016 | 渲染分层改回按 ID 前缀判断 —— ID 一洗，母版层就空了 | `packages/core/src/engine/svgRenderer.ts` | `spec/verify/element-variant.test.ts::render-and-theme-follow-variant-not-id` | ✅ | ✅ | ✅ | 通过 |
-| AC-CORE-017 | 全仓多了一个解析元素 ID 的消费方 —— 「零处解析」这条不变量破了 | `packages/core/src/engine/svgRenderer.ts` | `spec/verify/element-variant.test.ts::no-consumer-parses-element-ids` | ✅ | ✅ | ✅ | 通过 |
-| AC-QLT-011 | 自动修复不再只动真越界的元素 —— 母版页码与页脚被一起挪进安全区 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::autofix-leaves-master-elements-alone` | ✅ | ✅ | ✅ | 通过 |
-| AC-QLT-012 | 「修复不得让文稿更糟」的守卫被判反了 —— 修好了反而回退 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::autofix-never-lowers-score` | ✅ | ✅ | ✅ | 通过 |
-| AC-QLT-013 | 所有诊断都说「能一键修」 —— 不可修的缺陷也挂了 fixable=true | `packages/core/src/engine/qualityRules.ts` | `spec/verify/quality-engine.test.ts::issues-declare-fixability` | ✅ | ✅ | ✅ | 通过 |
-| AC-QLT-014 | 规则表的扣分幅度与文档漂了 —— 真相源和它的机器副本对不上 | `packages/core/src/engine/qualityRules.ts` | `spec/verify/quality-rules.test.ts::rule-table-matches-doc` | ✅ | ✅ | ✅ | 通过 |
-| AC-QLT-015 | 规则表里多了一条规则 —— 文档里没有对应的锚点 | `packages/core/src/engine/qualityRules.ts` | `spec/verify/quality-rules.test.ts::every-rule-has-doc-anchor` | ✅ | ✅ | ✅ | 通过 |
-| AC-QLT-016 | 诊断的 id 与规则表对不上 —— 追溯不到任何一条规则 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-rules.test.ts::diagnostic-ids-map-to-rules` | ✅ | ✅ | ✅ | 通过 |
-| AC-QLT-017 | 引擎把扣分幅度写死了 —— 不再读规则表，规则表改了分数也不动 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-rules.test.ts::penalties-come-from-rule-table` | ✅ | ✅ | ✅ | 通过 |
-| AC-QLT-018 | 「空页」判据整个不触发 —— 只有标题的页面不再扣内容分 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::thin-page-penalty` | ✅ | ✅ | ✅ | 通过 |
-| AC-QLT-019 | 跨页结论重复的门槛抬高到 3 —— 两页重复不再算重复 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::duplicate-keymessage-penalty` | ✅ | ✅ | ✅ | 通过 |
-| AC-QLT-020 | 稀疏判定的阈值放宽到 5% —— 版心一角的内容也算撑满了 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::sparse-page-penalty` | ✅ | ✅ | ✅ | 通过 |
-| AC-QLT-021 | 空页也按稀疏再扣一次分 —— 同一页被扣了两次 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::thin-page-not-double-charged` | ✅ | ✅ | ✅ | 通过 |
-| AC-RND-007 | 半角字符一律按 0.56em 计宽 —— 「半角一个宽度」的老口径回来了 | `packages/core/src/engine/textMetrics.ts` | `spec/verify/text-metrics.test.ts::text-width-model-is-calibrated` | ✅ | ✅ | ✅ | 通过 |
-| AC-RND-008 | 空格断行不再检查尾段是否超宽 —— 折出来的行溢出可用宽度 | `packages/core/src/engine/textMetrics.ts` | `spec/verify/text-metrics.test.ts::wrapped-lines-never-exceed-the-available-width` | ✅ | ✅ | ✅ | 通过 |
+| AC-CORE-001 | 把画布尺寸改成 1600×900 | `packages/core/src/engine/layoutEngine.ts` | `spec/verify/core-layout.test.ts::canvas-is-always-1920x1080` | 0 | 1 | 0 | 通过 |
+| AC-CORE-011 | 画布宽度改成跟着容器走（width: 100%）—— 屏幕上再次变成竖条、出现信箱边 | `src/components/Workbench.tsx` | `e2e/workbench.e2e.ts::AC-CORE-011 工作台画布在屏幕上保持 16:9，不出现信箱边` | 0 | 1 | 0 | 通过 |
+| AC-CORE-012 | 水平方向把 safe center 改回普通 center —— 溢出的一半被推到不可达的左侧 | `src/components/Workbench.tsx` | `e2e/workbench.e2e.ts::AC-CORE-012 画布放大超出可视区后，左右上下都滚得到，不被裁掉` | 0 | 1 | 0 | 通过 |
+| AC-CORE-012 | 垂直方向把 safe center 改回普通 center —— 溢出的一半被推到不可达的顶部 | `src/components/Workbench.tsx` | `e2e/workbench.e2e.ts::AC-CORE-012 画布放大超出可视区后，左右上下都滚得到，不被裁掉` | 0 | 1 | 0 | 通过 |
+| AC-CORE-013 | 不再观察容器尺寸变化 —— 缩放档位停在旧值上，画布不再适配新的可视区 | `src/components/Workbench.tsx` | `e2e/workbench.e2e.ts::AC-CORE-013 容器尺寸变化后缩放档位自动重新适配，画布不被裁掉` | 0 | 1 | 0 | 通过 |
+| AC-CORE-002 | 让页码元素横向越出画布 | `packages/core/src/engine/layoutEngine.ts` | `spec/verify/core-layout.test.ts::no-element-out-of-canvas` | 0 | 1 | 0 | 通过 |
+| AC-CORE-003 | 卡片元素 ID 不带 slideId —— 同版式的两页会撞 ID | `packages/core/src/engine/layoutEngine.ts` | `spec/verify/core-layout.test.ts::element-ids-unique-across-slides` | 0 | 1 | 0 | 通过 |
+| AC-CORE-004 | 卡片元素 ID 不再携带 slideId | `packages/core/src/engine/layoutEngine.ts` | `spec/verify/core-layout.test.ts::layout-element-ids-contain-slide-id` | 0 | 1 | 0 | 通过 |
+| AC-CORE-005 | 在页脚文案里掺入随机数（破坏确定性） | `packages/core/src/engine/layoutEngine.ts` | `spec/verify/core-layout.test.ts::layout-engine-is-pure` | 0 | 1 | 0 | 通过 |
+| AC-CORE-006 | 去掉「封面不渲染母版」的分支判断 | `packages/core/src/engine/layoutEngine.ts` | `spec/verify/core-layout.test.ts::cover-page-has-no-master-elements` | 0 | 1 | 0 | 通过 |
+| AC-CORE-007 | 页码不再补零到两位 | `packages/core/src/engine/layoutEngine.ts` | `spec/verify/core-layout.test.ts::page-number-format` | 0 | 1 | 0 | 通过 |
+| AC-CORE-008 | 卡片标题回落到硬编码演示文案（不再用要点标签） | `packages/core/src/engine/layoutEngine.ts` | `spec/verify/core-content.test.ts::bullet-consuming-layouts-use-outline-bullets` | 0 | 1 | 0 | 通过 |
+| AC-CORE-009 | 封面元信息卡塞入与 outline 无关的固定文案 | `packages/core/src/engine/layoutEngine.ts` | `spec/verify/core-content.test.ts::cover-content-traceable-to-outline` | 0 | 1 | 0 | 通过 |
+| AC-CORE-010 | 要点来源被固定成常量（渲染结果与输入无关） | `packages/core/src/engine/contentBinding.ts` | `spec/verify/core-content.test.ts::render-output-follows-outline-bullets` | 0 | 1 | 0 | 通过 |
+| AC-RND-001 | 文本内容不再转义 | `packages/core/src/engine/svgRenderer.ts` | `spec/verify/render-svg.test.ts::user-content-is-xml-escaped` | 0 | 1 | 0 | 通过 |
+| AC-RND-002 | 卡片渲染重新引入 foreignObject | `packages/core/src/engine/svgRenderer.ts` | `spec/verify/render-svg.test.ts::svg-contains-no-foreignobject` | 0 | 1 | 0 | 通过 |
+| AC-RND-003 | SVG 重新引入 Google Fonts @import | `packages/core/src/engine/svgRenderer.ts` | `spec/verify/render-svg.test.ts::svg-contains-no-external-font-import` | 0 | 1 | 0 | 通过 |
+| AC-RND-004 | 不再输出元素的 id 属性（只留 data-element-id 顶替） | `packages/core/src/engine/svgRenderer.ts` | `spec/verify/render-svg.test.ts::svg-preserves-element-ids` | 0 | 1 | 0 | 通过 |
+| AC-RND-004 | data-element-id 的值与 IR id 不一致 | `packages/core/src/engine/svgRenderer.ts` | `spec/verify/render-svg.test.ts::svg-preserves-element-ids` | 0 | 1 | 0 | 通过 |
+| AC-RND-005 | 把装饰层改名，破坏四层约定 | `packages/core/src/engine/svgRenderer.ts` | `spec/verify/render-svg.test.ts::svg-has-four-layers` | 0 | 1 | 0 | 通过 |
+| AC-RND-006 | 不再截断 —— 装不下的行原样溢出（整段原文直接铺进 SVG） | `packages/core/src/engine/svgRenderer.ts` | `spec/verify/render-svg.test.ts::long-text-is-truncated-with-ellipsis` | 0 | 1 | 0 | 通过 |
+| AC-RND-006 | 截断了但不补省略号 —— 文字被切掉，读者却看不出来 | `packages/core/src/engine/svgRenderer.ts` | `spec/verify/render-svg.test.ts::long-text-is-truncated-with-ellipsis` | 0 | 1 | 0 | 通过 |
+| AC-QLT-001 | 把内容分权重从 0.2 改成 0.4 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::quality-formula-weights` | 0 | 1 | 0 | 通过 |
+| AC-QLT-002 | 画布尺寸不符不再扣 15 分 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::canvas-mismatch-penalty` | 0 | 1 | 0 | 通过 |
+| AC-QLT-003 | 重复元素 ID 不再扣 5 分 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::duplicate-id-penalty` | 0 | 1 | 0 | 通过 |
+| AC-QLT-004 | 几何越界不再扣视觉分 10 分 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::out-of-bounds-penalty` | 0 | 1 | 0 | 通过 |
+| AC-QLT-005 | 卡片碰撞不再扣视觉分 8 分 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::aabb-collision-penalty` | 0 | 1 | 0 | 通过 |
+| AC-QLT-006 | 标题过短不再扣内容分 15 分 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::missing-title-penalty` | 0 | 1 | 0 | 通过 |
+| AC-QLT-007 | 核心结论缺失不再扣内容分 8 分 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::missing-keymessage-penalty` | 0 | 1 | 0 | 通过 |
+| AC-QLT-008 | 页数不足不再扣一致性分 15 分 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::consistency-penalties` | 0 | 1 | 0 | 通过 |
+| AC-QLT-010 | 自动修复不再重排元素 ID（保留重复 ID） | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::autofix-restores-id-uniqueness` | 0 | 1 | 0 | 通过 |
+| AC-EXP-002 | 不再写入演讲者备注 | `packages/core/src/engine/exportEngine.ts` | `spec/verify/export-pptx.test.ts::pptx-includes-speaker-notes` | 0 | 1 | 0 | 通过 |
+| AC-EXP-003 | 服务端 PNG 光栅化改成 1 倍分辨率 | `apps/api/src/services/exportService.ts` | `spec/verify/export-png-resolution.test.ts::server-png-export-is-2x` | 0 | 1 | 0 | 通过 |
+| AC-EXP-003 | 核心库浏览器 canvas 路径的光栅化改成 1 倍分辨率 | `packages/core/src/engine/exportEngine.ts` | `spec/verify/export-pptx.test.ts::png-export-is-2x` | 0 | 1 | 0 | 通过 |
+| AC-EXP-001 | 指标卡的大数字不再导出（正文丢失） | `packages/core/src/engine/exportEngine.ts` | `spec/verify/export-pptx.test.ts::pptx-preserves-ir-text-content` | 0 | 1 | 0 | 通过 |
+| AC-EXP-001 | 两个 IR 字符串被拼进同一个文本运行（串行） | `packages/core/src/engine/exportEngine.ts` | `spec/verify/export-pptx.test.ts::pptx-preserves-ir-text-content` | 0 | 1 | 0 | 通过 |
+| AC-EXP-001 | 导出时凭空追加固定文案（多出非 IR 文本） | `packages/core/src/engine/exportEngine.ts` | `spec/verify/export-pptx.test.ts::pptx-preserves-ir-text-content` | 0 | 1 | 0 | 通过 |
+| AC-EXP-004 | 文件名不再剥离空白与非法字符 | `packages/core/src/engine/exportEngine.ts` | `spec/verify/export-pptx.test.ts::export-filename-sanitized` | 0 | 1 | 0 | 通过 |
+| AC-EXP-004 | SVG 文件名丢掉扩展名 | `packages/core/src/engine/exportEngine.ts` | `spec/verify/export-pptx.test.ts::export-filename-sanitized` | 0 | 1 | 0 | 通过 |
+| AC-EXP-004 | JSON 文件名丢掉扩展名 | `packages/core/src/engine/exportEngine.ts` | `spec/verify/export-pptx.test.ts::export-filename-sanitized` | 0 | 1 | 0 | 通过 |
+| AC-EXP-005 | 导入时把页序整体倒过来 —— 导出去能再导回来，但回来的页序是反的 | `apps/api/src/services/projectService.ts` | `apps/api/tests/integration/import-bundle.test.ts::exported-bundle-round-trips-with-page-order-intact` | 0 | 1 | 0 | 通过 |
+| AC-EXP-006 | orderIndex 的下界校验被拆掉 —— 0 / 负数能落库，违反内核契约 order >= 1 | `apps/api/src/routes/projects.ts` | `apps/api/tests/integration/import-bundle.test.ts::zero-order-index-is-rejected` | 0 | 1 | 0 | 通过 |
+| AC-EXP-006 | orderIndex 唯一性校验被拆掉 —— 排序键重复，页序静默随机化 | `apps/api/src/routes/projects.ts` | `apps/api/tests/integration/import-bundle.test.ts::duplicate-order-index-is-rejected` | 0 | 1 | 0 | 通过 |
+| AC-EXP-006 | slides 字段不再必填 —— 缺 slides 的文件被当成空项目导进去 | `apps/api/src/routes/projects.ts` | `apps/api/tests/integration/import-bundle.test.ts::missing-slides-field-is-rejected` | 0 | 1 | 0 | 通过 |
+| AC-QLT-009 | 自动修复不再把越出画布的元素挪回安全区（修复后仍然越界） | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::autofix-restores-bounds` | 0 | 1 | 0 | 通过 |
+| AC-API-001 | 成功响应不再带 traceId | `apps/api/src/errors.ts` | `apps/api/tests/contract/response-envelope.test.ts::success-response-envelope` | 0 | 1 | 0 | 通过 |
+| AC-API-006 | 失败响应的 error 字段被换成 data | `apps/api/src/errors.ts` | `apps/api/tests/contract/response-envelope.test.ts::failure-response-envelope` | 0 | 1 | 0 | 通过 |
+| AC-API-007 | 错误码枚举被偷偷加了一个 INTERNAL_ERROR | `apps/api/src/errors.ts` | `apps/api/tests/contract/response-envelope.test.ts::error-codes-closed-enum` | 0 | 1 | 0 | 通过 |
+| AC-API-002 | 乐观并发守卫被拆掉（前置检查 + SQL 条件同时失效） | `apps/api/src/services/slideService.ts` | `apps/api/tests/integration/optimistic-lock.test.ts::same-base-version-second-write-conflicts` | 0 | 1 | 0 | 通过 |
+| AC-API-003 | 项目查询不再带 userId 条件（跨租户可读） | `apps/api/src/middleware/auth.ts` | `apps/api/tests/security/cross-tenant-access.test.ts::cross-tenant-resource-read-is-404` | 0 | 1 | 0 | 通过 |
+| AC-API-004 | 模型输出跳过 Schema 校验直接进系统 | `apps/api/src/services/modelRouter.ts` | `apps/api/tests/security/ai-output-validation.test.ts::invalid-model-output-rejected-and-not-persisted` | 0 | 1 | 0 | 通过 |
+| AC-API-005 | 启动失败时以退出码 0 结束（缺密钥也"启动成功"） | `apps/api/src/index.ts` | `apps/api/tests/security/secret-handling.test.ts::missing-api-key-fails-startup` | 0 | 1 | 0 | 通过 |
+| AC-SEC-001 | 密码按明文入库 | `apps/api/src/services/authService.ts` | `apps/api/tests/security/password-hashing.test.ts::password-stored-as-argon2id-hash` | 0 | 1 | 0 | 通过 |
+| AC-SEC-003 | 密码校验永远返回 true（任何密码都登录成功） | `apps/api/src/services/authService.ts` | `apps/api/tests/security/password-hashing.test.ts::password-verify-accepts-correct-and-rejects-wrong` | 0 | 1 | 0 | 通过 |
+| AC-SEC-002 | 会话 Cookie 不再带 HttpOnly | `apps/api/src/services/authService.ts` | `apps/api/tests/security/session-cookie.test.ts::session-cookie-has-security-attributes` | 0 | 1 | 0 | 通过 |
+| AC-SEC-004 | 生产环境也不给 Cookie 加 Secure | `apps/api/src/services/authService.ts` | `apps/api/tests/security/session-cookie.test.ts::session-cookie-secure-in-production` | 0 | 1 | 0 | 通过 |
+| AC-SEC-005 | Session ID 只有 16 字节（熵减半） | `apps/api/src/services/authService.ts` | `apps/api/tests/security/session-cookie.test.ts::session-id-is-32-byte-base64url` | 0 | 1 | 0 | 通过 |
+| AC-NFR-003 | 模型不可用时不再降级（直接把 503 抛给用户） | `apps/api/src/services/agents/outlineAgent.ts` | `apps/api/tests/chaos/model-fallback.test.ts::model-unavailable-falls-back-with-valid-outline` | 0 | 1 | 0 | 通过 |
+| AC-NFR-004 | 降级大纲对所有主题返回同一份（回到旧 fallback 的老毛病） | `apps/api/src/services/agents/localOutline.ts` | `apps/api/tests/chaos/model-fallback.test.ts::fallback-outline-varies-by-topic` | 0 | 1 | 0 | 通过 |
+| AC-NFR-002 | 导出出现长尾（第 19、20 次耗时 46s）—— 判据必须抓长尾，而不是只看中位数 | `apps/api/src/services/exportService.ts` | `apps/api/tests/perf/export-latency.bench.ts::pptx-export-p95-under-threshold` | 0 | 1 | 0 | 通过 |
+| AC-IRP-001 | AI 编辑响应里额外返回 updatedElements（违反「只回增量补丁」的契约） | `apps/api/src/routes/ai.ts` | `apps/api/tests/ai/edit-slide.test.ts::returns-patches-not-full-elements` | 0 | 1 | 0 | 通过 |
+| AC-IRP-002 | add_element 不再对已存在的同 id 元素做幂等处理（施加两次会重复插入） | `packages/core/src/engine/patchApplier.ts` | `packages/core/tests/patchApplier.test.ts::apply-is-idempotent` | 0 | 2 | 0 | 通过 |
+| AC-IRP-003 | remove_element 指向不存在的元素时静默返回（不再报错） | `packages/core/src/engine/patchApplier.ts` | `packages/core/tests/patchApplier.test.ts::remove-missing-element-throws` | 0 | 1 | 0 | 通过 |
+| AC-API-008 | /api/meta/models 把 API Key 原样返回（密钥泄漏到响应体） | `apps/api/src/routes/system.ts` | `apps/api/tests/security/secret-handling.test.ts::secret-never-leaks-into-responses-or-logs` | 0 | 1 | 0 | 通过 |
+| AC-GOV-001 | 把覆盖率门槛从 90 抬到 99（门禁再也拦不住低覆盖率） | `scripts/check-coverage.ts` | `scripts/check-coverage.check.ts::domain-coverage-threshold` | 0 | 1 | 0 | 通过 |
+| AC-GOV-001 | 取消「一个领域内核文件都没采到 → 未通过」的守卫（无法判定被当成通过） | `scripts/check-coverage.ts` | `scripts/check-coverage.check.ts::domain-coverage-threshold` | 0 | 1 | 0 | 通过 |
+| AC-GOV-002 | 版式引擎把标题字号从 38 改成 39（实现与快照基线漂移） | `packages/core/src/engine/layoutEngine.ts` | `packages/core/tests/layoutEngine.snapshot.test.ts::golden-snapshots-all-match` | 0 | 1 | 0 | 通过 |
+| AC-E2E-012 | 重命名时把 name 覆盖回旧值（改名静默不生效） | `apps/api/src/services/projectService.ts` | `e2e/projects.e2e.ts::AC-E2E-012 重命名项目 → 服务端存的是新名字` | 0 | 1 | 0 | 通过 |
+| AC-E2E-013 | 删除项目时不写 deleted_at（软删除没落库） | `apps/api/src/services/projectService.ts` | `e2e/projects.e2e.ts::AC-E2E-013 删除项目 → 服务端真的删掉了（且列表里也没有）` | 0 | 1 | 0 | 通过 |
+| AC-E2E-011 | 项目查询不再带 userId 条件（浏览器链路上跨租户可读） | `apps/api/src/middleware/auth.ts` | `e2e/projects.e2e.ts::AC-E2E-011 跨租户隔离 → 别人的项目拿不到（404 而不是 403）` | 0 | 1 | 0 | 通过 |
+| AC-E2E-001 | 会话不落库（Cookie 签发了，服务端却不认这个会话） | `apps/api/src/services/authService.ts` | `e2e/auth.e2e.ts::AC-E2E-001 注册 → 服务端签发 HttpOnly 会话，前端据此进入工作台` | 0 | 1 | 0 | 通过 |
+| AC-E2E-002 | 新建项目时归属写成了别的用户（项目不落在当前用户名下） | `apps/api/src/services/projectService.ts` | `e2e/projects.e2e.ts::AC-E2E-002 新建项目 → 服务端库里真的有这条项目，且归属当前用户` | 0 | 1 | 0 | 通过 |
+| AC-E2E-003 | 解析主题时忽略用户输入（大纲不再随主题变化） | `apps/api/src/services/agents/topicTerms.ts` | `e2e/workbench.e2e.ts::AC-E2E-003 生成大纲 → 页数、主题、服务端与 UI 一致` | 0 | 1 | 0 | 通过 |
+| AC-E2E-004 | 项目 PATCH 忽略前端提交的大纲（编辑静默不生效） | `apps/api/src/routes/projects.ts` | `e2e/workbench.e2e.ts::AC-E2E-004 改大纲标题 → 服务端存新标题，UI 也显示新标题` | 0 | 1 | 0 | 通过 |
+| AC-E2E-005 | 工作台画布的标题被写死（界面渲染的不是服务端返回的 IR） | `src/components/Workbench.tsx` | `e2e/workbench.e2e.ts::AC-E2E-005 确认大纲并编译 → 画布渲染的正是服务端那份 IR` | 0 | 1 | 0 | 通过 |
+| AC-E2E-006 | 写回时不生成新版本号（乐观锁失效） | `apps/api/src/services/slideService.ts` | `e2e/workbench.e2e.ts::AC-E2E-006 就地改文本 → 防抖写回服务端，并产生新版本号` | 0 | 1 | 0 | 通过 |
+| AC-E2E-007 | 乐观锁守卫被拆掉（前置检查 + SQL 条件同时失效） | `apps/api/src/services/slideService.ts` | `e2e/workbench.e2e.ts::AC-E2E-007 两个会话改同一页 → 后者收到 409，前端提示且没覆盖服务端` | 0 | 1 | 0 | 通过 |
+| AC-E2E-008 | IRPatch 施加时被丢弃（服务端没改内容） | `apps/api/src/services/slideService.ts` | `e2e/workbench.e2e.ts::AC-E2E-008 AI 编辑 → 服务端施加补丁，画布跟着重绘` | 0 | 1 | 0 | 通过 |
+| AC-E2E-009 | PPTX 产物被替换成假字节（不是真的 PPTX） | `apps/api/src/services/exportService.ts` | `e2e/exports.e2e.ts::AC-E2E-009 PPTX 导出 → 产物是真正的 OOXML，而且里面是这份文稿` | 0 | 1 | 0 | 通过 |
+| AC-E2E-010 | PDF 产物被替换成假字节（不是真的 PDF） | `apps/api/src/services/exportService.ts` | `e2e/exports.e2e.ts::AC-E2E-010 PDF 导出 → 产物是真正的 PDF（%PDF 魔数）` | 0 | 1 | 0 | 通过 |
+| AC-E2E-014 | 应用模板时不写回项目（接口说成功，服务端存的还是旧模板） | `apps/api/src/routes/templates.ts` | `e2e/templates.e2e.ts::应用模板 → 服务端存的是新模板，刷新后仍然是它` | 0 | 1 | 0 | 通过 |
+| AC-E2E-014 | 前端应用模板时只改本地 state，不落服务端 | `src/App.tsx` | `e2e/templates.e2e.ts::应用模板 → 服务端存的是新模板，刷新后仍然是它` | 0 | 1 | 0 | 通过 |
+| AC-E2E-020 | 应用模板失败时前端仍然乐观换成本地模板（假成功） | `src/App.tsx` | `e2e/templates.e2e.ts::应用不存在的模板 → 界面如实报错，服务端模板不被改动` | 0 | 1 | 0 | 通过 |
+| AC-E2E-022 | 把外部字体样式表改回渲染阻塞（CDN 不可达时白屏） | `index.html` | `e2e/offline.e2e.ts::外部资源被挂起 → 外壳仍在 8 秒内渲染出来` | 0 | 1 | 0 | 通过 |
+| AC-E2E-008 | 本地降级不再校验补丁能不能画出来（IR 变了但页面没变） | `apps/api/src/services/agents/editAgent.ts` | `e2e/workbench.e2e.ts::AC-E2E-008 AI 编辑 → 服务端施加补丁，画布跟着重绘` | 0 | 1 | 0 | 通过 |
+| AC-E2E-015 | 服务端评估时漏装了 slides（评的是空项目，分数与界面对不上） | `apps/api/src/routes/quality.ts` | `e2e/quality.e2e.ts::质量报告 → 界面分数与服务端权威评分逐项对得上` | 0 | 1 | 0 | 通过 |
+| AC-E2E-016 | 防抖同步只比较文本（修复带来的 ID 与几何改动不落库） | `src/App.tsx` | `e2e/quality.e2e.ts::一键修复 → 服务端的 IR 真的被改写，版本号前进` | 0 | 1 | 0 | 通过 |
+| AC-E2E-017 | 放映模式只渲染背景层（正文元素没画出来） | `src/components/PresentationMode.tsx` | `e2e/presentation.e2e.ts::放映画面上的文字 == 服务端 IR 里的文字` | 0 | 1 | 0 | 通过 |
+| AC-E2E-018 | 翻页一次跳两页（off-by-one，翻到的不是服务端那一页） | `src/components/PresentationMode.tsx` | `e2e/presentation.e2e.ts::翻页 → 换到服务端的后一页，退回后回到第一页` | 0 | 1 | 0 | 通过 |
+| AC-E2E-019 | 导出提交失败被吞掉，界面改报成功（假成功） | `src/components/ExportModal.tsx` | `e2e/errors.e2e.ts::导出提交失败 → 界面显示"导出失败"，绝不显示"导出成功"` | 0 | 1 | 0 | 通过 |
+| AC-E2E-021 | 又加了一张渲染阻塞的外部样式表（CDN 不可达时整页白屏） | `index.html` | `e2e/offline.e2e.ts::应用 HTML → 没有会阻塞渲染的外部样式表` | 0 | 1 | 0 | 通过 |
+| AC-CORE-018 | 绑定不再按契约裁剪 —— 什么槽位都带进这一页 | `packages/core/src/engine/contentBinding.ts` | `packages/core/tests/contentBinding.test.ts::slots-not-consumed-by-layout-are-dropped` | 0 | 1 | 0 | 通过 |
+| AC-CORE-019 | 缺契约要求的槽位时不再报 error（降级成 warning）—— ok 永远为真 | `packages/core/src/engine/contentBinding.ts` | `packages/core/tests/contentBinding.test.ts::missing-required-slot-is-an-error` | 0 | 1 | 0 | 通过 |
+| AC-CORE-020 | 契约表里少了一条降级声明 —— 指标页没有数字时也降不了级 | `packages/core/src/data/layoutIntents.ts` | `packages/core/tests/contentBinding.test.ts::stats-kpi-without-number-degrades-to-cards-grid` | 0 | 1 | 0 | 通过 |
+| AC-CORE-020 | 引擎把「契约声明了降级」判反了 —— 声明了反而**不**降级 | `packages/core/src/engine/layoutEngine.ts` | `packages/core/tests/contentBinding.test.ts::stats-kpi-without-number-degrades-to-cards-grid` | 0 | 1 | 0 | 通过 |
+| AC-GOV-003 | 渲染器不再按变体表分层 —— 母版槽位被塞进内容层 | `packages/core/src/engine/svgRenderer.ts` | `packages/core/tests/layoutInvariants.test.ts::elements-belong-to-declared-layers` | 0 | 1 | 0 | 通过 |
+| AC-GOV-004 | 跨页结论的归一化把数字也去掉了 —— 64 页的结论被归成同一句，于是 62 条重复误报 | `packages/core/src/engine/qualityEngine.ts` | `packages/core/tests/layoutInvariants.test.ts::no-quality-issue-in-any-combo` | 0 | 1 | 0 | 通过 |
+| AC-CORE-014 | 版式引擎不再给元素标 variant —— 字段缺失，语义只能靠猜 ID | `packages/core/src/engine/layoutEngine.ts` | `spec/verify/element-variant.test.ts::layout-engine-sets-variant-on-every-element` | 0 | 1 | 0 | 通过 |
+| AC-CORE-015 | ID 修复改回从旧 ID 里抠语义前缀 —— 洗过的 ID 再也修不回语义 | `packages/core/src/engine/elementVariant.ts` | `spec/verify/element-variant.test.ts::id-repair-derives-prefix-from-variant` | 0 | 1 | 0 | 通过 |
+| AC-CORE-016 | 渲染分层改回按 ID 前缀判断 —— ID 一洗，母版层就空了 | `packages/core/src/engine/svgRenderer.ts` | `spec/verify/element-variant.test.ts::render-and-theme-follow-variant-not-id` | 0 | 1 | 0 | 通过 |
+| AC-CORE-017 | 全仓多了一个解析元素 ID 的消费方 —— 「零处解析」这条不变量破了 | `packages/core/src/engine/svgRenderer.ts` | `spec/verify/element-variant.test.ts::no-consumer-parses-element-ids` | 0 | 1 | 0 | 通过 |
+| AC-QLT-011 | 自动修复不再只动真越界的元素 —— 母版页码与页脚被一起挪进安全区 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::autofix-leaves-master-elements-alone` | 0 | 1 | 0 | 通过 |
+| AC-QLT-012 | 「修复不得让文稿更糟」的守卫被判反了 —— 修好了反而回退 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::autofix-never-lowers-score` | 0 | 1 | 0 | 通过 |
+| AC-QLT-013 | 所有诊断都说「能一键修」 —— 不可修的缺陷也挂了 fixable=true | `packages/core/src/engine/qualityRules.ts` | `spec/verify/quality-engine.test.ts::issues-declare-fixability` | 0 | 1 | 0 | 通过 |
+| AC-QLT-014 | 规则表的扣分幅度与文档漂了 —— 真相源和它的机器副本对不上 | `packages/core/src/engine/qualityRules.ts` | `spec/verify/quality-rules.test.ts::rule-table-matches-doc` | 0 | 1 | 0 | 通过 |
+| AC-QLT-015 | 规则表里多了一条规则 —— 文档里没有对应的锚点 | `packages/core/src/engine/qualityRules.ts` | `spec/verify/quality-rules.test.ts::every-rule-has-doc-anchor` | 0 | 1 | 0 | 通过 |
+| AC-QLT-016 | 诊断的 id 与规则表对不上 —— 追溯不到任何一条规则 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-rules.test.ts::diagnostic-ids-map-to-rules` | 0 | 1 | 0 | 通过 |
+| AC-QLT-017 | 引擎把扣分幅度写死了 —— 不再读规则表，规则表改了分数也不动 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-rules.test.ts::penalties-come-from-rule-table` | 0 | 1 | 0 | 通过 |
+| AC-QLT-018 | 「空页」判据整个不触发 —— 只有标题的页面不再扣内容分 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::thin-page-penalty` | 0 | 1 | 0 | 通过 |
+| AC-QLT-019 | 跨页结论重复的门槛抬高到 3 —— 两页重复不再算重复 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::duplicate-keymessage-penalty` | 0 | 1 | 0 | 通过 |
+| AC-QLT-020 | 稀疏判定的阈值放宽到 5% —— 版心一角的内容也算撑满了 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::sparse-page-penalty` | 0 | 1 | 0 | 通过 |
+| AC-QLT-021 | 空页也按稀疏再扣一次分 —— 同一页被扣了两次 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::thin-page-not-double-charged` | 0 | 1 | 0 | 通过 |
+| AC-RND-007 | 半角字符一律按 0.56em 计宽 —— 「半角一个宽度」的老口径回来了 | `packages/core/src/engine/textMetrics.ts` | `spec/verify/text-metrics.test.ts::text-width-model-is-calibrated` | 0 | 1 | 0 | 通过 |
+| AC-RND-008 | 空格断行不再检查尾段是否超宽 —— 折出来的行溢出可用宽度 | `packages/core/src/engine/textMetrics.ts` | `spec/verify/text-metrics.test.ts::wrapped-lines-never-exceed-the-available-width` | 0 | 1 | 0 | 通过 |
+| AC-EXP-007 | fallback 链不再插入 CJK 族 —— 字体栈里一个 CJK 族都没有，中文只能靠操作系统兜底 | `packages/core/src/engine/typography.ts` | `spec/verify/font-fallback.test.ts::svg-font-stack-has-cjk-fallback` | 0 | 1 | 0 | 通过 |
+| AC-EXP-007 | CJK 族被排到 generic 族之后 —— generic 一旦命中就轮不到 CJK 了 | `packages/core/src/engine/typography.ts` | `spec/verify/font-fallback.test.ts::svg-font-stack-has-cjk-fallback` | 0 | 1 | 0 | 通过 |
+| AC-EXP-007 | 渲染器绕过 fallback 链 —— 主题字体栈原样写进 SVG，中文全靠操作系统兜底 | `packages/core/src/engine/svgRenderer.ts` | `spec/verify/font-fallback.test.ts::svg-font-stack-has-cjk-fallback` | 0 | 1 | 0 | 通过 |
+| AC-EXP-008 | PPTX 侧不再跟着字体常量走 —— 写死成 Arial，拉丁字形与东亚字形都指向它 | `packages/core/src/engine/exportEngine.ts` | `spec/verify/font-fallback.test.ts::pptx-uses-cjk-capable-font` | 0 | 1 | 0 | 通过 |
+| AC-EXP-008 | 文本运行直接透传主题的 CSS 字体栈 —— 「主题字体栈直接透传」的旧写法回来了 | `packages/core/src/engine/exportEngine.ts` | `spec/verify/font-fallback.test.ts::pptx-uses-cjk-capable-font` | 0 | 1 | 0 | 通过 |
+| AC-E2E-023 | PNG/SVG 导出的 scope 带上全部页 —— 第 1 页混了进来 | `src/components/ExportModal.tsx` | `e2e/navigation.e2e.ts::AC-E2E-023 PNG/SVG 导出 → scope 只含当前页` | 0 | 1 | 0 | 通过 |
+| AC-E2E-024 | 导出弹窗的页码写死第 1 页 —— 停在第 2 页也写着「当前第 1 页」 | `src/components/ExportModal.tsx` | `e2e/navigation.e2e.ts::AC-E2E-024 导出弹窗的 PNG 说明 → 页码跟着当前页走` | 0 | 1 | 0 | 通过 |
+| AC-E2E-025 | 放映的起点恒为第 1 页 —— 停在第 2 页点放映还是从第 1 页开始 | `src/components/PresentationMode.tsx` | `e2e/navigation.e2e.ts::AC-E2E-025 工作台第 2 页点放映 → 从第 2 页开始` | 0 | 1 | 0 | 通过 |
 
-> 全部注入错误都被对应验证器抓到。**没有 MISSED 行** —— 上表的 PASS 因此不是自证。**但那是跑批那一刻的结论**：这些用例现在还跑不跑得起来，见 §2.4.2。
+> 全部注入错误都被对应验证器抓到 —— 上表的 PASS 因此不是自证。**但那是跑批那一刻的结论**：这些用例现在还跑不跑得起来，见 §2.4.2。
 
 #### 2.4.1 这批结论还对当前代码成立吗
 
-注入报告生成于 2026-11-05T10:10:38.692Z。「验证器抓得住这个错」是**某一版**验证器与**某一版**实现之间的结论 —— 跑完之后动过其中任何一边，这条结论就不再自动适用于当前代码。下面按报告里记下的文件指纹逐条比对。
+注入报告生成于 2026-11-05T11:17:39.448Z。「验证器抓得住这个错」是**某一版**验证器与**某一版**实现之间的结论 —— 跑完之后动过其中任何一边，这条结论就不再自动适用于当前代码。下面按报告里记下的文件指纹逐条比对。
 
-> 逐条比对了跑批时的文件指纹与当前的文件内容：**114 条全部仍然成立**（验证器、被改动的源文件与数据依赖都和跑批时一致）。
+> 逐条比对了跑批时的文件指纹与当前的文件内容：**122 条全部仍然成立**（验证器、被改动的源文件与数据依赖都和跑批时一致）。
 
 #### 2.4.2 现在还跑得起来吗
 
-当前代码里定义了 **114** 条注入用例，全量报告里有 **114** 条。
+当前代码里定义了 **122** 条注入用例，全量报告里有 **122** 条。
 
-> 全部 114 条都在报告里，锚点**命中且唯一** —— 现在重跑还跑得起来，报告里的结论没有过期。
+> 全部 122 条都在报告里，锚点**命中且唯一** —— 现在重跑还跑得起来，报告里的结论没有过期。
 
 > 首轮运行曾出现 1 个 MISSED（AC-RND-004）：判据原文写作「存在 `id=` **或** `data-element-id=`」，弱于条款陈述本身要求的「必须带有 id 属性」。已把判据收紧到与条款陈述及 `docs/test-cases.md` TC-EXP-003 一致，并补上第二条注入（data-element-id 值与 IR 不一致）。
 
 > **注入的必须是「代表性错误」** —— 拆掉乐观锁的前置检查却留着 SQL 里的 `WHERE version_id = ...`，验证器照样返回 409，抓不到；那不是代表性错误，是不完整的错误。AC-API-002 因此需要同时改两处。
 
-> **E2E 的注入跑整个文件而不是单个用例** —— E2E 是一条顺序流程，单独跑一个用例会因为「前置没做」而失败。那种失败跟「抓到了注入的错误」是两回事，混在一起就是假阳性。
+> **E2E 的注入曾经要跑整个文件** —— 那时 E2E 是一条顺序流程，单独跑一个用例会因为「前置没做」而失败。那种失败跟「抓到了注入的错误」是两回事，混在一起就是假阳性。现在 E2E 已拆成**各自完备**的独立链（每条链自己建项目、自己收尾），按用例名过滤是安全的 —— `wholeFile` 这个选项还留着，**当前没有一条注入用例用它**。
+
+> **「注入那轮红了」不等于「注入被抓住了」** —— 以前「抓到注入」那一列记的是「注入那一轮红不红」：树本来就红的时候它照样是 ✓，等于给一个什么都没证明的验证器**记了功**。现在记的是**差分**：注入**带来了哪些新的失败**（`M \ B`），以及还原之后还多出哪些（`R \ B`）。差别不是措辞 —— 前者会把「树本来就坏」说成「验证器抓得住」，后者说「没跑出结论」。
 
 > **锚点必须唯一** —— `String.replace(字符串)` 只替换**第一处**匹配。锚点在文件里出现两次时，注入落在第一处，而被测路径可能根本不在那儿：注入「执行成功」、验证器「仍然通过」，看上去是验证器抓不到错，实际上是**注入根本没进到被测代码路径**。首轮的 AC-IRP-001 就栽在这（同一段 `patches: result.patches,` 同时出现在 `/edit-slide` 和 `/suggest` 两个路由里，注入改的是前者，验的却是后者）。现在这条是**硬校验**：锚点不唯一即判该用例不合格。
 
@@ -1988,17 +1998,17 @@ EVD-GOV-004
 
 ### 实际验证了什么
 
-- 真的跑了证据集（`bun test spec/verify/ packages/core/tests/ apps/api/tests/ ./scripts/check-coverage.check.ts ./apps/api/tests/perf/export-latency.bench.ts`）：**446 个用例，0 失败，446 通过**，覆盖 45 个测试文件
+- 真的跑了证据集（`bun test spec/verify/ packages/core/tests/ apps/api/tests/ ./scripts/check-coverage.check.ts ./apps/api/tests/perf/export-latency.bench.ts`）：**462 个用例，0 失败，462 通过**，覆盖 45 个测试文件
 - 真的跑了前后端集成 E2E（`bun test ./e2e/auth.e2e.ts ./e2e/errors.e2e.ts ./e2e/exports.e2e.ts ./e2e/library.e2e.ts ./e2e/navigation.e2e.ts ./e2e/offline.e2e.ts ./e2e/presentation.e2e.ts ./e2e/projects.e2e.ts ./e2e/quality.e2e.ts ./e2e/templates.e2e.ts ./e2e/workbench-editing.e2e.ts ./e2e/workbench-pages.e2e.ts ./e2e/workbench.e2e.ts`，Playwright 驱动真实 Chromium + 真实服务端）：**98 个用例，0 失败**
-- 证据集对账：两层证据共 **544 个用例**，其中 **105 个挂了判据**、439 个没挂；没挂判据的用例里 **0 个失败** —— 「失败明细」里那个「（无）」不是漏报
+- 证据集对账：两层证据共 **560 个用例**，其中 **105 个挂了判据**、455 个没挂；没挂判据的用例里 **0 个失败** —— 「失败明细」里那个「（无）」不是漏报
 - 真的跑了 `python3 spec/verify/spec-schema.py`：Spec 结构校验通过（70 条条款 / 106 条判据引用完整）
 - 真的跑了 `npx tsc --noEmit`：类型检查通过
-- 真的跑了 `bun run spec/verify/mutation-check.ts`：**114 个注入用例，不合格 0 个** —— 每个用例走「基线 PASS → 注入必须 FAIL → 还原后重新 PASS」三步，源文件已全部还原 —— 其中对**当前代码**仍然成立 **114** 条、已过期 **0** 条（见 §2.4.1）
+- 真的跑了 `bun run spec/verify/mutation-check.ts`：**122 个注入用例，不合格 0 个** —— 每个用例走「基线 → 注入 → 还原」三步，结论由**差分**给出（只看注入带来了哪些新的失败），源文件已全部还原 —— 其中对**当前代码**仍然成立 **122** 条、已过期 **0** 条（见 §2.4.1）
 - 领域内核行覆盖率：**94.29% ≥ 90%**（2380/2524 行，证据落盘在 `spec/evidence/coverage.json`）
 
 ### 哪些结论仍不可信
 
-- **6 条判据没有做注入错误检查**（AC-EXP-007、AC-EXP-008、AC-E2E-023、AC-E2E-024、AC-E2E-025、AC-NFR-001）—— 它们的 PASS 只来自「测试跑过了」，没有被元验证证明「抓得住错」
+- **1 条判据没有做注入错误检查**（AC-NFR-001）—— 它们的 PASS 只来自「测试跑过了」，没有被元验证证明「抓得住错」
 - **SPEC-NFR-001 —— 真实模型下的 P95 从未测过**。验证器已建成，但本轮只跑了降级模式（.env 里的 GEMINI_API_KEY 是占位符），模型往返延迟根本没被采样到
 - **SPEC-GOV-003 —— 质量门禁分数线从未在文档中给出**，判据无法存在（AMB-001 未裁决）
 - **AC-QLT-010 —— self-derived oracle**，只能防回归，不能证明正确

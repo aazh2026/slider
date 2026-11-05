@@ -1,7 +1,7 @@
 {
   "generated_by": "spec/verify/mutation-check.ts",
-  "generated_at": "2026-11-05T10:10:38.692Z",
-  "total": 114,
+  "generated_at": "2026-11-05T11:17:39.448Z",
+  "total": 122,
   "unqualified": 0,
   "inconclusive": 0,
   "cases": [
@@ -11,11 +11,22 @@
       "mutated_file": "packages/core/src/engine/layoutEngine.ts",
       "verifier": "spec/verify/core-layout.test.ts::canvas-is-always-1920x1080",
       "verifier_file": "spec/verify/core-layout.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/core-layout.test.ts::canvas-is-always-1920x1080"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "e9dbce26fb8cfd434647082fdbbaa143266b40e74eff4d40240518ef210b3964",
       "source_sha256": "ee5819a0cb5ab569d48736c8bbaa0d675aa774c27a7ed678e5e0582d763e212e",
       "data_deps": [],
@@ -28,11 +39,22 @@
       "mutated_file": "src/components/Workbench.tsx",
       "verifier": "e2e/workbench.e2e.ts::AC-CORE-011 工作台画布在屏幕上保持 16:9，不出现信箱边",
       "verifier_file": "e2e/workbench.e2e.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "e2e/workbench.e2e.ts::AC-CORE-011 工作台画布在屏幕上保持 16:9，不出现信箱边"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "4101f2d42f65ca9787c287518e0067619d05d2150216cbae4c9adedc423ce7e5",
       "source_sha256": "08f8a4b1aea5b5cdf91a410ddda4c4263133ec1d0da34133eec38c37ae365ef7",
       "data_deps": [],
@@ -45,11 +67,22 @@
       "mutated_file": "src/components/Workbench.tsx",
       "verifier": "e2e/workbench.e2e.ts::AC-CORE-012 画布放大超出可视区后，左右上下都滚得到，不被裁掉",
       "verifier_file": "e2e/workbench.e2e.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "e2e/workbench.e2e.ts::AC-CORE-012 画布放大超出可视区后，左右上下都滚得到，不被裁掉"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "4101f2d42f65ca9787c287518e0067619d05d2150216cbae4c9adedc423ce7e5",
       "source_sha256": "08f8a4b1aea5b5cdf91a410ddda4c4263133ec1d0da34133eec38c37ae365ef7",
       "data_deps": [],
@@ -62,11 +95,22 @@
       "mutated_file": "src/components/Workbench.tsx",
       "verifier": "e2e/workbench.e2e.ts::AC-CORE-012 画布放大超出可视区后，左右上下都滚得到，不被裁掉",
       "verifier_file": "e2e/workbench.e2e.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "e2e/workbench.e2e.ts::AC-CORE-012 画布放大超出可视区后，左右上下都滚得到，不被裁掉"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "4101f2d42f65ca9787c287518e0067619d05d2150216cbae4c9adedc423ce7e5",
       "source_sha256": "08f8a4b1aea5b5cdf91a410ddda4c4263133ec1d0da34133eec38c37ae365ef7",
       "data_deps": [],
@@ -79,11 +123,22 @@
       "mutated_file": "src/components/Workbench.tsx",
       "verifier": "e2e/workbench.e2e.ts::AC-CORE-013 容器尺寸变化后缩放档位自动重新适配，画布不被裁掉",
       "verifier_file": "e2e/workbench.e2e.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "e2e/workbench.e2e.ts::AC-CORE-013 容器尺寸变化后缩放档位自动重新适配，画布不被裁掉"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "4101f2d42f65ca9787c287518e0067619d05d2150216cbae4c9adedc423ce7e5",
       "source_sha256": "08f8a4b1aea5b5cdf91a410ddda4c4263133ec1d0da34133eec38c37ae365ef7",
       "data_deps": [],
@@ -96,11 +151,22 @@
       "mutated_file": "packages/core/src/engine/layoutEngine.ts",
       "verifier": "spec/verify/core-layout.test.ts::no-element-out-of-canvas",
       "verifier_file": "spec/verify/core-layout.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/core-layout.test.ts::no-element-out-of-canvas"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "e9dbce26fb8cfd434647082fdbbaa143266b40e74eff4d40240518ef210b3964",
       "source_sha256": "ee5819a0cb5ab569d48736c8bbaa0d675aa774c27a7ed678e5e0582d763e212e",
       "data_deps": [],
@@ -113,11 +179,22 @@
       "mutated_file": "packages/core/src/engine/layoutEngine.ts",
       "verifier": "spec/verify/core-layout.test.ts::element-ids-unique-across-slides",
       "verifier_file": "spec/verify/core-layout.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/core-layout.test.ts::element-ids-unique-across-slides"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "e9dbce26fb8cfd434647082fdbbaa143266b40e74eff4d40240518ef210b3964",
       "source_sha256": "ee5819a0cb5ab569d48736c8bbaa0d675aa774c27a7ed678e5e0582d763e212e",
       "data_deps": [],
@@ -130,11 +207,22 @@
       "mutated_file": "packages/core/src/engine/layoutEngine.ts",
       "verifier": "spec/verify/core-layout.test.ts::layout-element-ids-contain-slide-id",
       "verifier_file": "spec/verify/core-layout.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/core-layout.test.ts::layout-element-ids-contain-slide-id"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "e9dbce26fb8cfd434647082fdbbaa143266b40e74eff4d40240518ef210b3964",
       "source_sha256": "ee5819a0cb5ab569d48736c8bbaa0d675aa774c27a7ed678e5e0582d763e212e",
       "data_deps": [],
@@ -147,11 +235,22 @@
       "mutated_file": "packages/core/src/engine/layoutEngine.ts",
       "verifier": "spec/verify/core-layout.test.ts::layout-engine-is-pure",
       "verifier_file": "spec/verify/core-layout.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/core-layout.test.ts::layout-engine-is-pure"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "e9dbce26fb8cfd434647082fdbbaa143266b40e74eff4d40240518ef210b3964",
       "source_sha256": "ee5819a0cb5ab569d48736c8bbaa0d675aa774c27a7ed678e5e0582d763e212e",
       "data_deps": [],
@@ -164,11 +263,22 @@
       "mutated_file": "packages/core/src/engine/layoutEngine.ts",
       "verifier": "spec/verify/core-layout.test.ts::cover-page-has-no-master-elements",
       "verifier_file": "spec/verify/core-layout.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/core-layout.test.ts::cover-page-has-no-master-elements"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "e9dbce26fb8cfd434647082fdbbaa143266b40e74eff4d40240518ef210b3964",
       "source_sha256": "ee5819a0cb5ab569d48736c8bbaa0d675aa774c27a7ed678e5e0582d763e212e",
       "data_deps": [],
@@ -181,11 +291,22 @@
       "mutated_file": "packages/core/src/engine/layoutEngine.ts",
       "verifier": "spec/verify/core-layout.test.ts::page-number-format",
       "verifier_file": "spec/verify/core-layout.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/core-layout.test.ts::page-number-format"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "e9dbce26fb8cfd434647082fdbbaa143266b40e74eff4d40240518ef210b3964",
       "source_sha256": "ee5819a0cb5ab569d48736c8bbaa0d675aa774c27a7ed678e5e0582d763e212e",
       "data_deps": [],
@@ -198,11 +319,22 @@
       "mutated_file": "packages/core/src/engine/layoutEngine.ts",
       "verifier": "spec/verify/core-content.test.ts::bullet-consuming-layouts-use-outline-bullets",
       "verifier_file": "spec/verify/core-content.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/core-content.test.ts::bullet-consuming-layouts-use-outline-bullets"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "4ce77cb219701ca9ff8295d6e99b4d7c3e4501b25ab2c5d13088c63605aa6271",
       "source_sha256": "ee5819a0cb5ab569d48736c8bbaa0d675aa774c27a7ed678e5e0582d763e212e",
       "data_deps": [],
@@ -215,11 +347,22 @@
       "mutated_file": "packages/core/src/engine/layoutEngine.ts",
       "verifier": "spec/verify/core-content.test.ts::cover-content-traceable-to-outline",
       "verifier_file": "spec/verify/core-content.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/core-content.test.ts::cover-content-traceable-to-outline"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "4ce77cb219701ca9ff8295d6e99b4d7c3e4501b25ab2c5d13088c63605aa6271",
       "source_sha256": "ee5819a0cb5ab569d48736c8bbaa0d675aa774c27a7ed678e5e0582d763e212e",
       "data_deps": [],
@@ -232,11 +375,22 @@
       "mutated_file": "packages/core/src/engine/contentBinding.ts",
       "verifier": "spec/verify/core-content.test.ts::render-output-follows-outline-bullets",
       "verifier_file": "spec/verify/core-content.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/core-content.test.ts::render-output-follows-outline-bullets"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "4ce77cb219701ca9ff8295d6e99b4d7c3e4501b25ab2c5d13088c63605aa6271",
       "source_sha256": "28b7353a38b5f1c349b48234b0ae1918b93067d87e23e56ec30171771c87b24b",
       "data_deps": [],
@@ -249,11 +403,22 @@
       "mutated_file": "packages/core/src/engine/svgRenderer.ts",
       "verifier": "spec/verify/render-svg.test.ts::user-content-is-xml-escaped",
       "verifier_file": "spec/verify/render-svg.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/render-svg.test.ts::user-content-is-xml-escaped"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "2f284b3168db413336f284e19eb74d58b8e4d528e61cf4ac8315657a9fbb2dc7",
       "source_sha256": "91710f94e2583a3dbc123e0edc64c2f642dacdfa5d07597bbbf9ce98ff9337cd",
       "data_deps": [],
@@ -266,11 +431,22 @@
       "mutated_file": "packages/core/src/engine/svgRenderer.ts",
       "verifier": "spec/verify/render-svg.test.ts::svg-contains-no-foreignobject",
       "verifier_file": "spec/verify/render-svg.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/render-svg.test.ts::svg-contains-no-foreignobject"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "2f284b3168db413336f284e19eb74d58b8e4d528e61cf4ac8315657a9fbb2dc7",
       "source_sha256": "91710f94e2583a3dbc123e0edc64c2f642dacdfa5d07597bbbf9ce98ff9337cd",
       "data_deps": [],
@@ -283,11 +459,22 @@
       "mutated_file": "packages/core/src/engine/svgRenderer.ts",
       "verifier": "spec/verify/render-svg.test.ts::svg-contains-no-external-font-import",
       "verifier_file": "spec/verify/render-svg.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/render-svg.test.ts::svg-contains-no-external-font-import"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "2f284b3168db413336f284e19eb74d58b8e4d528e61cf4ac8315657a9fbb2dc7",
       "source_sha256": "91710f94e2583a3dbc123e0edc64c2f642dacdfa5d07597bbbf9ce98ff9337cd",
       "data_deps": [],
@@ -300,11 +487,22 @@
       "mutated_file": "packages/core/src/engine/svgRenderer.ts",
       "verifier": "spec/verify/render-svg.test.ts::svg-preserves-element-ids",
       "verifier_file": "spec/verify/render-svg.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/render-svg.test.ts::svg-preserves-element-ids"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "2f284b3168db413336f284e19eb74d58b8e4d528e61cf4ac8315657a9fbb2dc7",
       "source_sha256": "91710f94e2583a3dbc123e0edc64c2f642dacdfa5d07597bbbf9ce98ff9337cd",
       "data_deps": [],
@@ -317,11 +515,22 @@
       "mutated_file": "packages/core/src/engine/svgRenderer.ts",
       "verifier": "spec/verify/render-svg.test.ts::svg-preserves-element-ids",
       "verifier_file": "spec/verify/render-svg.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/render-svg.test.ts::svg-preserves-element-ids"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "2f284b3168db413336f284e19eb74d58b8e4d528e61cf4ac8315657a9fbb2dc7",
       "source_sha256": "91710f94e2583a3dbc123e0edc64c2f642dacdfa5d07597bbbf9ce98ff9337cd",
       "data_deps": [],
@@ -334,11 +543,22 @@
       "mutated_file": "packages/core/src/engine/svgRenderer.ts",
       "verifier": "spec/verify/render-svg.test.ts::svg-has-four-layers",
       "verifier_file": "spec/verify/render-svg.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/render-svg.test.ts::svg-has-four-layers"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "2f284b3168db413336f284e19eb74d58b8e4d528e61cf4ac8315657a9fbb2dc7",
       "source_sha256": "91710f94e2583a3dbc123e0edc64c2f642dacdfa5d07597bbbf9ce98ff9337cd",
       "data_deps": [],
@@ -351,11 +571,22 @@
       "mutated_file": "packages/core/src/engine/svgRenderer.ts",
       "verifier": "spec/verify/render-svg.test.ts::long-text-is-truncated-with-ellipsis",
       "verifier_file": "spec/verify/render-svg.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/render-svg.test.ts::long-text-is-truncated-with-ellipsis"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "2f284b3168db413336f284e19eb74d58b8e4d528e61cf4ac8315657a9fbb2dc7",
       "source_sha256": "91710f94e2583a3dbc123e0edc64c2f642dacdfa5d07597bbbf9ce98ff9337cd",
       "data_deps": [],
@@ -368,11 +599,22 @@
       "mutated_file": "packages/core/src/engine/svgRenderer.ts",
       "verifier": "spec/verify/render-svg.test.ts::long-text-is-truncated-with-ellipsis",
       "verifier_file": "spec/verify/render-svg.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/render-svg.test.ts::long-text-is-truncated-with-ellipsis"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "2f284b3168db413336f284e19eb74d58b8e4d528e61cf4ac8315657a9fbb2dc7",
       "source_sha256": "91710f94e2583a3dbc123e0edc64c2f642dacdfa5d07597bbbf9ce98ff9337cd",
       "data_deps": [],
@@ -385,11 +627,22 @@
       "mutated_file": "packages/core/src/engine/qualityEngine.ts",
       "verifier": "spec/verify/quality-engine.test.ts::quality-formula-weights",
       "verifier_file": "spec/verify/quality-engine.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/quality-engine.test.ts::quality-formula-weights"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "484563d25c9966e6bdf8a5f41dbea484ca0421cbd219a21d270037d5414f651b",
       "source_sha256": "c13a804cc23db71c1a162e60c367df078be1a4371ca17ed4eba7e608f0b9db82",
       "data_deps": [],
@@ -402,11 +655,22 @@
       "mutated_file": "packages/core/src/engine/qualityEngine.ts",
       "verifier": "spec/verify/quality-engine.test.ts::canvas-mismatch-penalty",
       "verifier_file": "spec/verify/quality-engine.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/quality-engine.test.ts::canvas-mismatch-penalty"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "484563d25c9966e6bdf8a5f41dbea484ca0421cbd219a21d270037d5414f651b",
       "source_sha256": "c13a804cc23db71c1a162e60c367df078be1a4371ca17ed4eba7e608f0b9db82",
       "data_deps": [],
@@ -419,11 +683,22 @@
       "mutated_file": "packages/core/src/engine/qualityEngine.ts",
       "verifier": "spec/verify/quality-engine.test.ts::duplicate-id-penalty",
       "verifier_file": "spec/verify/quality-engine.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/quality-engine.test.ts::duplicate-id-penalty"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "484563d25c9966e6bdf8a5f41dbea484ca0421cbd219a21d270037d5414f651b",
       "source_sha256": "c13a804cc23db71c1a162e60c367df078be1a4371ca17ed4eba7e608f0b9db82",
       "data_deps": [],
@@ -436,11 +711,22 @@
       "mutated_file": "packages/core/src/engine/qualityEngine.ts",
       "verifier": "spec/verify/quality-engine.test.ts::out-of-bounds-penalty",
       "verifier_file": "spec/verify/quality-engine.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/quality-engine.test.ts::out-of-bounds-penalty"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "484563d25c9966e6bdf8a5f41dbea484ca0421cbd219a21d270037d5414f651b",
       "source_sha256": "c13a804cc23db71c1a162e60c367df078be1a4371ca17ed4eba7e608f0b9db82",
       "data_deps": [],
@@ -453,11 +739,22 @@
       "mutated_file": "packages/core/src/engine/qualityEngine.ts",
       "verifier": "spec/verify/quality-engine.test.ts::aabb-collision-penalty",
       "verifier_file": "spec/verify/quality-engine.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/quality-engine.test.ts::aabb-collision-penalty"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "484563d25c9966e6bdf8a5f41dbea484ca0421cbd219a21d270037d5414f651b",
       "source_sha256": "c13a804cc23db71c1a162e60c367df078be1a4371ca17ed4eba7e608f0b9db82",
       "data_deps": [],
@@ -470,11 +767,22 @@
       "mutated_file": "packages/core/src/engine/qualityEngine.ts",
       "verifier": "spec/verify/quality-engine.test.ts::missing-title-penalty",
       "verifier_file": "spec/verify/quality-engine.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/quality-engine.test.ts::missing-title-penalty"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "484563d25c9966e6bdf8a5f41dbea484ca0421cbd219a21d270037d5414f651b",
       "source_sha256": "c13a804cc23db71c1a162e60c367df078be1a4371ca17ed4eba7e608f0b9db82",
       "data_deps": [],
@@ -487,11 +795,22 @@
       "mutated_file": "packages/core/src/engine/qualityEngine.ts",
       "verifier": "spec/verify/quality-engine.test.ts::missing-keymessage-penalty",
       "verifier_file": "spec/verify/quality-engine.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/quality-engine.test.ts::missing-keymessage-penalty"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "484563d25c9966e6bdf8a5f41dbea484ca0421cbd219a21d270037d5414f651b",
       "source_sha256": "c13a804cc23db71c1a162e60c367df078be1a4371ca17ed4eba7e608f0b9db82",
       "data_deps": [],
@@ -504,11 +823,22 @@
       "mutated_file": "packages/core/src/engine/qualityEngine.ts",
       "verifier": "spec/verify/quality-engine.test.ts::consistency-penalties",
       "verifier_file": "spec/verify/quality-engine.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/quality-engine.test.ts::consistency-penalties"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "484563d25c9966e6bdf8a5f41dbea484ca0421cbd219a21d270037d5414f651b",
       "source_sha256": "c13a804cc23db71c1a162e60c367df078be1a4371ca17ed4eba7e608f0b9db82",
       "data_deps": [],
@@ -521,11 +851,22 @@
       "mutated_file": "packages/core/src/engine/qualityEngine.ts",
       "verifier": "spec/verify/quality-engine.test.ts::autofix-restores-id-uniqueness",
       "verifier_file": "spec/verify/quality-engine.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/quality-engine.test.ts::autofix-restores-id-uniqueness"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "484563d25c9966e6bdf8a5f41dbea484ca0421cbd219a21d270037d5414f651b",
       "source_sha256": "c13a804cc23db71c1a162e60c367df078be1a4371ca17ed4eba7e608f0b9db82",
       "data_deps": [],
@@ -538,11 +879,22 @@
       "mutated_file": "packages/core/src/engine/exportEngine.ts",
       "verifier": "spec/verify/export-pptx.test.ts::pptx-includes-speaker-notes",
       "verifier_file": "spec/verify/export-pptx.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/export-pptx.test.ts::pptx-includes-speaker-notes"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "99297490037ccd9fbdbd4d7aed56e4abd22e619e1c0f778229aed5d7bb22efa3",
       "source_sha256": "749b73d751ea2ff4ac94f2937da52ae113e37e451187499d6d9b3e2695e4c7d9",
       "data_deps": [],
@@ -555,11 +907,22 @@
       "mutated_file": "apps/api/src/services/exportService.ts",
       "verifier": "spec/verify/export-png-resolution.test.ts::server-png-export-is-2x",
       "verifier_file": "spec/verify/export-png-resolution.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/export-png-resolution.test.ts::server-png-export-is-2x"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "753cdac4263b5c62d88f2af31ed35b21ab8a6ebd99163470d1a60c60cf5a4889",
       "source_sha256": "bb335e9e1a07dc100e3ad2dbbdc5b05210d61fbf61d0e0095af3a7d5191dc3d4",
       "data_deps": [],
@@ -572,11 +935,22 @@
       "mutated_file": "packages/core/src/engine/exportEngine.ts",
       "verifier": "spec/verify/export-pptx.test.ts::png-export-is-2x",
       "verifier_file": "spec/verify/export-pptx.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/export-pptx.test.ts::png-export-is-2x"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "99297490037ccd9fbdbd4d7aed56e4abd22e619e1c0f778229aed5d7bb22efa3",
       "source_sha256": "749b73d751ea2ff4ac94f2937da52ae113e37e451187499d6d9b3e2695e4c7d9",
       "data_deps": [],
@@ -589,11 +963,22 @@
       "mutated_file": "packages/core/src/engine/exportEngine.ts",
       "verifier": "spec/verify/export-pptx.test.ts::pptx-preserves-ir-text-content",
       "verifier_file": "spec/verify/export-pptx.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/export-pptx.test.ts::pptx-preserves-ir-text-content"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "99297490037ccd9fbdbd4d7aed56e4abd22e619e1c0f778229aed5d7bb22efa3",
       "source_sha256": "749b73d751ea2ff4ac94f2937da52ae113e37e451187499d6d9b3e2695e4c7d9",
       "data_deps": [],
@@ -606,11 +991,22 @@
       "mutated_file": "packages/core/src/engine/exportEngine.ts",
       "verifier": "spec/verify/export-pptx.test.ts::pptx-preserves-ir-text-content",
       "verifier_file": "spec/verify/export-pptx.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/export-pptx.test.ts::pptx-preserves-ir-text-content"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "99297490037ccd9fbdbd4d7aed56e4abd22e619e1c0f778229aed5d7bb22efa3",
       "source_sha256": "749b73d751ea2ff4ac94f2937da52ae113e37e451187499d6d9b3e2695e4c7d9",
       "data_deps": [],
@@ -623,11 +1019,22 @@
       "mutated_file": "packages/core/src/engine/exportEngine.ts",
       "verifier": "spec/verify/export-pptx.test.ts::pptx-preserves-ir-text-content",
       "verifier_file": "spec/verify/export-pptx.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/export-pptx.test.ts::pptx-preserves-ir-text-content"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "99297490037ccd9fbdbd4d7aed56e4abd22e619e1c0f778229aed5d7bb22efa3",
       "source_sha256": "749b73d751ea2ff4ac94f2937da52ae113e37e451187499d6d9b3e2695e4c7d9",
       "data_deps": [],
@@ -640,11 +1047,22 @@
       "mutated_file": "packages/core/src/engine/exportEngine.ts",
       "verifier": "spec/verify/export-pptx.test.ts::export-filename-sanitized",
       "verifier_file": "spec/verify/export-pptx.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/export-pptx.test.ts::export-filename-sanitized"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "99297490037ccd9fbdbd4d7aed56e4abd22e619e1c0f778229aed5d7bb22efa3",
       "source_sha256": "749b73d751ea2ff4ac94f2937da52ae113e37e451187499d6d9b3e2695e4c7d9",
       "data_deps": [],
@@ -657,11 +1075,22 @@
       "mutated_file": "packages/core/src/engine/exportEngine.ts",
       "verifier": "spec/verify/export-pptx.test.ts::export-filename-sanitized",
       "verifier_file": "spec/verify/export-pptx.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/export-pptx.test.ts::export-filename-sanitized"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "99297490037ccd9fbdbd4d7aed56e4abd22e619e1c0f778229aed5d7bb22efa3",
       "source_sha256": "749b73d751ea2ff4ac94f2937da52ae113e37e451187499d6d9b3e2695e4c7d9",
       "data_deps": [],
@@ -674,11 +1103,22 @@
       "mutated_file": "packages/core/src/engine/exportEngine.ts",
       "verifier": "spec/verify/export-pptx.test.ts::export-filename-sanitized",
       "verifier_file": "spec/verify/export-pptx.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/export-pptx.test.ts::export-filename-sanitized"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "99297490037ccd9fbdbd4d7aed56e4abd22e619e1c0f778229aed5d7bb22efa3",
       "source_sha256": "749b73d751ea2ff4ac94f2937da52ae113e37e451187499d6d9b3e2695e4c7d9",
       "data_deps": [],
@@ -691,11 +1131,22 @@
       "mutated_file": "apps/api/src/services/projectService.ts",
       "verifier": "apps/api/tests/integration/import-bundle.test.ts::exported-bundle-round-trips-with-page-order-intact",
       "verifier_file": "apps/api/tests/integration/import-bundle.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "apps/api/tests/integration/import-bundle.test.ts::exported-bundle-round-trips-with-page-order-intact"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "6d4afceefba94b0f08db745d1833008f064c3cf59fb4f4fa2c3049949fcc9dab",
       "source_sha256": "16c5c2af21dea23090a7324a153097c098eb7a3d57e1e184b300e0732de3ec9c",
       "data_deps": [],
@@ -708,11 +1159,22 @@
       "mutated_file": "apps/api/src/routes/projects.ts",
       "verifier": "apps/api/tests/integration/import-bundle.test.ts::zero-order-index-is-rejected",
       "verifier_file": "apps/api/tests/integration/import-bundle.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "apps/api/tests/integration/import-bundle.test.ts::zero-order-index-is-rejected"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "6d4afceefba94b0f08db745d1833008f064c3cf59fb4f4fa2c3049949fcc9dab",
       "source_sha256": "dabd2348f021375a6707e1907e0a87fdf4d4577c779273d491e965a8d0f328df",
       "data_deps": [],
@@ -725,11 +1187,22 @@
       "mutated_file": "apps/api/src/routes/projects.ts",
       "verifier": "apps/api/tests/integration/import-bundle.test.ts::duplicate-order-index-is-rejected",
       "verifier_file": "apps/api/tests/integration/import-bundle.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "apps/api/tests/integration/import-bundle.test.ts::duplicate-order-index-is-rejected"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "6d4afceefba94b0f08db745d1833008f064c3cf59fb4f4fa2c3049949fcc9dab",
       "source_sha256": "dabd2348f021375a6707e1907e0a87fdf4d4577c779273d491e965a8d0f328df",
       "data_deps": [],
@@ -742,11 +1215,22 @@
       "mutated_file": "apps/api/src/routes/projects.ts",
       "verifier": "apps/api/tests/integration/import-bundle.test.ts::missing-slides-field-is-rejected",
       "verifier_file": "apps/api/tests/integration/import-bundle.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "apps/api/tests/integration/import-bundle.test.ts::missing-slides-field-is-rejected"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "6d4afceefba94b0f08db745d1833008f064c3cf59fb4f4fa2c3049949fcc9dab",
       "source_sha256": "dabd2348f021375a6707e1907e0a87fdf4d4577c779273d491e965a8d0f328df",
       "data_deps": [],
@@ -759,11 +1243,22 @@
       "mutated_file": "packages/core/src/engine/qualityEngine.ts",
       "verifier": "spec/verify/quality-engine.test.ts::autofix-restores-bounds",
       "verifier_file": "spec/verify/quality-engine.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/quality-engine.test.ts::autofix-restores-bounds"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "484563d25c9966e6bdf8a5f41dbea484ca0421cbd219a21d270037d5414f651b",
       "source_sha256": "c13a804cc23db71c1a162e60c367df078be1a4371ca17ed4eba7e608f0b9db82",
       "data_deps": [],
@@ -776,11 +1271,22 @@
       "mutated_file": "apps/api/src/errors.ts",
       "verifier": "apps/api/tests/contract/response-envelope.test.ts::success-response-envelope",
       "verifier_file": "apps/api/tests/contract/response-envelope.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "apps/api/tests/contract/response-envelope.test.ts::success-response-envelope"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "de9a1e707a0aa18a63968d786069a19f0c24193a8df1270d60dc857266ef30de",
       "source_sha256": "f33a1a90bb0a65bf53b0dd4b9635d98c233dbe9bc786ac0c87899d246d600c01",
       "data_deps": [],
@@ -793,11 +1299,22 @@
       "mutated_file": "apps/api/src/errors.ts",
       "verifier": "apps/api/tests/contract/response-envelope.test.ts::failure-response-envelope",
       "verifier_file": "apps/api/tests/contract/response-envelope.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "apps/api/tests/contract/response-envelope.test.ts::failure-response-envelope"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "de9a1e707a0aa18a63968d786069a19f0c24193a8df1270d60dc857266ef30de",
       "source_sha256": "f33a1a90bb0a65bf53b0dd4b9635d98c233dbe9bc786ac0c87899d246d600c01",
       "data_deps": [],
@@ -810,11 +1327,22 @@
       "mutated_file": "apps/api/src/errors.ts",
       "verifier": "apps/api/tests/contract/response-envelope.test.ts::error-codes-closed-enum",
       "verifier_file": "apps/api/tests/contract/response-envelope.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "apps/api/tests/contract/response-envelope.test.ts::error-codes-closed-enum"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "de9a1e707a0aa18a63968d786069a19f0c24193a8df1270d60dc857266ef30de",
       "source_sha256": "f33a1a90bb0a65bf53b0dd4b9635d98c233dbe9bc786ac0c87899d246d600c01",
       "data_deps": [],
@@ -827,11 +1355,22 @@
       "mutated_file": "apps/api/src/services/slideService.ts",
       "verifier": "apps/api/tests/integration/optimistic-lock.test.ts::same-base-version-second-write-conflicts",
       "verifier_file": "apps/api/tests/integration/optimistic-lock.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "apps/api/tests/integration/optimistic-lock.test.ts::same-base-version-second-write-conflicts"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "7f294262e220e6ddeb3e9a41dfd51f26307dfc10f89ee9e4a8048953456b585f",
       "source_sha256": "73c7d09fa3e9face56cfb181b6288c9c14296127108e999809be789e8e231035",
       "data_deps": [],
@@ -844,11 +1383,22 @@
       "mutated_file": "apps/api/src/middleware/auth.ts",
       "verifier": "apps/api/tests/security/cross-tenant-access.test.ts::cross-tenant-resource-read-is-404",
       "verifier_file": "apps/api/tests/security/cross-tenant-access.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "apps/api/tests/security/cross-tenant-access.test.ts::cross-tenant-resource-read-is-404"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "b46b625d66d1bce7f6d90d8290147e711fcaa18636d5e4e87aa70f33188b7270",
       "source_sha256": "a0b7700ebcdaf49105f784ef1561480c684a9a99737f1504943618b951e28941",
       "data_deps": [],
@@ -861,11 +1411,22 @@
       "mutated_file": "apps/api/src/services/modelRouter.ts",
       "verifier": "apps/api/tests/security/ai-output-validation.test.ts::invalid-model-output-rejected-and-not-persisted",
       "verifier_file": "apps/api/tests/security/ai-output-validation.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "apps/api/tests/security/ai-output-validation.test.ts::invalid-model-output-rejected-and-not-persisted"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "a5fecc95b3d8c5ef27648a57feb516de2cf51c09836b65039ea5e2f62bcebc8e",
       "source_sha256": "5d976faff385cfb011020368c8fda7580f5a643c8cd5e053fbbfd040efb2d0fb",
       "data_deps": [],
@@ -878,11 +1439,22 @@
       "mutated_file": "apps/api/src/index.ts",
       "verifier": "apps/api/tests/security/secret-handling.test.ts::missing-api-key-fails-startup",
       "verifier_file": "apps/api/tests/security/secret-handling.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "apps/api/tests/security/secret-handling.test.ts::missing-api-key-fails-startup"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "c504dd7fdbeca0545b242ecd9b3fa4a03bf16a91da39f1cedb0bdd4d6005e83a",
       "source_sha256": "15af5d93fd24c6dbe71fbef77a56ff9f9b621195cf09361f7c7606a14cb56ae9",
       "data_deps": [],
@@ -895,11 +1467,22 @@
       "mutated_file": "apps/api/src/services/authService.ts",
       "verifier": "apps/api/tests/security/password-hashing.test.ts::password-stored-as-argon2id-hash",
       "verifier_file": "apps/api/tests/security/password-hashing.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "apps/api/tests/security/password-hashing.test.ts::password-stored-as-argon2id-hash"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "cf5b4a4f4d19e0bb2b15ef185b9caa0a208812a7be776177408960f478b52d15",
       "source_sha256": "86adb0abd3d41cca0791671733fbb3bb15674fc2f1f6053a719fcebb7aacfc5f",
       "data_deps": [],
@@ -912,11 +1495,22 @@
       "mutated_file": "apps/api/src/services/authService.ts",
       "verifier": "apps/api/tests/security/password-hashing.test.ts::password-verify-accepts-correct-and-rejects-wrong",
       "verifier_file": "apps/api/tests/security/password-hashing.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "apps/api/tests/security/password-hashing.test.ts::password-verify-accepts-correct-and-rejects-wrong"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "cf5b4a4f4d19e0bb2b15ef185b9caa0a208812a7be776177408960f478b52d15",
       "source_sha256": "86adb0abd3d41cca0791671733fbb3bb15674fc2f1f6053a719fcebb7aacfc5f",
       "data_deps": [],
@@ -929,11 +1523,22 @@
       "mutated_file": "apps/api/src/services/authService.ts",
       "verifier": "apps/api/tests/security/session-cookie.test.ts::session-cookie-has-security-attributes",
       "verifier_file": "apps/api/tests/security/session-cookie.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "apps/api/tests/security/session-cookie.test.ts::session-cookie-has-security-attributes"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "522e0271f84a485bd43c830ef38c1a57ad6a14c3dc3d043c65eb803436335861",
       "source_sha256": "86adb0abd3d41cca0791671733fbb3bb15674fc2f1f6053a719fcebb7aacfc5f",
       "data_deps": [],
@@ -946,11 +1551,22 @@
       "mutated_file": "apps/api/src/services/authService.ts",
       "verifier": "apps/api/tests/security/session-cookie.test.ts::session-cookie-secure-in-production",
       "verifier_file": "apps/api/tests/security/session-cookie.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "apps/api/tests/security/session-cookie.test.ts::session-cookie-secure-in-production"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "522e0271f84a485bd43c830ef38c1a57ad6a14c3dc3d043c65eb803436335861",
       "source_sha256": "86adb0abd3d41cca0791671733fbb3bb15674fc2f1f6053a719fcebb7aacfc5f",
       "data_deps": [],
@@ -963,11 +1579,22 @@
       "mutated_file": "apps/api/src/services/authService.ts",
       "verifier": "apps/api/tests/security/session-cookie.test.ts::session-id-is-32-byte-base64url",
       "verifier_file": "apps/api/tests/security/session-cookie.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "apps/api/tests/security/session-cookie.test.ts::session-id-is-32-byte-base64url"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "522e0271f84a485bd43c830ef38c1a57ad6a14c3dc3d043c65eb803436335861",
       "source_sha256": "86adb0abd3d41cca0791671733fbb3bb15674fc2f1f6053a719fcebb7aacfc5f",
       "data_deps": [],
@@ -980,11 +1607,22 @@
       "mutated_file": "apps/api/src/services/agents/outlineAgent.ts",
       "verifier": "apps/api/tests/chaos/model-fallback.test.ts::model-unavailable-falls-back-with-valid-outline",
       "verifier_file": "apps/api/tests/chaos/model-fallback.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "apps/api/tests/chaos/model-fallback.test.ts::model-unavailable-falls-back-with-valid-outline"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "eb1ca2411dd063d6c14a0c3e0e0e5533b1239ca87c7c6da4685830c78aec78fb",
       "source_sha256": "dd07f734efa4ed16d3e15357707f4593e6c0c701ee784f8abd2a9bacf3b4530a",
       "data_deps": [],
@@ -997,11 +1635,22 @@
       "mutated_file": "apps/api/src/services/agents/localOutline.ts",
       "verifier": "apps/api/tests/chaos/model-fallback.test.ts::fallback-outline-varies-by-topic",
       "verifier_file": "apps/api/tests/chaos/model-fallback.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "apps/api/tests/chaos/model-fallback.test.ts::fallback-outline-varies-by-topic"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "eb1ca2411dd063d6c14a0c3e0e0e5533b1239ca87c7c6da4685830c78aec78fb",
       "source_sha256": "290a8bd0c7424f3096fa30a6fb898d06a8c777cd0a7c69ad133fb8c968a5212e",
       "data_deps": [],
@@ -1014,11 +1663,22 @@
       "mutated_file": "apps/api/src/services/exportService.ts",
       "verifier": "apps/api/tests/perf/export-latency.bench.ts::pptx-export-p95-under-threshold",
       "verifier_file": "apps/api/tests/perf/export-latency.bench.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "apps/api/tests/perf/export-latency.bench.ts::pptx-export-p95-under-threshold"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "fdae6f6c289230090744f4c8ff37af0d749876e7ad23d606ad9f0fde79c684b7",
       "source_sha256": "bb335e9e1a07dc100e3ad2dbbdc5b05210d61fbf61d0e0095af3a7d5191dc3d4",
       "data_deps": [],
@@ -1031,11 +1691,22 @@
       "mutated_file": "apps/api/src/routes/ai.ts",
       "verifier": "apps/api/tests/ai/edit-slide.test.ts::returns-patches-not-full-elements",
       "verifier_file": "apps/api/tests/ai/edit-slide.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "apps/api/tests/ai/edit-slide.test.ts::returns-patches-not-full-elements"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "089aa19f35bfda7cbb67fe7f844b1e8677d4effecf76f48258b87e70278ad608",
       "source_sha256": "6943fdb05399ae93094fc22a2fb51ff81017a21a47dd4a4dc1925ec7a365927f",
       "data_deps": [],
@@ -1048,11 +1719,23 @@
       "mutated_file": "packages/core/src/engine/patchApplier.ts",
       "verifier": "packages/core/tests/patchApplier.test.ts::apply-is-idempotent",
       "verifier_file": "packages/core/tests/patchApplier.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "packages/core/tests/patchApplier.test.ts::apply-is-idempotent",
+          "packages/core/tests/patchApplier.test.ts::apply-is-idempotent:add_element"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 2 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "04dc450ae2245de9e0cdd225c23827c5008571cc4e6871878958303ca50596b9",
       "source_sha256": "941fe492a1d1ea4889a605d690566111a77334aefa7a9735be5e33ec2f21383c",
       "data_deps": [],
@@ -1065,11 +1748,22 @@
       "mutated_file": "packages/core/src/engine/patchApplier.ts",
       "verifier": "packages/core/tests/patchApplier.test.ts::remove-missing-element-throws",
       "verifier_file": "packages/core/tests/patchApplier.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "packages/core/tests/patchApplier.test.ts::remove-missing-element-throws"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "04dc450ae2245de9e0cdd225c23827c5008571cc4e6871878958303ca50596b9",
       "source_sha256": "941fe492a1d1ea4889a605d690566111a77334aefa7a9735be5e33ec2f21383c",
       "data_deps": [],
@@ -1082,11 +1776,22 @@
       "mutated_file": "apps/api/src/routes/system.ts",
       "verifier": "apps/api/tests/security/secret-handling.test.ts::secret-never-leaks-into-responses-or-logs",
       "verifier_file": "apps/api/tests/security/secret-handling.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "apps/api/tests/security/secret-handling.test.ts::secret-never-leaks-into-responses-or-logs"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "c504dd7fdbeca0545b242ecd9b3fa4a03bf16a91da39f1cedb0bdd4d6005e83a",
       "source_sha256": "4820c67c727624b1fddc17c81c621b3ac12bd4bf3dacafad910abec4217f33d1",
       "data_deps": [],
@@ -1099,11 +1804,22 @@
       "mutated_file": "scripts/check-coverage.ts",
       "verifier": "scripts/check-coverage.check.ts::domain-coverage-threshold",
       "verifier_file": "scripts/check-coverage.check.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "scripts/check-coverage.check.ts::domain-coverage-threshold"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "4f33d00232dce03ca5a53fa1092b870c1ca4ae523ff44f42673565c488d2a39c",
       "source_sha256": "4d78c0a2edf68bebca3c432deb27ec2e3e0c4f8199afd1bf33c5e2dba1f4fa0b",
       "data_deps": [],
@@ -1116,11 +1832,22 @@
       "mutated_file": "scripts/check-coverage.ts",
       "verifier": "scripts/check-coverage.check.ts::domain-coverage-threshold",
       "verifier_file": "scripts/check-coverage.check.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "scripts/check-coverage.check.ts::domain-coverage-threshold"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "4f33d00232dce03ca5a53fa1092b870c1ca4ae523ff44f42673565c488d2a39c",
       "source_sha256": "4d78c0a2edf68bebca3c432deb27ec2e3e0c4f8199afd1bf33c5e2dba1f4fa0b",
       "data_deps": [],
@@ -1133,11 +1860,22 @@
       "mutated_file": "packages/core/src/engine/layoutEngine.ts",
       "verifier": "packages/core/tests/layoutEngine.snapshot.test.ts::golden-snapshots-all-match",
       "verifier_file": "packages/core/tests/layoutEngine.snapshot.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "packages/core/tests/layoutEngine.snapshot.test.ts::golden-snapshots-all-match"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "b8dd75759a47bc5d06e8452629684c5f305b19fafc445e250c443258c755c8a9",
       "source_sha256": "ee5819a0cb5ab569d48736c8bbaa0d675aa774c27a7ed678e5e0582d763e212e",
       "data_deps": [
@@ -1280,11 +2018,22 @@
       "mutated_file": "apps/api/src/services/projectService.ts",
       "verifier": "e2e/projects.e2e.ts::AC-E2E-012 重命名项目 → 服务端存的是新名字",
       "verifier_file": "e2e/projects.e2e.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "e2e/projects.e2e.ts::AC-E2E-012 重命名项目 → 服务端存的是新名字"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "dd6d9bb6e9ee9130812f62e5b177c6acf97d71884a29d97a2dfe47b9c0582f38",
       "source_sha256": "16c5c2af21dea23090a7324a153097c098eb7a3d57e1e184b300e0732de3ec9c",
       "data_deps": [],
@@ -1297,11 +2046,22 @@
       "mutated_file": "apps/api/src/services/projectService.ts",
       "verifier": "e2e/projects.e2e.ts::AC-E2E-013 删除项目 → 服务端真的删掉了（且列表里也没有）",
       "verifier_file": "e2e/projects.e2e.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "e2e/projects.e2e.ts::AC-E2E-013 删除项目 → 服务端真的删掉了（且列表里也没有）"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "dd6d9bb6e9ee9130812f62e5b177c6acf97d71884a29d97a2dfe47b9c0582f38",
       "source_sha256": "16c5c2af21dea23090a7324a153097c098eb7a3d57e1e184b300e0732de3ec9c",
       "data_deps": [],
@@ -1314,11 +2074,22 @@
       "mutated_file": "apps/api/src/middleware/auth.ts",
       "verifier": "e2e/projects.e2e.ts::AC-E2E-011 跨租户隔离 → 别人的项目拿不到（404 而不是 403）",
       "verifier_file": "e2e/projects.e2e.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "e2e/projects.e2e.ts::AC-E2E-011 跨租户隔离 → 别人的项目拿不到（404 而不是 403）"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "dd6d9bb6e9ee9130812f62e5b177c6acf97d71884a29d97a2dfe47b9c0582f38",
       "source_sha256": "a0b7700ebcdaf49105f784ef1561480c684a9a99737f1504943618b951e28941",
       "data_deps": [],
@@ -1331,11 +2102,22 @@
       "mutated_file": "apps/api/src/services/authService.ts",
       "verifier": "e2e/auth.e2e.ts::AC-E2E-001 注册 → 服务端签发 HttpOnly 会话，前端据此进入工作台",
       "verifier_file": "e2e/auth.e2e.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "e2e/auth.e2e.ts::AC-E2E-001 注册 → 服务端签发 HttpOnly 会话，前端据此进入工作台"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "8eb637a91792780064df0b6508fac35c3e4acdad28517fec1f1df95618ee1012",
       "source_sha256": "86adb0abd3d41cca0791671733fbb3bb15674fc2f1f6053a719fcebb7aacfc5f",
       "data_deps": [],
@@ -1348,11 +2130,22 @@
       "mutated_file": "apps/api/src/services/projectService.ts",
       "verifier": "e2e/projects.e2e.ts::AC-E2E-002 新建项目 → 服务端库里真的有这条项目，且归属当前用户",
       "verifier_file": "e2e/projects.e2e.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "e2e/projects.e2e.ts::AC-E2E-002 新建项目 → 服务端库里真的有这条项目，且归属当前用户"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "dd6d9bb6e9ee9130812f62e5b177c6acf97d71884a29d97a2dfe47b9c0582f38",
       "source_sha256": "16c5c2af21dea23090a7324a153097c098eb7a3d57e1e184b300e0732de3ec9c",
       "data_deps": [],
@@ -1365,11 +2158,22 @@
       "mutated_file": "apps/api/src/services/agents/topicTerms.ts",
       "verifier": "e2e/workbench.e2e.ts::AC-E2E-003 生成大纲 → 页数、主题、服务端与 UI 一致",
       "verifier_file": "e2e/workbench.e2e.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "e2e/workbench.e2e.ts::AC-E2E-003 生成大纲 → 页数、主题、服务端与 UI 一致"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "4101f2d42f65ca9787c287518e0067619d05d2150216cbae4c9adedc423ce7e5",
       "source_sha256": "655c83e951987029727af6b3ebdb0aa1c48bf6d165aac053b460b82ad923470a",
       "data_deps": [],
@@ -1382,11 +2186,22 @@
       "mutated_file": "apps/api/src/routes/projects.ts",
       "verifier": "e2e/workbench.e2e.ts::AC-E2E-004 改大纲标题 → 服务端存新标题，UI 也显示新标题",
       "verifier_file": "e2e/workbench.e2e.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "e2e/workbench.e2e.ts::AC-E2E-004 改大纲标题 → 服务端存新标题，UI 也显示新标题"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "4101f2d42f65ca9787c287518e0067619d05d2150216cbae4c9adedc423ce7e5",
       "source_sha256": "dabd2348f021375a6707e1907e0a87fdf4d4577c779273d491e965a8d0f328df",
       "data_deps": [],
@@ -1399,11 +2214,22 @@
       "mutated_file": "src/components/Workbench.tsx",
       "verifier": "e2e/workbench.e2e.ts::AC-E2E-005 确认大纲并编译 → 画布渲染的正是服务端那份 IR",
       "verifier_file": "e2e/workbench.e2e.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "e2e/workbench.e2e.ts::AC-E2E-005 确认大纲并编译 → 画布渲染的正是服务端那份 IR"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "4101f2d42f65ca9787c287518e0067619d05d2150216cbae4c9adedc423ce7e5",
       "source_sha256": "08f8a4b1aea5b5cdf91a410ddda4c4263133ec1d0da34133eec38c37ae365ef7",
       "data_deps": [],
@@ -1416,11 +2242,22 @@
       "mutated_file": "apps/api/src/services/slideService.ts",
       "verifier": "e2e/workbench.e2e.ts::AC-E2E-006 就地改文本 → 防抖写回服务端，并产生新版本号",
       "verifier_file": "e2e/workbench.e2e.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "e2e/workbench.e2e.ts::AC-E2E-006 就地改文本 → 防抖写回服务端，并产生新版本号"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "4101f2d42f65ca9787c287518e0067619d05d2150216cbae4c9adedc423ce7e5",
       "source_sha256": "73c7d09fa3e9face56cfb181b6288c9c14296127108e999809be789e8e231035",
       "data_deps": [],
@@ -1433,11 +2270,22 @@
       "mutated_file": "apps/api/src/services/slideService.ts",
       "verifier": "e2e/workbench.e2e.ts::AC-E2E-007 两个会话改同一页 → 后者收到 409，前端提示且没覆盖服务端",
       "verifier_file": "e2e/workbench.e2e.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "e2e/workbench.e2e.ts::AC-E2E-007 两个会话改同一页 → 后者收到 409，前端提示且没覆盖服务端"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "4101f2d42f65ca9787c287518e0067619d05d2150216cbae4c9adedc423ce7e5",
       "source_sha256": "73c7d09fa3e9face56cfb181b6288c9c14296127108e999809be789e8e231035",
       "data_deps": [],
@@ -1450,11 +2298,22 @@
       "mutated_file": "apps/api/src/services/slideService.ts",
       "verifier": "e2e/workbench.e2e.ts::AC-E2E-008 AI 编辑 → 服务端施加补丁，画布跟着重绘",
       "verifier_file": "e2e/workbench.e2e.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "e2e/workbench.e2e.ts::AC-E2E-008 AI 编辑 → 服务端施加补丁，画布跟着重绘"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "4101f2d42f65ca9787c287518e0067619d05d2150216cbae4c9adedc423ce7e5",
       "source_sha256": "73c7d09fa3e9face56cfb181b6288c9c14296127108e999809be789e8e231035",
       "data_deps": [],
@@ -1467,11 +2326,22 @@
       "mutated_file": "apps/api/src/services/exportService.ts",
       "verifier": "e2e/exports.e2e.ts::AC-E2E-009 PPTX 导出 → 产物是真正的 OOXML，而且里面是这份文稿",
       "verifier_file": "e2e/exports.e2e.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "e2e/exports.e2e.ts::AC-E2E-009 PPTX 导出 → 产物是真正的 OOXML，而且里面是这份文稿"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "9b461bc2934c351db9447cdc5157dddcb095c28422b29dd81d6da85f2455523d",
       "source_sha256": "bb335e9e1a07dc100e3ad2dbbdc5b05210d61fbf61d0e0095af3a7d5191dc3d4",
       "data_deps": [],
@@ -1484,11 +2354,22 @@
       "mutated_file": "apps/api/src/services/exportService.ts",
       "verifier": "e2e/exports.e2e.ts::AC-E2E-010 PDF 导出 → 产物是真正的 PDF（%PDF 魔数）",
       "verifier_file": "e2e/exports.e2e.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "e2e/exports.e2e.ts::AC-E2E-010 PDF 导出 → 产物是真正的 PDF（%PDF 魔数）"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "9b461bc2934c351db9447cdc5157dddcb095c28422b29dd81d6da85f2455523d",
       "source_sha256": "bb335e9e1a07dc100e3ad2dbbdc5b05210d61fbf61d0e0095af3a7d5191dc3d4",
       "data_deps": [],
@@ -1501,11 +2382,22 @@
       "mutated_file": "apps/api/src/routes/templates.ts",
       "verifier": "e2e/templates.e2e.ts::应用模板 → 服务端存的是新模板，刷新后仍然是它",
       "verifier_file": "e2e/templates.e2e.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "e2e/templates.e2e.ts::应用模板 → 服务端存的是新模板，刷新后仍然是它"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "e66eed577110a0630fbda706a45ec3d0e368ea820d9eef0afb2e9a0a6b657949",
       "source_sha256": "03dce230a68bbe0a39019b1a448755daad33c12aadc3392316c1975ef0074eb7",
       "data_deps": [],
@@ -1518,11 +2410,22 @@
       "mutated_file": "src/App.tsx",
       "verifier": "e2e/templates.e2e.ts::应用模板 → 服务端存的是新模板，刷新后仍然是它",
       "verifier_file": "e2e/templates.e2e.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "e2e/templates.e2e.ts::应用模板 → 服务端存的是新模板，刷新后仍然是它"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "e66eed577110a0630fbda706a45ec3d0e368ea820d9eef0afb2e9a0a6b657949",
       "source_sha256": "24efdcf1f9f4e680cfd1f5228213b5a21936fd19b5dc1c18c5a0451aeb3445c0",
       "data_deps": [],
@@ -1535,11 +2438,22 @@
       "mutated_file": "src/App.tsx",
       "verifier": "e2e/templates.e2e.ts::应用不存在的模板 → 界面如实报错，服务端模板不被改动",
       "verifier_file": "e2e/templates.e2e.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "e2e/templates.e2e.ts::应用不存在的模板 → 界面如实报错，服务端模板不被改动"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "e66eed577110a0630fbda706a45ec3d0e368ea820d9eef0afb2e9a0a6b657949",
       "source_sha256": "24efdcf1f9f4e680cfd1f5228213b5a21936fd19b5dc1c18c5a0451aeb3445c0",
       "data_deps": [],
@@ -1552,11 +2466,22 @@
       "mutated_file": "index.html",
       "verifier": "e2e/offline.e2e.ts::外部资源被挂起 → 外壳仍在 8 秒内渲染出来",
       "verifier_file": "e2e/offline.e2e.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "e2e/offline.e2e.ts::外部资源被挂起 → 外壳仍在 8 秒内渲染出来"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "da82d37ca484cb213b4861335b62c1dcb3a9b35e3f266affb7ca091eba62fafe",
       "source_sha256": "d6ab7322b8f2a1532dcad712ffb85e8b4a916f44fe96c332bf6375ee560961df",
       "data_deps": [],
@@ -1569,11 +2494,22 @@
       "mutated_file": "apps/api/src/services/agents/editAgent.ts",
       "verifier": "e2e/workbench.e2e.ts::AC-E2E-008 AI 编辑 → 服务端施加补丁，画布跟着重绘",
       "verifier_file": "e2e/workbench.e2e.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "e2e/workbench.e2e.ts::AC-E2E-008 AI 编辑 → 服务端施加补丁，画布跟着重绘"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "4101f2d42f65ca9787c287518e0067619d05d2150216cbae4c9adedc423ce7e5",
       "source_sha256": "8ed6d714d74b8868e174a5121d79f31b45395046b07415751d325d0ad80f9a58",
       "data_deps": [],
@@ -1586,11 +2522,22 @@
       "mutated_file": "apps/api/src/routes/quality.ts",
       "verifier": "e2e/quality.e2e.ts::质量报告 → 界面分数与服务端权威评分逐项对得上",
       "verifier_file": "e2e/quality.e2e.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "e2e/quality.e2e.ts::质量报告 → 界面分数与服务端权威评分逐项对得上"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "11718930db5a4300e03c0c3df5145df63b3bb19fb388f445ee9453694e4fd4c5",
       "source_sha256": "c41e63ee7af91d009734ccef159c8cbae1dd6786c04a28ae9d709ede7e2d7d44",
       "data_deps": [],
@@ -1603,11 +2550,22 @@
       "mutated_file": "src/App.tsx",
       "verifier": "e2e/quality.e2e.ts::一键修复 → 服务端的 IR 真的被改写，版本号前进",
       "verifier_file": "e2e/quality.e2e.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "e2e/quality.e2e.ts::一键修复 → 服务端的 IR 真的被改写，版本号前进"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "11718930db5a4300e03c0c3df5145df63b3bb19fb388f445ee9453694e4fd4c5",
       "source_sha256": "24efdcf1f9f4e680cfd1f5228213b5a21936fd19b5dc1c18c5a0451aeb3445c0",
       "data_deps": [],
@@ -1620,11 +2578,22 @@
       "mutated_file": "src/components/PresentationMode.tsx",
       "verifier": "e2e/presentation.e2e.ts::放映画面上的文字 == 服务端 IR 里的文字",
       "verifier_file": "e2e/presentation.e2e.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "e2e/presentation.e2e.ts::放映画面上的文字 == 服务端 IR 里的文字"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "3c1c9eadae83474bee77ed713465a319858b2e3f1b96035a84f8f585c069b5d3",
       "source_sha256": "d34b49569087eb7d30933022a74536f75d2373ba2d5e43c7dacd0087f02d6c3f",
       "data_deps": [],
@@ -1637,11 +2606,22 @@
       "mutated_file": "src/components/PresentationMode.tsx",
       "verifier": "e2e/presentation.e2e.ts::翻页 → 换到服务端的后一页，退回后回到第一页",
       "verifier_file": "e2e/presentation.e2e.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "e2e/presentation.e2e.ts::翻页 → 换到服务端的后一页，退回后回到第一页"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "3c1c9eadae83474bee77ed713465a319858b2e3f1b96035a84f8f585c069b5d3",
       "source_sha256": "d34b49569087eb7d30933022a74536f75d2373ba2d5e43c7dacd0087f02d6c3f",
       "data_deps": [],
@@ -1654,11 +2634,22 @@
       "mutated_file": "src/components/ExportModal.tsx",
       "verifier": "e2e/errors.e2e.ts::导出提交失败 → 界面显示\"导出失败\"，绝不显示\"导出成功\"",
       "verifier_file": "e2e/errors.e2e.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "e2e/errors.e2e.ts::导出提交失败 → 界面显示\"导出失败\"，绝不显示\"导出成功\""
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "2f437d304275ee1e05d3c10aed135a09e305f879c69223f274ddf5f0957a7d63",
       "source_sha256": "2951dbcdb6e6bdfe3147674b780eed4a8301a32ac1d382052efafbfcdb89be69",
       "data_deps": [],
@@ -1671,11 +2662,22 @@
       "mutated_file": "index.html",
       "verifier": "e2e/offline.e2e.ts::应用 HTML → 没有会阻塞渲染的外部样式表",
       "verifier_file": "e2e/offline.e2e.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "e2e/offline.e2e.ts::应用 HTML → 没有会阻塞渲染的外部样式表"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "da82d37ca484cb213b4861335b62c1dcb3a9b35e3f266affb7ca091eba62fafe",
       "source_sha256": "d6ab7322b8f2a1532dcad712ffb85e8b4a916f44fe96c332bf6375ee560961df",
       "data_deps": [],
@@ -1688,11 +2690,22 @@
       "mutated_file": "packages/core/src/engine/contentBinding.ts",
       "verifier": "packages/core/tests/contentBinding.test.ts::slots-not-consumed-by-layout-are-dropped",
       "verifier_file": "packages/core/tests/contentBinding.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "packages/core/tests/contentBinding.test.ts::slots-not-consumed-by-layout-are-dropped"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "12375bff088314a6c0d8209d0f95b2ea016d99cbc004ba5fe77bdf50c5e35f60",
       "source_sha256": "28b7353a38b5f1c349b48234b0ae1918b93067d87e23e56ec30171771c87b24b",
       "data_deps": [],
@@ -1705,11 +2718,22 @@
       "mutated_file": "packages/core/src/engine/contentBinding.ts",
       "verifier": "packages/core/tests/contentBinding.test.ts::missing-required-slot-is-an-error",
       "verifier_file": "packages/core/tests/contentBinding.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "packages/core/tests/contentBinding.test.ts::missing-required-slot-is-an-error"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "12375bff088314a6c0d8209d0f95b2ea016d99cbc004ba5fe77bdf50c5e35f60",
       "source_sha256": "28b7353a38b5f1c349b48234b0ae1918b93067d87e23e56ec30171771c87b24b",
       "data_deps": [],
@@ -1722,11 +2746,22 @@
       "mutated_file": "packages/core/src/data/layoutIntents.ts",
       "verifier": "packages/core/tests/contentBinding.test.ts::stats-kpi-without-number-degrades-to-cards-grid",
       "verifier_file": "packages/core/tests/contentBinding.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "packages/core/tests/contentBinding.test.ts::stats-kpi-without-number-degrades-to-cards-grid"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "12375bff088314a6c0d8209d0f95b2ea016d99cbc004ba5fe77bdf50c5e35f60",
       "source_sha256": "bbff0dd27cae9e5e51f7733c70f165e3d2d44c1e95818b3d64cadae46acc23e6",
       "data_deps": [],
@@ -1739,11 +2774,22 @@
       "mutated_file": "packages/core/src/engine/layoutEngine.ts",
       "verifier": "packages/core/tests/contentBinding.test.ts::stats-kpi-without-number-degrades-to-cards-grid",
       "verifier_file": "packages/core/tests/contentBinding.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "packages/core/tests/contentBinding.test.ts::stats-kpi-without-number-degrades-to-cards-grid"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "12375bff088314a6c0d8209d0f95b2ea016d99cbc004ba5fe77bdf50c5e35f60",
       "source_sha256": "ee5819a0cb5ab569d48736c8bbaa0d675aa774c27a7ed678e5e0582d763e212e",
       "data_deps": [],
@@ -1756,11 +2802,22 @@
       "mutated_file": "packages/core/src/engine/svgRenderer.ts",
       "verifier": "packages/core/tests/layoutInvariants.test.ts::elements-belong-to-declared-layers",
       "verifier_file": "packages/core/tests/layoutInvariants.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "packages/core/tests/layoutInvariants.test.ts::elements-belong-to-declared-layers"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "6fa6a3b50e025dd98783316122415eec774f8d62b3a3c4b62b308a823293f858",
       "source_sha256": "91710f94e2583a3dbc123e0edc64c2f642dacdfa5d07597bbbf9ce98ff9337cd",
       "data_deps": [],
@@ -1773,11 +2830,22 @@
       "mutated_file": "packages/core/src/engine/qualityEngine.ts",
       "verifier": "packages/core/tests/layoutInvariants.test.ts::no-quality-issue-in-any-combo",
       "verifier_file": "packages/core/tests/layoutInvariants.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "(整轮失败)"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "6fa6a3b50e025dd98783316122415eec774f8d62b3a3c4b62b308a823293f858",
       "source_sha256": "c13a804cc23db71c1a162e60c367df078be1a4371ca17ed4eba7e608f0b9db82",
       "data_deps": [],
@@ -1790,11 +2858,22 @@
       "mutated_file": "packages/core/src/engine/layoutEngine.ts",
       "verifier": "spec/verify/element-variant.test.ts::layout-engine-sets-variant-on-every-element",
       "verifier_file": "spec/verify/element-variant.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/element-variant.test.ts::layout-engine-sets-variant-on-every-element"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "951ceb0dde8a06dd724effd97188d15d1681e8287542973012602232385956f5",
       "source_sha256": "ee5819a0cb5ab569d48736c8bbaa0d675aa774c27a7ed678e5e0582d763e212e",
       "data_deps": [],
@@ -1807,11 +2886,22 @@
       "mutated_file": "packages/core/src/engine/elementVariant.ts",
       "verifier": "spec/verify/element-variant.test.ts::id-repair-derives-prefix-from-variant",
       "verifier_file": "spec/verify/element-variant.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/element-variant.test.ts::id-repair-derives-prefix-from-variant"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "951ceb0dde8a06dd724effd97188d15d1681e8287542973012602232385956f5",
       "source_sha256": "5672e6c572de4bd8f8e1c7429b3eb025b1db6d120ed6d5c49904d868d7850351",
       "data_deps": [],
@@ -1824,11 +2914,22 @@
       "mutated_file": "packages/core/src/engine/svgRenderer.ts",
       "verifier": "spec/verify/element-variant.test.ts::render-and-theme-follow-variant-not-id",
       "verifier_file": "spec/verify/element-variant.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/element-variant.test.ts::render-and-theme-follow-variant-not-id"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "951ceb0dde8a06dd724effd97188d15d1681e8287542973012602232385956f5",
       "source_sha256": "91710f94e2583a3dbc123e0edc64c2f642dacdfa5d07597bbbf9ce98ff9337cd",
       "data_deps": [],
@@ -1841,11 +2942,22 @@
       "mutated_file": "packages/core/src/engine/svgRenderer.ts",
       "verifier": "spec/verify/element-variant.test.ts::no-consumer-parses-element-ids",
       "verifier_file": "spec/verify/element-variant.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/element-variant.test.ts::no-consumer-parses-element-ids"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "951ceb0dde8a06dd724effd97188d15d1681e8287542973012602232385956f5",
       "source_sha256": "91710f94e2583a3dbc123e0edc64c2f642dacdfa5d07597bbbf9ce98ff9337cd",
       "data_deps": [],
@@ -1858,11 +2970,22 @@
       "mutated_file": "packages/core/src/engine/qualityEngine.ts",
       "verifier": "spec/verify/quality-engine.test.ts::autofix-leaves-master-elements-alone",
       "verifier_file": "spec/verify/quality-engine.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/quality-engine.test.ts::autofix-leaves-master-elements-alone"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "484563d25c9966e6bdf8a5f41dbea484ca0421cbd219a21d270037d5414f651b",
       "source_sha256": "c13a804cc23db71c1a162e60c367df078be1a4371ca17ed4eba7e608f0b9db82",
       "data_deps": [],
@@ -1875,11 +2998,22 @@
       "mutated_file": "packages/core/src/engine/qualityEngine.ts",
       "verifier": "spec/verify/quality-engine.test.ts::autofix-never-lowers-score",
       "verifier_file": "spec/verify/quality-engine.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/quality-engine.test.ts::autofix-never-lowers-score"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "484563d25c9966e6bdf8a5f41dbea484ca0421cbd219a21d270037d5414f651b",
       "source_sha256": "c13a804cc23db71c1a162e60c367df078be1a4371ca17ed4eba7e608f0b9db82",
       "data_deps": [],
@@ -1892,11 +3026,22 @@
       "mutated_file": "packages/core/src/engine/qualityRules.ts",
       "verifier": "spec/verify/quality-engine.test.ts::issues-declare-fixability",
       "verifier_file": "spec/verify/quality-engine.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/quality-engine.test.ts::issues-declare-fixability"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "484563d25c9966e6bdf8a5f41dbea484ca0421cbd219a21d270037d5414f651b",
       "source_sha256": "8110c476dcad11b0eee3b45af393c6369137d65e9c0257c40555703064bf9527",
       "data_deps": [],
@@ -1909,11 +3054,22 @@
       "mutated_file": "packages/core/src/engine/qualityRules.ts",
       "verifier": "spec/verify/quality-rules.test.ts::rule-table-matches-doc",
       "verifier_file": "spec/verify/quality-rules.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/quality-rules.test.ts::rule-table-matches-doc"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "441f4fd2c0478bd15c907d4e2cde6f76b8d9322b158440aa117c2d0c68f269ec",
       "source_sha256": "8110c476dcad11b0eee3b45af393c6369137d65e9c0257c40555703064bf9527",
       "data_deps": [],
@@ -1926,11 +3082,22 @@
       "mutated_file": "packages/core/src/engine/qualityRules.ts",
       "verifier": "spec/verify/quality-rules.test.ts::every-rule-has-doc-anchor",
       "verifier_file": "spec/verify/quality-rules.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/quality-rules.test.ts::every-rule-has-doc-anchor"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "441f4fd2c0478bd15c907d4e2cde6f76b8d9322b158440aa117c2d0c68f269ec",
       "source_sha256": "8110c476dcad11b0eee3b45af393c6369137d65e9c0257c40555703064bf9527",
       "data_deps": [],
@@ -1943,11 +3110,22 @@
       "mutated_file": "packages/core/src/engine/qualityEngine.ts",
       "verifier": "spec/verify/quality-rules.test.ts::diagnostic-ids-map-to-rules",
       "verifier_file": "spec/verify/quality-rules.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/quality-rules.test.ts::diagnostic-ids-map-to-rules"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "441f4fd2c0478bd15c907d4e2cde6f76b8d9322b158440aa117c2d0c68f269ec",
       "source_sha256": "c13a804cc23db71c1a162e60c367df078be1a4371ca17ed4eba7e608f0b9db82",
       "data_deps": [],
@@ -1960,11 +3138,22 @@
       "mutated_file": "packages/core/src/engine/qualityEngine.ts",
       "verifier": "spec/verify/quality-rules.test.ts::penalties-come-from-rule-table",
       "verifier_file": "spec/verify/quality-rules.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/quality-rules.test.ts::penalties-come-from-rule-table"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "441f4fd2c0478bd15c907d4e2cde6f76b8d9322b158440aa117c2d0c68f269ec",
       "source_sha256": "c13a804cc23db71c1a162e60c367df078be1a4371ca17ed4eba7e608f0b9db82",
       "data_deps": [],
@@ -1977,11 +3166,22 @@
       "mutated_file": "packages/core/src/engine/qualityEngine.ts",
       "verifier": "spec/verify/quality-engine.test.ts::thin-page-penalty",
       "verifier_file": "spec/verify/quality-engine.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/quality-engine.test.ts::thin-page-penalty"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "484563d25c9966e6bdf8a5f41dbea484ca0421cbd219a21d270037d5414f651b",
       "source_sha256": "c13a804cc23db71c1a162e60c367df078be1a4371ca17ed4eba7e608f0b9db82",
       "data_deps": [],
@@ -1994,11 +3194,22 @@
       "mutated_file": "packages/core/src/engine/qualityEngine.ts",
       "verifier": "spec/verify/quality-engine.test.ts::duplicate-keymessage-penalty",
       "verifier_file": "spec/verify/quality-engine.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/quality-engine.test.ts::duplicate-keymessage-penalty"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "484563d25c9966e6bdf8a5f41dbea484ca0421cbd219a21d270037d5414f651b",
       "source_sha256": "c13a804cc23db71c1a162e60c367df078be1a4371ca17ed4eba7e608f0b9db82",
       "data_deps": [],
@@ -2011,11 +3222,22 @@
       "mutated_file": "packages/core/src/engine/qualityEngine.ts",
       "verifier": "spec/verify/quality-engine.test.ts::sparse-page-penalty",
       "verifier_file": "spec/verify/quality-engine.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/quality-engine.test.ts::sparse-page-penalty"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "484563d25c9966e6bdf8a5f41dbea484ca0421cbd219a21d270037d5414f651b",
       "source_sha256": "c13a804cc23db71c1a162e60c367df078be1a4371ca17ed4eba7e608f0b9db82",
       "data_deps": [],
@@ -2028,11 +3250,22 @@
       "mutated_file": "packages/core/src/engine/qualityEngine.ts",
       "verifier": "spec/verify/quality-engine.test.ts::thin-page-not-double-charged",
       "verifier_file": "spec/verify/quality-engine.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/quality-engine.test.ts::thin-page-not-double-charged"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "484563d25c9966e6bdf8a5f41dbea484ca0421cbd219a21d270037d5414f651b",
       "source_sha256": "c13a804cc23db71c1a162e60c367df078be1a4371ca17ed4eba7e608f0b9db82",
       "data_deps": [],
@@ -2045,11 +3278,22 @@
       "mutated_file": "packages/core/src/engine/textMetrics.ts",
       "verifier": "spec/verify/text-metrics.test.ts::text-width-model-is-calibrated",
       "verifier_file": "spec/verify/text-metrics.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/text-metrics.test.ts::text-width-model-is-calibrated"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "eea0589a563f37050bebcded102b2490d3af336eb59ab95516871f3890841ab2",
       "source_sha256": "00381af7ffaa9d7deb4d38071c6f04ea4b6a4d6fcdba1d7d8750a0a321f86402",
       "data_deps": [],
@@ -2062,13 +3306,248 @@
       "mutated_file": "packages/core/src/engine/textMetrics.ts",
       "verifier": "spec/verify/text-metrics.test.ts::wrapped-lines-never-exceed-the-available-width",
       "verifier_file": "spec/verify/text-metrics.test.ts",
-      "baseline_pass": true,
-      "caught": true,
-      "restored_pass": true,
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/text-metrics.test.ts::wrapped-lines-never-exceed-the-available-width"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
       "verdict": "PASS",
-      "note": "已报错",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
       "verifier_sha256": "eea0589a563f37050bebcded102b2490d3af336eb59ab95516871f3890841ab2",
       "source_sha256": "00381af7ffaa9d7deb4d38071c6f04ea4b6a4d6fcdba1d7d8750a0a321f86402",
+      "data_deps": [],
+      "data_sha256": {},
+      "output_tail": ""
+    },
+    {
+      "criterion": "AC-EXP-007",
+      "description": "fallback 链不再插入 CJK 族 —— 字体栈里一个 CJK 族都没有，中文只能靠操作系统兜底",
+      "mutated_file": "packages/core/src/engine/typography.ts",
+      "verifier": "spec/verify/font-fallback.test.ts::svg-font-stack-has-cjk-fallback",
+      "verifier_file": "spec/verify/font-fallback.test.ts",
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/font-fallback.test.ts::svg-font-stack-has-cjk-fallback"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "verdict": "PASS",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
+      "verifier_sha256": "6a825e8536b5259ff80a35dbc246fd5b3982d661107ec524c3e89557b7ca3113",
+      "source_sha256": "f25b01f3f1e1d4946e24f79d5ebb3dbbc0459a91f77721596aaa99062705acae",
+      "data_deps": [],
+      "data_sha256": {},
+      "output_tail": ""
+    },
+    {
+      "criterion": "AC-EXP-007",
+      "description": "CJK 族被排到 generic 族之后 —— generic 一旦命中就轮不到 CJK 了",
+      "mutated_file": "packages/core/src/engine/typography.ts",
+      "verifier": "spec/verify/font-fallback.test.ts::svg-font-stack-has-cjk-fallback",
+      "verifier_file": "spec/verify/font-fallback.test.ts",
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/font-fallback.test.ts::svg-font-stack-has-cjk-fallback"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "verdict": "PASS",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
+      "verifier_sha256": "6a825e8536b5259ff80a35dbc246fd5b3982d661107ec524c3e89557b7ca3113",
+      "source_sha256": "f25b01f3f1e1d4946e24f79d5ebb3dbbc0459a91f77721596aaa99062705acae",
+      "data_deps": [],
+      "data_sha256": {},
+      "output_tail": ""
+    },
+    {
+      "criterion": "AC-EXP-007",
+      "description": "渲染器绕过 fallback 链 —— 主题字体栈原样写进 SVG，中文全靠操作系统兜底",
+      "mutated_file": "packages/core/src/engine/svgRenderer.ts",
+      "verifier": "spec/verify/font-fallback.test.ts::svg-font-stack-has-cjk-fallback",
+      "verifier_file": "spec/verify/font-fallback.test.ts",
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/font-fallback.test.ts::svg-font-stack-has-cjk-fallback"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "verdict": "PASS",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
+      "verifier_sha256": "6a825e8536b5259ff80a35dbc246fd5b3982d661107ec524c3e89557b7ca3113",
+      "source_sha256": "91710f94e2583a3dbc123e0edc64c2f642dacdfa5d07597bbbf9ce98ff9337cd",
+      "data_deps": [],
+      "data_sha256": {},
+      "output_tail": ""
+    },
+    {
+      "criterion": "AC-EXP-008",
+      "description": "PPTX 侧不再跟着字体常量走 —— 写死成 Arial，拉丁字形与东亚字形都指向它",
+      "mutated_file": "packages/core/src/engine/exportEngine.ts",
+      "verifier": "spec/verify/font-fallback.test.ts::pptx-uses-cjk-capable-font",
+      "verifier_file": "spec/verify/font-fallback.test.ts",
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/font-fallback.test.ts::pptx-uses-cjk-capable-font"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "verdict": "PASS",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
+      "verifier_sha256": "6a825e8536b5259ff80a35dbc246fd5b3982d661107ec524c3e89557b7ca3113",
+      "source_sha256": "749b73d751ea2ff4ac94f2937da52ae113e37e451187499d6d9b3e2695e4c7d9",
+      "data_deps": [],
+      "data_sha256": {},
+      "output_tail": ""
+    },
+    {
+      "criterion": "AC-EXP-008",
+      "description": "文本运行直接透传主题的 CSS 字体栈 —— 「主题字体栈直接透传」的旧写法回来了",
+      "mutated_file": "packages/core/src/engine/exportEngine.ts",
+      "verifier": "spec/verify/font-fallback.test.ts::pptx-uses-cjk-capable-font",
+      "verifier_file": "spec/verify/font-fallback.test.ts",
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "spec/verify/font-fallback.test.ts::pptx-uses-cjk-capable-font"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "verdict": "PASS",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
+      "verifier_sha256": "6a825e8536b5259ff80a35dbc246fd5b3982d661107ec524c3e89557b7ca3113",
+      "source_sha256": "749b73d751ea2ff4ac94f2937da52ae113e37e451187499d6d9b3e2695e4c7d9",
+      "data_deps": [],
+      "data_sha256": {},
+      "output_tail": ""
+    },
+    {
+      "criterion": "AC-E2E-023",
+      "description": "PNG/SVG 导出的 scope 带上全部页 —— 第 1 页混了进来",
+      "mutated_file": "src/components/ExportModal.tsx",
+      "verifier": "e2e/navigation.e2e.ts::AC-E2E-023 PNG/SVG 导出 → scope 只含当前页",
+      "verifier_file": "e2e/navigation.e2e.ts",
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "e2e/navigation.e2e.ts::AC-E2E-023 PNG/SVG 导出 → scope 只含当前页"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "verdict": "PASS",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
+      "verifier_sha256": "c342a48f97f4feaa01ae5c54938d8cdbb28fda363eb2c6863b815896144dc7ec",
+      "source_sha256": "2951dbcdb6e6bdfe3147674b780eed4a8301a32ac1d382052efafbfcdb89be69",
+      "data_deps": [],
+      "data_sha256": {},
+      "output_tail": ""
+    },
+    {
+      "criterion": "AC-E2E-024",
+      "description": "导出弹窗的页码写死第 1 页 —— 停在第 2 页也写着「当前第 1 页」",
+      "mutated_file": "src/components/ExportModal.tsx",
+      "verifier": "e2e/navigation.e2e.ts::AC-E2E-024 导出弹窗的 PNG 说明 → 页码跟着当前页走",
+      "verifier_file": "e2e/navigation.e2e.ts",
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "e2e/navigation.e2e.ts::AC-E2E-024 导出弹窗的 PNG 说明 → 页码跟着当前页走"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "verdict": "PASS",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
+      "verifier_sha256": "c342a48f97f4feaa01ae5c54938d8cdbb28fda363eb2c6863b815896144dc7ec",
+      "source_sha256": "2951dbcdb6e6bdfe3147674b780eed4a8301a32ac1d382052efafbfcdb89be69",
+      "data_deps": [],
+      "data_sha256": {},
+      "output_tail": ""
+    },
+    {
+      "criterion": "AC-E2E-025",
+      "description": "放映的起点恒为第 1 页 —— 停在第 2 页点放映还是从第 1 页开始",
+      "mutated_file": "src/components/PresentationMode.tsx",
+      "verifier": "e2e/navigation.e2e.ts::AC-E2E-025 工作台第 2 页点放映 → 从第 2 页开始",
+      "verifier_file": "e2e/navigation.e2e.ts",
+      "baseline": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "mutated": {
+        "failed": [
+          "e2e/navigation.e2e.ts::AC-E2E-025 工作台第 2 页点放映 → 从第 2 页开始"
+        ],
+        "no_verdict": false
+      },
+      "restored": {
+        "failed": [],
+        "no_verdict": false
+      },
+      "verdict": "PASS",
+      "reason": "注入让原本不失败的用例失败了（多出 1 条），还原后回到了基线状态 —— **验证器抓得住这个错**",
+      "verifier_sha256": "c342a48f97f4feaa01ae5c54938d8cdbb28fda363eb2c6863b815896144dc7ec",
+      "source_sha256": "d34b49569087eb7d30933022a74536f75d2373ba2d5e43c7dacd0087f02d6c3f",
       "data_deps": [],
       "data_sha256": {},
       "output_tail": ""

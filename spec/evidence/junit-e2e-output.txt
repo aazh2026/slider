@@ -6,7 +6,7 @@
  10 pass
  0 fail
  35 expect() calls
-Ran 10 tests across 1 file. [4.92s]
+Ran 10 tests across 1 file. [4.76s]
 
 ======================================================================
 链 errors —— 通过
@@ -15,7 +15,7 @@ Ran 10 tests across 1 file. [4.92s]
  4 pass
  0 fail
  12 expect() calls
-Ran 4 tests across 1 file. [2.35s]
+Ran 4 tests across 1 file. [2.27s]
 
 ======================================================================
 链 exports —— 通过
@@ -24,7 +24,7 @@ Ran 4 tests across 1 file. [2.35s]
  5 pass
  0 fail
  35 expect() calls
-Ran 5 tests across 1 file. [8.71s]
+Ran 5 tests across 1 file. [8.53s]
 
 ======================================================================
 链 library —— 通过
@@ -33,7 +33,7 @@ Ran 5 tests across 1 file. [8.71s]
  12 pass
  0 fail
  36 expect() calls
-Ran 12 tests across 1 file. [6.86s]
+Ran 12 tests across 1 file. [6.70s]
 
 ======================================================================
 链 navigation —— 通过
@@ -42,7 +42,7 @@ Ran 12 tests across 1 file. [6.86s]
  13 pass
  0 fail
  45 expect() calls
-Ran 13 tests across 1 file. [9.02s]
+Ran 13 tests across 1 file. [8.94s]
 
 ======================================================================
 链 offline —— 通过
@@ -51,7 +51,7 @@ Ran 13 tests across 1 file. [9.02s]
  2 pass
  0 fail
  4 expect() calls
-Ran 2 tests across 1 file. [499.00ms]
+Ran 2 tests across 1 file. [502.00ms]
 
 ======================================================================
 链 presentation —— 通过
@@ -60,7 +60,7 @@ Ran 2 tests across 1 file. [499.00ms]
  4 pass
  0 fail
  14 expect() calls
-Ran 4 tests across 1 file. [3.10s]
+Ran 4 tests across 1 file. [3.09s]
 
 ======================================================================
 链 projects —— 通过
@@ -69,7 +69,7 @@ Ran 4 tests across 1 file. [3.10s]
  7 pass
  0 fail
  25 expect() calls
-Ran 7 tests across 1 file. [4.52s]
+Ran 7 tests across 1 file. [4.58s]
 
 ======================================================================
 链 quality —— 通过
@@ -87,7 +87,7 @@ Ran 2 tests across 1 file. [2.42s]
  3 pass
  0 fail
  9 expect() calls
-Ran 3 tests across 1 file. [2.51s]
+Ran 3 tests across 1 file. [2.63s]
 
 ======================================================================
 链 workbench —— 通过
@@ -96,7 +96,7 @@ Ran 3 tests across 1 file. [2.51s]
  12 pass
  0 fail
  78 expect() calls
-Ran 12 tests across 1 file. [15.79s]
+Ran 12 tests across 1 file. [15.67s]
 
 ======================================================================
 链 workbench-editing —— 通过
@@ -105,7 +105,7 @@ Ran 12 tests across 1 file. [15.79s]
  14 pass
  0 fail
  23 expect() calls
-Ran 14 tests across 1 file. [17.47s]
+Ran 14 tests across 1 file. [17.44s]
 
 ======================================================================
 链 workbench-pages —— 通过
