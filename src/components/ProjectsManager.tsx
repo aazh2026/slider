@@ -73,10 +73,28 @@ export const ProjectsManager: React.FC<ProjectsManagerProps> = ({
     URL.revokeObjectURL(url);
   };
 
+  /**
+   * 导出 PPTX（卡片上的「直接下载」）。
+   * ---------------------------------------------------------------------------
+   * 卡片上这份 `p` 是**摘要** —— 列表接口只回摘要，`slides` 恒为空数组
+   * （见 `projectStorage.ts` 的 `listProjects`）。
+   *
+   * 直接把它丢给导出引擎，产出的就是一份**合法但零页**的 .pptx：
+   * 文件能打开、能编辑，里面一页都没有。实测（2026-11-05 第 18 轮）：
+   * 一份 3 页的文稿，导出来 `ppt/slides/` 下**一个 slideN.xml 都没有**。
+   *
+   * 旁边的「导出 JSON」早就是这个毛病，也早修好了（导服务端那份 bundle）。
+   * 同一个根因、两个按钮，漏了一个 —— 这次一起修：**导服务端那份全量**。
+   */
   const handleDirectExportPptx = async (p: PresentationProject) => {
     setExportingProjectId(p.id);
     try {
-      await ExportEngine.exportPresentationAsPptx(p);
+      // 走「打开这份文稿」同一条路 —— 导出来的就是用户会看到的那份
+      const { project } = await ProjectStorage.loadProject(p.id);
+      if (project.slides.length === 0) {
+        throw new Error('这份文稿还没有页面，先编译再导出');
+      }
+      await ExportEngine.exportPresentationAsPptx(project);
     } catch (err: any) {
       alert(`导出 PPTX 失败: ${err.message || '未知错误'}`);
     } finally {

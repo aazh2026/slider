@@ -14,15 +14,19 @@
  *     「按页数从多到少」对没打开过的文稿是空操作；
  *   · 「导出 Slide IR JSON 备份」导的是内存里那份（也就是摘要）→ 导出来
  *     是一份没有页面的空壳，再导入回去什么也恢复不了。
+ *   · 「导出 PPTX」也导的是摘要 —— 摘要的 `slides` 恒为空数组，
+ *     于是导出来是一份**合法但零页**的 .pptx：文件能打开，里面没有一页。
+ *     （JSON 那条修好了，PPTX 这条被漏下了 —— 同一个根因，两个按钮。）
  *
- * 三条都已修（服务端摘要补 `templateId` / `slideCount`；导出改导服务端 bundle），
- * 这一链就是它们的**回归锁**。
+ * 前三条都已修（服务端摘要补 `templateId` / `slideCount`；导出改导服务端 bundle），
+ * 这一链就是它们的**回归锁**；第四条是 2026-11-05 第 18 轮补上的。
  *
  * 断言分层：作品库这一层的动作（新建 / 复制 / 导入）**都落服务端**，
  * 所以断言查服务端的项目列表；界面上的卡片只作辅助观察。
  */
 
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
+import JSZip from 'jszip';
 
 import {
   TEST_TIMEOUT,
@@ -316,6 +320,49 @@ describe('作品库链（真实浏览器 + 真实服务端）', () => {
       // 服务端的 orderIndex 是 1 起的（idx + 1）—— 页序必须原样带出来
       expect(bundle.slides.map((s) => s.orderIndex)).toEqual([1, 2, 3]);
       expect(bundle.slides.map((s) => s.ir.slideId)).toEqual(fx.lightSlideIds);
+
+      expect(uncaughtErrors(session.logs)).toEqual([]);
+    } finally {
+      await session.close();
+    }
+  }, TEST_TIMEOUT);
+
+  test('导出 PPTX → 拿到的是带页面的 pptx（不是零页空壳）', async () => {
+    const session = await harness.newSession();
+    try {
+      const fx = await setupLibrary(session);
+
+      const [download] = await Promise.all([
+        session.page.waitForEvent('download'),
+        session.page.getByTestId(`pm-pptx-${fx.lightId}`).click(),
+      ]);
+
+      expect(download.suggestedFilename()).toContain('浅色方案');
+
+      const path = await download.path();
+      expect(path).toBeTruthy();
+      const bytes = new Uint8Array(await Bun.file(path!).arrayBuffer());
+
+      // ZIP 魔数 —— 文件本身是合法的 OOXML 包
+      expect(Array.from(bytes.slice(0, 4))).toEqual([0x50, 0x4b, 0x03, 0x04]);
+
+      const zip = await JSZip.loadAsync(bytes);
+      const slideNames = Object.keys(zip.files).filter((n) =>
+        /^ppt\/slides\/slide\d+\.xml$/.test(n)
+      );
+
+      // **关键断言**：这份文稿有 3 页，导出的 pptx 里就得有 3 页。
+      // 以前这里拿到的是 0 —— 卡片上那份是**摘要**，`slides` 恒为空数组，
+      // 于是导出来的是一份「合法但零页」的空壳：能打开，里面一页都没有。
+      expect(slideNames.length).toBe(3);
+
+      // 内容层：得是**这份**文稿，不是别的（换一份文稿的产物，页数照样对得上）
+      let allText = '';
+      for (const name of slideNames) {
+        const xml = await zip.file(name)!.async('string');
+        allText += xml.replace(/<[^>]*>/g, '');
+      }
+      expect(allText).toContain('浅色方案');
 
       expect(uncaughtErrors(session.logs)).toEqual([]);
     } finally {

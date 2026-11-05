@@ -1821,6 +1821,33 @@ export const MUTATIONS: Mutation[] = [
     testName: 'AC-E2E-025 工作台第 2 页点放映 → 从第 2 页开始',
   },
   // =======================================================================
+  // 波 5 —— 作品库这一屏的导出（SPEC-E2E-013）
+  // =======================================================================
+  //
+  // 注入的是**修好之前的那个写法**：把「导服务端那份全量」改回「导卡片上
+  // 这份摘要」。摘要是列表接口给的，`slides` 恒为空数组 ——
+  // 于是导出来是一份**合法但零页**的 pptx：能打开，里面一页都没有。
+  //
+  // 之所以要注入这一条：这份缺陷的特征是「**看起来成功**」。
+  // 导出没有报错、文件确实下来了、Office 也确实能打开它 ——
+  // 唯一能揭穿它的，是把包解开数一数里面有几页。
+  // 这正是「导出后回读产物，校验页数」（docs/backend-features.md EXP-17）
+  // 说的那件事；判据不回读产物，就永远发现不了。
+  {
+    criterion: 'AC-E2E-026',
+    description: 'PPTX 导出又用回卡片摘要 —— 摘要的 slides 是空数组，导出来是零页空壳',
+    file: 'src/components/ProjectsManager.tsx',
+    find:
+      '      const { project } = await ProjectStorage.loadProject(p.id);\n' +
+      '      if (project.slides.length === 0) {\n' +
+      "        throw new Error('这份文稿还没有页面，先编译再导出');\n" +
+      '      }\n' +
+      '      await ExportEngine.exportPresentationAsPptx(project);\n',
+    replace: '      await ExportEngine.exportPresentationAsPptx(p);\n',
+    testFile: 'e2e/library.e2e.ts',
+    testName: '导出 PPTX → 拿到的是带页面的 pptx（不是零页空壳）',
+  },
+  // =======================================================================
   // SPEC-GOV-005 领域层零依赖 —— 门禁自己抓不抓得住错
   // =======================================================================
   //

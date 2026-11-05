@@ -2376,6 +2376,42 @@ clauses:
           pass_when: "退出码 0，且该用例未被 skip"
         maturity: automated
 
+  # ---- SPEC-E2E-013 作品库这一屏，导出的产物必须是这份文稿本身 ----
+  - id: SPEC-E2E-013
+    title: 作品库卡片上导出的产物，必须是这份文稿本身
+    type: business
+    risk: high
+    status: active
+    maturity: automated
+    statement: "作品库（我的文稿）这一屏上触发的导出，导出的产物必须来自服务端那份完整文稿（项目详情 + 每一页的 IR），而不是列表接口给的摘要 —— 摘要里 slides 恒为空数组，据它导出的 PPTX 会是一份合法但零页的空壳，导出的 JSON 会是一份恢复不回来的备份"
+    source:
+      doc: "docs/backend-features.md"
+      section: "§项目管理 PRJ-08"
+      quote: "| PRJ-08 | 导出 Slide IR JSON | P0 | S1 | 对应前端 `exportProjectAsJson`；导出内容可再次导入 |"
+    inference: "PRJ-08 说「导出内容可再次导入」—— 导出物必须承载这份文稿的页面，否则导出的东西什么也恢复不了。列表接口（PRJ-01）只回摘要，只有项目详情（PRJ-03）才回 slides；前端若拿摘要当导出对象，导出的就是一个没有页面的壳子。同一类缺陷此前修过一处（JSON 导出改成导服务端那份 bundle），PPTX 那条被漏下了 —— 本条把「作品库这一屏的导出」整体收进判据，不再按按钮逐个修"
+    behaviors:
+      - when: "用户在作品库里对一份 3 页的文稿点「导出 PPTX」"
+        then: "下载到的 pptx 必须正好含 3 页，页面文本里有这份文稿的主题文字 —— 不能是一份能打开但一页都没有的空壳"
+      - when: "导出对象是一份还没有页面的文稿（刚建、还没编译）"
+        then: "界面必须明确报错，不得下载出一份零页文件冒充成功"
+    boundaries:
+      - "本条只管作品库这一屏（ProjectsManager）的卡片按钮；工作台里的导出中心（服务端管线）另由 SPEC-E2E-005 管"
+      - "本条管的是「导出来的东西是不是这份文稿」，不管版式保真（那由 SPEC-EXP-001 等管）"
+      - "本条管「导出」，不管「导入」；导入的 bundle 形状校验由 SPEC-EXP-005 管"
+    acceptance:
+      - id: AC-E2E-026
+        criterion: "在真实浏览器的作品库里对一份 3 页文稿点「导出 PPTX」，断言下载到的文件是合法 OOXML（ZIP 魔数 PK\\x03\\x04）、`ppt/slides/` 下**正好 3 个** slideN.xml，且剥掉标签后的页面文本里含这份文稿的主题文字"
+        oracle:
+          tier: authoritative
+          source: "docs/backend-features.md EXP-17「导出后回读产物，校验页数、尺寸、关键文本存在」+ PRJ-03「项目详情返回 slides」+ PRJ-08「导出内容可再次导入」"
+          confidence: high
+        verification:
+          kind: test
+          target: "e2e/library.e2e.ts::导出 PPTX → 拿到的是带页面的 pptx（不是零页空壳）"
+          command: "bun test ./e2e/library.e2e.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
 # ===========================================================================
 # H. 非功能
 # ===========================================================================

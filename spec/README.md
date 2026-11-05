@@ -55,7 +55,7 @@ MUTATION_CHECK_ONLY=AC-E2E-011 bun run spec/verify/mutation-check.ts   # 只跑�
 
 | 文件 | 作用 | 性质 |
 |---|---|---|
-| `spec.yaml` | 条款 / 判据的机器可读契约（当前 60 条条款 / 85 条判据） | **手写** —— 唯一的事实来源 |
+| `spec.yaml` | 条款 / 判据的机器可读契约（当前 72 条条款 / 108 条判据） | **手写** —— 唯一的事实来源 |
 | `spec.schema.json` | Spec 自身的结构约束（JSON Schema 2020-12） | 手写 |
 | `verify/spec-schema.py` | 结构校验器 | 手写 |
 | `verify/spec-structure.test.ts` | 引用完整性（悬空 ID、判据与验证器对不上、成熟度自洽） | 手写 |
@@ -122,7 +122,7 @@ Spec 目录之外，判据的验证器还包括：
 | `packages/core/tests/` | 领域内核（`@ppt/core`）的版式快照与补丁应用测试 |
 | `apps/api/tests/` | 后端的契约 / 集成 / 安全 / AI / 混沌 / 性能测试 |
 | `src/services/projectMerge.test.ts` | 前端唯一的单元测试 —— 摘要/全量合并的回归锁（`bun test` 默认规则会扫到） |
-| `e2e/*.e2e.ts` | 前后端集成的**独立链**（auth / projects / workbench / exports / quality / templates / presentation / errors）—— Playwright 驱动真实 Chromium + 真实服务端 |
+| `e2e/*.e2e.ts` | 前后端集成的**独立链**（auth / projects / library / workbench / workbench-pages / workbench-editing / navigation / exports / quality / templates / presentation / errors / offline）—— Playwright 驱动真实 Chromium + 真实服务端 |
 | `scripts/check-coverage.check.ts` | 覆盖率门禁的可执行判据（SPEC-GOV-001） |
 
 ---
@@ -798,6 +798,22 @@ bun run test:e2e:visible
     别人临时起的脚本（子集扫描、手工 `bun test`）不参与，照样能抢 CPU。
   · 它管的是**同一台机器**；两台机器各跑各的，互看不见（也不该看见）。
   · 「等」是**排队**，不是**公平** —— 谁先抢到谁先跑，后来的等。
+- **作品库卡片的「导出 PPTX」导出的是零页空壳（2026-11-05，第 18 轮）** ——
+  卡片上那份 `p` 是**摘要**：列表接口只回摘要，`slides` 恒为空数组
+  （`projectStorage.ts` 的 `listProjects`）。前端把它直接丢给导出引擎，
+  `buildPresentationPptx` 按 `project.slides.length` 建页 —— **0 页**。
+  于是用户点「导出 PPTX」，**确实下载到了文件**、确实是合法的 OOXML、
+  Office 也确实打得开 —— **里面一页都没有**。
+  旁边的「导出 JSON」早就是这个毛病，也早修好了（改导服务端那份 bundle）；
+  **同一个根因、两个按钮，漏了一个**。
+  这类缺陷的特征是「**看起来成功**」：不报错、有文件、能打开 ——
+  唯一能揭穿它的，是把包解开数一数里面有几页
+  （`docs/backend-features.md` EXP-17「导出后回读产物，校验页数、尺寸、关键文本存在」）。
+  修法：卡片导出改走 `ProjectStorage.loadProject(p.id)`（服务端那份全量），
+  并在 0 页时**明确报错** —— 不下载一份零页文件冒充成功。
+  判据：`AC-E2E-026`（条款 `SPEC-E2E-013`）；
+  注入用例把它改回「导摘要」，`e2e/library.e2e.ts` 当场报红
+  （`Expected: 3, Received: 0`）—— 修前复现、修后转绿，两边都实测过。
 - **页序基线是 1-based，写在 `DEC-012` 里** ——
   五份设计文档**从未规定**页码从几开始；
   能定住它的是领域内核的形式化契约
