@@ -156,13 +156,13 @@
 
 > 结论为 PASS 的判据共 105 条，每一条都在 §2.3 有对应证据记录（EVD-*）。
 > 「未覆盖（无判据）」的 1 条（SPEC-GOV-003）连判据都不存在，既不是 PASS 也不是 FAIL —— 见 §2.5。
-> **证据集对账**：这轮证据集共 499 个用例（spec/evidence/junit.xml 401 + spec/evidence/junit-e2e.xml 98），其中 105 个被某条判据点名、394 个没有。
-> 没有判据的 394 个用例里 **0 个失败** —— 上表的「FAIL 0」不是漏报：它们也都过了。
+> **证据集对账**：这轮证据集共 527 个用例（spec/evidence/junit.xml 429 + spec/evidence/junit-e2e.xml 98），其中 105 个被某条判据点名、422 个没有。
+> 没有判据的 422 个用例里 **0 个失败** —— 上表的「FAIL 0」不是漏报：它们也都过了。
 > 判据点名的 106 个验证目标里，**1 个在这轮证据集里没找到**（`apps/api/tests/perf/outline-latency.bench.ts::outline-generation-p95-under-threshold`）—— 挂不上验证目标的判据一律 INCONCLUSIVE，绝不按「通过」算（§2.5）。
 
 #### 2.1.1 这批结论对应的是哪一版代码
 
-这些证据生成于：spec/evidence/junit.xml 2026-11-05 16:05:24、spec/evidence/junit-e2e.xml 2026-11-05 16:07:04。每一条 PASS/FAIL 都是**跑批那一刻**的结论 —— 跑完之后动过它依赖的文件，这条结论就不再自动适用于当前代码。下面按「这条结论依赖的文件有没有在证据之后被改过」逐条判定。
+这些证据生成于：spec/evidence/junit.xml 2026-11-05 16:47:06、spec/evidence/junit-e2e.xml 2026-11-05 16:49:17。每一条 PASS/FAIL 都是**跑批那一刻**的结论 —— 跑完之后动过它依赖的文件，这条结论就不再自动适用于当前代码。下面按「这条结论依赖的文件有没有在证据之后被改过」逐条判定。
 
 > **105 条结论全部仍然成立** —— 它们依赖的文件在证据生成之后都没有被改过。
 
@@ -174,9 +174,13 @@
 
 （无）
 
+#### 超时的用例（不是断言不通过）
+
+（无）—— 本轮没有任何用例以超时收场。
+
 #### 未挂判据的失败
 
-（无）—— 没有判据的 394 个用例也全都过了。这一节存在的意义是：**「没有失败」得说得出依据**，不能靠「没列」来暗示。
+（无）—— 没有判据的 422 个用例也全都过了。这一节存在的意义是：**「没有失败」得说得出依据**，不能靠「没列」来暗示。
 
 ### 2.3 证据清单
 
@@ -1760,7 +1764,7 @@ EVD-GOV-004
 
 ### 2.4 注入错误检查（验证器的元验证）
 
-共 91 个注入用例，**不合格 0 个**。每个用例走「基线 PASS → 注入必须 FAIL → 还原后重新 PASS」三步。
+共 97 个注入用例，**不合格 0 个**。每个用例走「基线 PASS → 注入必须 FAIL → 还原后重新 PASS」三步。
 
 | 判据 | 注入的错误 | 改动的文件 | 检出者 | 基线 | 检出 | 还原 |
 |---|---|---|---|---|---|---|
@@ -1855,20 +1859,26 @@ EVD-GOV-004
 | AC-E2E-018 | 翻页一次跳两页（off-by-one，翻到的不是服务端那一页） | `src/components/PresentationMode.tsx` | `e2e/presentation.e2e.ts::翻页 → 换到服务端的后一页，退回后回到第一页` | ✅ | ✅ | ✅ |
 | AC-E2E-019 | 导出提交失败被吞掉，界面改报成功（假成功） | `src/components/ExportModal.tsx` | `e2e/errors.e2e.ts::导出提交失败 → 界面显示"导出失败"，绝不显示"导出成功"` | ✅ | ✅ | ✅ |
 | AC-E2E-021 | 又加了一张渲染阻塞的外部样式表（CDN 不可达时整页白屏） | `index.html` | `e2e/offline.e2e.ts::应用 HTML → 没有会阻塞渲染的外部样式表` | ✅ | ✅ | ✅ |
+| AC-CORE-018 | 绑定不再按契约裁剪 —— 什么槽位都带进这一页 | `packages/core/src/engine/contentBinding.ts` | `packages/core/tests/contentBinding.test.ts::slots-not-consumed-by-layout-are-dropped` | ✅ | ✅ | ✅ |
+| AC-CORE-019 | 缺契约要求的槽位时不再报 error（降级成 warning）—— ok 永远为真 | `packages/core/src/engine/contentBinding.ts` | `packages/core/tests/contentBinding.test.ts::missing-required-slot-is-an-error` | ✅ | ✅ | ✅ |
+| AC-CORE-020 | 契约表里少了一条降级声明 —— 指标页没有数字时也降不了级 | `packages/core/src/data/layoutIntents.ts` | `packages/core/tests/contentBinding.test.ts::stats-kpi-without-number-degrades-to-cards-grid` | ✅ | ✅ | ✅ |
+| AC-CORE-020 | 引擎把「契约声明了降级」判反了 —— 声明了反而**不**降级 | `packages/core/src/engine/layoutEngine.ts` | `packages/core/tests/contentBinding.test.ts::stats-kpi-without-number-degrades-to-cards-grid` | ✅ | ✅ | ✅ |
+| AC-GOV-003 | 渲染器不再按变体表分层 —— 母版槽位被塞进内容层 | `packages/core/src/engine/svgRenderer.ts` | `packages/core/tests/layoutInvariants.test.ts::elements-belong-to-declared-layers` | ✅ | ✅ | ✅ |
+| AC-GOV-004 | 跨页结论的归一化把数字也去掉了 —— 64 页的结论被归成同一句，于是 62 条重复误报 | `packages/core/src/engine/qualityEngine.ts` | `packages/core/tests/layoutInvariants.test.ts::no-quality-issue-in-any-combo` | ✅ | ✅ | ✅ |
 
 > 全部注入错误都被对应验证器抓到。**没有 MISSED 行** —— 上表的 PASS 因此不是自证。**但那是跑批那一刻的结论**：这些用例现在还跑不跑得起来，见 §2.4.2。
 
 #### 2.4.1 这批结论还对当前代码成立吗
 
-注入报告生成于 2026-11-05T08:14:23.476Z。「验证器抓得住这个错」是**某一版**验证器与**某一版**实现之间的结论 —— 跑完之后动过其中任何一边，这条结论就不再自动适用于当前代码。下面按报告里记下的文件指纹逐条比对。
+注入报告生成于 2026-11-05T09:03:00.013Z。「验证器抓得住这个错」是**某一版**验证器与**某一版**实现之间的结论 —— 跑完之后动过其中任何一边，这条结论就不再自动适用于当前代码。下面按报告里记下的文件指纹逐条比对。
 
-> 逐条比对了跑批时的文件指纹与当前的文件内容：**91 条全部仍然成立**（验证器、被改动的源文件与数据依赖都和跑批时一致）。
+> 逐条比对了跑批时的文件指纹与当前的文件内容：**97 条全部仍然成立**（验证器、被改动的源文件与数据依赖都和跑批时一致）。
 
 #### 2.4.2 现在还跑得起来吗
 
-当前代码里定义了 **91** 条注入用例，全量报告里有 **91** 条。
+当前代码里定义了 **97** 条注入用例，全量报告里有 **97** 条。
 
-> 全部 91 条都在报告里，锚点**命中且唯一** —— 现在重跑还跑得起来，报告里的结论没有过期。
+> 全部 97 条都在报告里，锚点**命中且唯一** —— 现在重跑还跑得起来，报告里的结论没有过期。
 
 > 首轮运行曾出现 1 个 MISSED（AC-RND-004）：判据原文写作「存在 `id=` **或** `data-element-id=`」，弱于条款陈述本身要求的「必须带有 id 属性」。已把判据收紧到与条款陈述及 `docs/test-cases.md` TC-EXP-003 一致，并补上第二条注入（data-element-id 值与 IR 不一致）。
 
@@ -1938,7 +1948,7 @@ EVD-GOV-004
 
 - `spec/spec.yaml` —— 70 条条款 / 106 条判据的机器可读契约
 - `spec/spec.schema.json` —— Spec 自身的结构约束（JSON Schema 2020-12）
-- `spec/verify/*.test.ts` —— 24 个验证器文件（Spec 自检 + 领域内核 + 导出 + 质量引擎 + 渲染）
+- `spec/verify/*.test.ts` —— 25 个验证器文件（Spec 自检 + 领域内核 + 导出 + 质量引擎 + 渲染）
 - `packages/core/tests/` —— 领域内核（@ppt/core）的版式快照与补丁应用测试
 - `apps/api/tests/` —— 后端的契约 / 集成 / 安全 / AI / 混沌 / 性能测试
 - `e2e/` —— 13 条前后端集成链（Playwright 真实浏览器 + 真实服务端），断言落在服务端状态上：`e2e/auth.e2e.ts`、`e2e/errors.e2e.ts`、`e2e/exports.e2e.ts`、`e2e/library.e2e.ts`、`e2e/navigation.e2e.ts`、`e2e/offline.e2e.ts`、`e2e/presentation.e2e.ts`、`e2e/projects.e2e.ts`、`e2e/quality.e2e.ts`、`e2e/templates.e2e.ts`、`e2e/workbench-editing.e2e.ts`、`e2e/workbench-pages.e2e.ts`、`e2e/workbench.e2e.ts`
@@ -1961,17 +1971,17 @@ EVD-GOV-004
 
 ### 实际验证了什么
 
-- 真的跑了证据集（`bun test spec/verify/ packages/core/tests/ apps/api/tests/ ./scripts/check-coverage.check.ts ./apps/api/tests/perf/export-latency.bench.ts`）：**401 个用例，0 失败，401 通过**，覆盖 43 个测试文件
+- 真的跑了证据集（`bun test spec/verify/ packages/core/tests/ apps/api/tests/ ./scripts/check-coverage.check.ts ./apps/api/tests/perf/export-latency.bench.ts`）：**429 个用例，0 失败，429 通过**，覆盖 44 个测试文件
 - 真的跑了前后端集成 E2E（`bun test ./e2e/auth.e2e.ts ./e2e/errors.e2e.ts ./e2e/exports.e2e.ts ./e2e/library.e2e.ts ./e2e/navigation.e2e.ts ./e2e/offline.e2e.ts ./e2e/presentation.e2e.ts ./e2e/projects.e2e.ts ./e2e/quality.e2e.ts ./e2e/templates.e2e.ts ./e2e/workbench-editing.e2e.ts ./e2e/workbench-pages.e2e.ts ./e2e/workbench.e2e.ts`，Playwright 驱动真实 Chromium + 真实服务端）：**98 个用例，0 失败**
-- 证据集对账：两层证据共 **499 个用例**，其中 **105 个挂了判据**、394 个没挂；没挂判据的用例里 **0 个失败** —— 「失败明细」里那个「（无）」不是漏报
+- 证据集对账：两层证据共 **527 个用例**，其中 **105 个挂了判据**、422 个没挂；没挂判据的用例里 **0 个失败** —— 「失败明细」里那个「（无）」不是漏报
 - 真的跑了 `python3 spec/verify/spec-schema.py`：Spec 结构校验通过（70 条条款 / 106 条判据引用完整）
 - 真的跑了 `npx tsc --noEmit`：类型检查通过
-- 真的跑了 `bun run spec/verify/mutation-check.ts`：**91 个注入用例，不合格 0 个** —— 每个用例走「基线 PASS → 注入必须 FAIL → 还原后重新 PASS」三步，源文件已全部还原 —— 其中对**当前代码**仍然成立 **91** 条、已过期 **0** 条（见 §2.4.1）
+- 真的跑了 `bun run spec/verify/mutation-check.ts`：**97 个注入用例，不合格 0 个** —— 每个用例走「基线 PASS → 注入必须 FAIL → 还原后重新 PASS」三步，源文件已全部还原 —— 其中对**当前代码**仍然成立 **97** 条、已过期 **0** 条（见 §2.4.1）
 - 领域内核行覆盖率：**94.29% ≥ 90%**（2380/2524 行，证据落盘在 `spec/evidence/coverage.json`）
 
 ### 哪些结论仍不可信
 
-- **28 条判据没有做注入错误检查**（AC-CORE-014、AC-CORE-015、AC-CORE-016、AC-CORE-017、AC-CORE-018、AC-CORE-019、AC-CORE-020、AC-QLT-011、AC-QLT-012、AC-QLT-013、AC-QLT-014、AC-QLT-015、AC-QLT-016、AC-QLT-017、AC-QLT-018、AC-QLT-019、AC-QLT-020、AC-QLT-021、AC-EXP-007、AC-EXP-008、AC-RND-007、AC-RND-008、AC-E2E-023、AC-E2E-024、AC-E2E-025、AC-NFR-001、AC-GOV-003、AC-GOV-004）—— 它们的 PASS 只来自「测试跑过了」，没有被元验证证明「抓得住错」
+- **23 条判据没有做注入错误检查**（AC-CORE-014、AC-CORE-015、AC-CORE-016、AC-CORE-017、AC-QLT-011、AC-QLT-012、AC-QLT-013、AC-QLT-014、AC-QLT-015、AC-QLT-016、AC-QLT-017、AC-QLT-018、AC-QLT-019、AC-QLT-020、AC-QLT-021、AC-EXP-007、AC-EXP-008、AC-RND-007、AC-RND-008、AC-E2E-023、AC-E2E-024、AC-E2E-025、AC-NFR-001）—— 它们的 PASS 只来自「测试跑过了」，没有被元验证证明「抓得住错」
 - **SPEC-NFR-001 —— 真实模型下的 P95 从未测过**。验证器已建成，但本轮只跑了降级模式（.env 里的 GEMINI_API_KEY 是占位符），模型往返延迟根本没被采样到
 - **SPEC-GOV-003 —— 质量门禁分数线从未在文档中给出**，判据无法存在（AMB-001 未裁决）
 - **AC-QLT-010 —— self-derived oracle**，只能防回归，不能证明正确
