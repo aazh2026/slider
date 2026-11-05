@@ -122,7 +122,10 @@
 1. **质量闸门落地**：裁决 `AMB-001`（AI 生成内容落库前的 Q 阈值），把数字写进 `backend-features.md` 与 `spec.yaml`，`SPEC-GOV-003` 从 `status: blocked` / `maturity: none` 变成有判据的 active 条款。
 2. **引入 `human` / `expert` oracle**：结构化人评 checklist（每份文稿约 15 分钟，评价 Qs/Qv/Qc/Qg 四维 + 整体可用性），产出 `M4` 的基线。**这是整个战略里唯一必须引入新成本的一步**，也是价值密度最高的一步 —— 没有它，「好 PPT」在本项目里永远只是一个形容词。
 3. **`known_gaps` 闭环**：现有 8 条每条要么补判据、要么把条款降级为 `withdrawn` / `blocked` 并写明原因，不留「已知没做到但状态仍是 active」的悬空条款。
-4. **追溯矩阵成为发布闸门**：`spec/traceability.md` 的结论列从「记录」变成「拦截」—— 有 INCOMPLETE 的高风险条款就不发版。
+4. ✅ **已完成 · 追溯矩阵成为发布闸门**：`spec/traceability.md` 的结论列从「记录」变成「拦截」—— 矩阵生成器（`spec/verify/traceability.ts`）在末尾执行发布闸门（`spec/verify/releaseGate.ts`），挡不住就以退出码 1 收场，流水线的退出码随之变 1。矩阵里多出 **§2.7 发布闸门**，逐条写明谁挡住了放行、为什么。
+   - **闸门的三条判据**：① 条款判定为 **FAIL** 一律不放行 —— 「已知欠账」不能给 FAIL 开门：欠账是「还没做」，FAIL 是「做了但不对」——**那是回归，不是债**；② **INCONCLUSIVE** 不放行，除非该条款已登记进 `spec.yaml` 的 `known_gaps`（没跑过的验证不是通过）；③ 连判据都没有的条款：已降级（`status` 不是 active）就放过，还 active 又没登记 —— 那是**悬空条款**，不放行。
+   - **比本节原先的措辞更严**：原先写的是「有 INCOMPLETE 的**高风险**条款就不发版」，实现里**不区分风险等级** —— 任何未登记的 INCONCLUSIVE 都挡。（另：实现用的词是 INCONCLUSIVE，INCOMPLETE 是本节的旧写法。）理由是风险等级在 `spec.yaml` 里没有可机械判定的字段，**判不了的东西不能当判据用**；而波 3 ③（`known_gaps` 闭环）本来就是为这道闸门准备的出口。
+   - **判据**：`spec/verify/releaseGate.test.ts` 的 14 条（纯逻辑，含「矩阵 FAIL 2 / INCONCLUSIVE 1、欠账只登记了其中一族」那轮跑批形状的缺陷回放）。
 
 ---
 
@@ -221,4 +224,4 @@
 
 ---
 
-*文档版本 1.4 · 2026-11-05 · 波 1 已落地、波 2 全部落地（① 语义搬迁 ② 快照不变量 ③ 槽位契约 ④ 文本度量）· 与 `architecture.md` §12 ADR-014~020、`quality-rules.md` 同步维护*
+*文档版本 1.5 · 2026-11-05 · 波 1 已落地、波 2 全部落地（① 语义搬迁 ② 快照不变量 ③ 槽位契约 ④ 文本度量）、波 3 ④ 已落地（追溯矩阵 = 发布闸门）· 与 `architecture.md` §12 ADR-014~020、`quality-rules.md` 同步维护*
