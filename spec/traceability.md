@@ -162,7 +162,7 @@
 
 #### 2.1.1 这批结论对应的是哪一版代码
 
-这些证据生成于：spec/evidence/junit.xml 2026-11-05 16:47:06、spec/evidence/junit-e2e.xml 2026-11-05 16:49:17。每一条 PASS/FAIL 都是**跑批那一刻**的结论 —— 跑完之后动过它依赖的文件，这条结论就不再自动适用于当前代码。下面按「这条结论依赖的文件有没有在证据之后被改过」逐条判定。
+这些证据生成于：spec/evidence/junit.xml 2026-11-05 17:15:07、spec/evidence/junit-e2e.xml 2026-11-05 17:17:08。每一条 PASS/FAIL 都是**跑批那一刻**的结论 —— 跑完之后动过它依赖的文件，这条结论就不再自动适用于当前代码。下面按「这条结论依赖的文件有没有在证据之后被改过」逐条判定。
 
 > **105 条结论全部仍然成立** —— 它们依赖的文件在证据生成之后都没有被改过。
 
@@ -1764,7 +1764,7 @@ EVD-GOV-004
 
 ### 2.4 注入错误检查（验证器的元验证）
 
-共 97 个注入用例，**不合格 0 个**。每个用例走「基线 PASS → 注入必须 FAIL → 还原后重新 PASS」三步。
+共 114 个注入用例，**不合格 0 个**。每个用例走「基线 PASS → 注入必须 FAIL → 还原后重新 PASS」三步。
 
 | 判据 | 注入的错误 | 改动的文件 | 检出者 | 基线 | 检出 | 还原 |
 |---|---|---|---|---|---|---|
@@ -1865,20 +1865,37 @@ EVD-GOV-004
 | AC-CORE-020 | 引擎把「契约声明了降级」判反了 —— 声明了反而**不**降级 | `packages/core/src/engine/layoutEngine.ts` | `packages/core/tests/contentBinding.test.ts::stats-kpi-without-number-degrades-to-cards-grid` | ✅ | ✅ | ✅ |
 | AC-GOV-003 | 渲染器不再按变体表分层 —— 母版槽位被塞进内容层 | `packages/core/src/engine/svgRenderer.ts` | `packages/core/tests/layoutInvariants.test.ts::elements-belong-to-declared-layers` | ✅ | ✅ | ✅ |
 | AC-GOV-004 | 跨页结论的归一化把数字也去掉了 —— 64 页的结论被归成同一句，于是 62 条重复误报 | `packages/core/src/engine/qualityEngine.ts` | `packages/core/tests/layoutInvariants.test.ts::no-quality-issue-in-any-combo` | ✅ | ✅ | ✅ |
+| AC-CORE-014 | 版式引擎不再给元素标 variant —— 字段缺失，语义只能靠猜 ID | `packages/core/src/engine/layoutEngine.ts` | `spec/verify/element-variant.test.ts::layout-engine-sets-variant-on-every-element` | ✅ | ✅ | ✅ |
+| AC-CORE-015 | ID 修复改回从旧 ID 里抠语义前缀 —— 洗过的 ID 再也修不回语义 | `packages/core/src/engine/elementVariant.ts` | `spec/verify/element-variant.test.ts::id-repair-derives-prefix-from-variant` | ✅ | ✅ | ✅ |
+| AC-CORE-016 | 渲染分层改回按 ID 前缀判断 —— ID 一洗，母版层就空了 | `packages/core/src/engine/svgRenderer.ts` | `spec/verify/element-variant.test.ts::render-and-theme-follow-variant-not-id` | ✅ | ✅ | ✅ |
+| AC-CORE-017 | 全仓多了一个解析元素 ID 的消费方 —— 「零处解析」这条不变量破了 | `packages/core/src/engine/svgRenderer.ts` | `spec/verify/element-variant.test.ts::no-consumer-parses-element-ids` | ✅ | ✅ | ✅ |
+| AC-QLT-011 | 自动修复不再只动真越界的元素 —— 母版页码与页脚被一起挪进安全区 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::autofix-leaves-master-elements-alone` | ✅ | ✅ | ✅ |
+| AC-QLT-012 | 「修复不得让文稿更糟」的守卫被判反了 —— 修好了反而回退 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::autofix-never-lowers-score` | ✅ | ✅ | ✅ |
+| AC-QLT-013 | 所有诊断都说「能一键修」 —— 不可修的缺陷也挂了 fixable=true | `packages/core/src/engine/qualityRules.ts` | `spec/verify/quality-engine.test.ts::issues-declare-fixability` | ✅ | ✅ | ✅ |
+| AC-QLT-014 | 规则表的扣分幅度与文档漂了 —— 真相源和它的机器副本对不上 | `packages/core/src/engine/qualityRules.ts` | `spec/verify/quality-rules.test.ts::rule-table-matches-doc` | ✅ | ✅ | ✅ |
+| AC-QLT-015 | 规则表里多了一条规则 —— 文档里没有对应的锚点 | `packages/core/src/engine/qualityRules.ts` | `spec/verify/quality-rules.test.ts::every-rule-has-doc-anchor` | ✅ | ✅ | ✅ |
+| AC-QLT-016 | 诊断的 id 与规则表对不上 —— 追溯不到任何一条规则 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-rules.test.ts::diagnostic-ids-map-to-rules` | ✅ | ✅ | ✅ |
+| AC-QLT-017 | 引擎把扣分幅度写死了 —— 不再读规则表，规则表改了分数也不动 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-rules.test.ts::penalties-come-from-rule-table` | ✅ | ✅ | ✅ |
+| AC-QLT-018 | 「空页」判据整个不触发 —— 只有标题的页面不再扣内容分 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::thin-page-penalty` | ✅ | ✅ | ✅ |
+| AC-QLT-019 | 跨页结论重复的门槛抬高到 3 —— 两页重复不再算重复 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::duplicate-keymessage-penalty` | ✅ | ✅ | ✅ |
+| AC-QLT-020 | 稀疏判定的阈值放宽到 5% —— 版心一角的内容也算撑满了 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::sparse-page-penalty` | ✅ | ✅ | ✅ |
+| AC-QLT-021 | 空页也按稀疏再扣一次分 —— 同一页被扣了两次 | `packages/core/src/engine/qualityEngine.ts` | `spec/verify/quality-engine.test.ts::thin-page-not-double-charged` | ✅ | ✅ | ✅ |
+| AC-RND-007 | 半角字符一律按 0.56em 计宽 —— 「半角一个宽度」的老口径回来了 | `packages/core/src/engine/textMetrics.ts` | `spec/verify/text-metrics.test.ts::text-width-model-is-calibrated` | ✅ | ✅ | ✅ |
+| AC-RND-008 | 空格断行不再检查尾段是否超宽 —— 折出来的行溢出可用宽度 | `packages/core/src/engine/textMetrics.ts` | `spec/verify/text-metrics.test.ts::wrapped-lines-never-exceed-the-available-width` | ✅ | ✅ | ✅ |
 
 > 全部注入错误都被对应验证器抓到。**没有 MISSED 行** —— 上表的 PASS 因此不是自证。**但那是跑批那一刻的结论**：这些用例现在还跑不跑得起来，见 §2.4.2。
 
 #### 2.4.1 这批结论还对当前代码成立吗
 
-注入报告生成于 2026-11-05T09:03:00.013Z。「验证器抓得住这个错」是**某一版**验证器与**某一版**实现之间的结论 —— 跑完之后动过其中任何一边，这条结论就不再自动适用于当前代码。下面按报告里记下的文件指纹逐条比对。
+注入报告生成于 2026-11-05T09:30:36.333Z。「验证器抓得住这个错」是**某一版**验证器与**某一版**实现之间的结论 —— 跑完之后动过其中任何一边，这条结论就不再自动适用于当前代码。下面按报告里记下的文件指纹逐条比对。
 
-> 逐条比对了跑批时的文件指纹与当前的文件内容：**97 条全部仍然成立**（验证器、被改动的源文件与数据依赖都和跑批时一致）。
+> 逐条比对了跑批时的文件指纹与当前的文件内容：**114 条全部仍然成立**（验证器、被改动的源文件与数据依赖都和跑批时一致）。
 
 #### 2.4.2 现在还跑得起来吗
 
-当前代码里定义了 **97** 条注入用例，全量报告里有 **97** 条。
+当前代码里定义了 **114** 条注入用例，全量报告里有 **114** 条。
 
-> 全部 97 条都在报告里，锚点**命中且唯一** —— 现在重跑还跑得起来，报告里的结论没有过期。
+> 全部 114 条都在报告里，锚点**命中且唯一** —— 现在重跑还跑得起来，报告里的结论没有过期。
 
 > 首轮运行曾出现 1 个 MISSED（AC-RND-004）：判据原文写作「存在 `id=` **或** `data-element-id=`」，弱于条款陈述本身要求的「必须带有 id 属性」。已把判据收紧到与条款陈述及 `docs/test-cases.md` TC-EXP-003 一致，并补上第二条注入（data-element-id 值与 IR 不一致）。
 
@@ -1976,12 +1993,12 @@ EVD-GOV-004
 - 证据集对账：两层证据共 **527 个用例**，其中 **105 个挂了判据**、422 个没挂；没挂判据的用例里 **0 个失败** —— 「失败明细」里那个「（无）」不是漏报
 - 真的跑了 `python3 spec/verify/spec-schema.py`：Spec 结构校验通过（70 条条款 / 106 条判据引用完整）
 - 真的跑了 `npx tsc --noEmit`：类型检查通过
-- 真的跑了 `bun run spec/verify/mutation-check.ts`：**97 个注入用例，不合格 0 个** —— 每个用例走「基线 PASS → 注入必须 FAIL → 还原后重新 PASS」三步，源文件已全部还原 —— 其中对**当前代码**仍然成立 **97** 条、已过期 **0** 条（见 §2.4.1）
+- 真的跑了 `bun run spec/verify/mutation-check.ts`：**114 个注入用例，不合格 0 个** —— 每个用例走「基线 PASS → 注入必须 FAIL → 还原后重新 PASS」三步，源文件已全部还原 —— 其中对**当前代码**仍然成立 **114** 条、已过期 **0** 条（见 §2.4.1）
 - 领域内核行覆盖率：**94.29% ≥ 90%**（2380/2524 行，证据落盘在 `spec/evidence/coverage.json`）
 
 ### 哪些结论仍不可信
 
-- **23 条判据没有做注入错误检查**（AC-CORE-014、AC-CORE-015、AC-CORE-016、AC-CORE-017、AC-QLT-011、AC-QLT-012、AC-QLT-013、AC-QLT-014、AC-QLT-015、AC-QLT-016、AC-QLT-017、AC-QLT-018、AC-QLT-019、AC-QLT-020、AC-QLT-021、AC-EXP-007、AC-EXP-008、AC-RND-007、AC-RND-008、AC-E2E-023、AC-E2E-024、AC-E2E-025、AC-NFR-001）—— 它们的 PASS 只来自「测试跑过了」，没有被元验证证明「抓得住错」
+- **6 条判据没有做注入错误检查**（AC-EXP-007、AC-EXP-008、AC-E2E-023、AC-E2E-024、AC-E2E-025、AC-NFR-001）—— 它们的 PASS 只来自「测试跑过了」，没有被元验证证明「抓得住错」
 - **SPEC-NFR-001 —— 真实模型下的 P95 从未测过**。验证器已建成，但本轮只跑了降级模式（.env 里的 GEMINI_API_KEY 是占位符），模型往返延迟根本没被采样到
 - **SPEC-GOV-003 —— 质量门禁分数线从未在文档中给出**，判据无法存在（AMB-001 未裁决）
 - **AC-QLT-010 —— self-derived oracle**，只能防回归，不能证明正确
