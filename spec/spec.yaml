@@ -472,6 +472,70 @@ clauses:
           pass_when: "退出码 0，且该用例未被 skip"
         maturity: automated
 
+  # ---- SPEC-CORE-011 版式 → 槽位契约 ----
+  - id: SPEC-CORE-011
+    title: 版式与内容槽位之间必须有契约，不匹配要被报告而不是硬塞
+    type: technical
+    risk: high
+    status: active
+    maturity: automated
+    statement: "「某个版式消费哪些内容槽位」必须写成**可查、可测的契约表**；绑定时不属于该版式的槽位不得进入这一页；契约要求的槽位缺失或条目不达标时必须报 error；专属槽位不满足要求时的降级目标必须写在契约表里而不是藏在引擎里"
+    source:
+      doc: "docs/architecture.md"
+      section: "§12 ADR-020"
+      quote: "**契约表是唯一真相源**（`packages/core/src/data/layoutIntents.ts` 的 `LAYOUT_SLOT_CONTRACTS`）。每种版式一行，每行声明六件事：`consumes`（消费哪些槽位 —— **不在表里的槽位不进这一页**）、`fallbackFrom`、`requires`、`produces` / `requiresVariants`、`degradesTo`。"
+    derived_from: SPEC-CORE-010
+    inference: "ADR-018 治的是「元素的身份」，本条治的是「版式的需求」。同一个病的两个切面：语义该住在数据里，不该住在控制流里"
+    behaviors:
+      - when: "AI 给一个 cards_grid 的页面附带了 layers"
+        then: "layers 不得进入这一页的 SlideContent，且校验必须报告一条 warning（多余内容被丢弃）"
+      - when: "某个版式要求的专属槽位没有内容"
+        then: "校验必须报 error（这一页按这个版式排不出来），不得静默塞一个空壳"
+      - when: "指标页的指标条目里没有任何数字"
+        then: "校验必须报 error；版式引擎按契约表的 degradesTo 降级为 cards_grid"
+    boundaries:
+      - "本条只管**版式 ↔ 槽位**的匹配，不管内容本身好不好 —— 内容质量由 SPEC-QLT 系列管"
+      - "降级只允许契约表里显式声明的那一条；引擎不得自带未声明的降级分支"
+    acceptance:
+      - id: AC-CORE-018
+        criterion: "对 8 种版式各用一份「什么槽位都带了」的内容做绑定，断言：① 被该版式契约声明消费的槽位全部在结果里；② 不被消费的专属槽位（columns / layers / phases / metrics / radial / summary / meta）全部**不在**结果里 —— 即不匹配的内容被丢弃而不是硬塞；③ 无论哪种版式，bullets 都必须保留（它是降级链的源头）"
+        oracle:
+          tier: authoritative
+          source: "docs/architecture.md §12 ADR-020 —— 绑定按契约裁剪；`consumes` 是『不在表里的槽位不进这一页』"
+          confidence: high
+        verification:
+          kind: test
+          target: "packages/core/tests/contentBinding.test.ts::slots-not-consumed-by-layout-are-dropped"
+          command: "bun test ./packages/core/tests/contentBinding.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+      - id: AC-CORE-019
+        criterion: "断言校验器的三档结论：① 架构图版式缺 layers 时报 **error**（ok=false）；② cards_grid 收到多余的 layers 时**不**报 error（ok=true）但必须报一条 warning 且 dropped 里含 layers；③ 指标页的 metrics 条目里没有任何数字时报 error、带数字时不报；④ 内容整体缺失时报 error。另断言契约表自身自洽：每一行都有 consumes、requires 的槽位必须同时在 consumes 里、未知版式回落到 cards_grid"
+        oracle:
+          tier: authoritative
+          source: "docs/architecture.md §12 ADR-020 —— 校验器给出结论：缺什么报 error，多余的报 warning；ok 只看 error 级；『有 4 个指标』和『有 4 个带数字的指标』不是一回事"
+          confidence: high
+        verification:
+          kind: test
+          target: "packages/core/tests/contentBinding.test.ts::missing-required-slot-is-an-error"
+          command: "bun test ./packages/core/tests/contentBinding.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+      - id: AC-CORE-020
+        criterion: "断言降级规则来自契约表：① 指标页整页没有数字时，版式引擎产出的这一页 layout.type 必须是 cards_grid 且不得出现 kpi_card 元素、必须出现 grid_card 元素；② 指标页有数字时 layout.type 必须是 stats_kpi 且必须出现 kpi_card 元素；③ 断言 8 种版式里**只有** stats_kpi 声明了 degradesTo —— 别的版式不许悄悄换版式"
+        oracle:
+          tier: authoritative
+          source: "docs/architecture.md §12 ADR-020 —— 降级规则写在表里，引擎只执行；stats_kpi 是唯一声明了 degradesTo 的版式"
+          confidence: high
+        verification:
+          kind: test
+          target: "packages/core/tests/contentBinding.test.ts::stats-kpi-without-number-degrades-to-cards-grid"
+          command: "bun test ./packages/core/tests/contentBinding.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
 # ===========================================================================
 # B. 质量引擎
 # ===========================================================================
@@ -1195,7 +1259,6 @@ clauses:
           pass_when: "退出码 0，且该用例未被 skip"
         maturity: automated
 
-# ===========================================================================
 # D. 导出
 # ===========================================================================
   # ---- SPEC-EXP-001 PPTX 保真 ----
@@ -2478,6 +2541,59 @@ clauses:
       quote: "**闸门是架构组件，不是 UI 功能**。这保证无论内容从哪来（AI 生成、人工导入、模板提取），落库的都是达标内容。"
     conflict: CONF-002
     acceptance: []
+
+  # ---- SPEC-GOV-004 版式不变量 ----
+  - id: SPEC-GOV-004
+    title: 8 版式 × 8 主题共 64 组必须满足五条版式不变量
+    type: governance
+    risk: high
+    status: active
+    maturity: automated
+    statement: "64 组（8 版式 × 8 主题）产物必须同时满足五条不变量：① 层归属正确（元素落在哪一层由 variant 决定）；② accent 色正确跟随主题；③ 无元素越出画布；④ 无文字被截断或丢弃；⑤ 卡片/层之间留得住 10px 安全距；并且质量引擎对 64 组整份文稿零命中、总分 100"
+    source:
+      doc: "docs/quality-strategy.md"
+      section: "§波 2 · 64 组快照回归升级"
+      quote: "8 版式 × 8 主题，从「渲染不崩、不断言别的」升级为「断言不变量」—— 层归属正确、accent 色正确跟随、无越界、无截断、无碰撞。这是波 1 规则表在版式侧的对应物。"
+    derived_from: SPEC-GOV-002
+    inference: "快照保证「没变」，不保证「对」—— 基线本身错了快照一样绿。因此在 64 组快照之外必须有独立于快照的性质断言"
+    behaviors:
+      - when: "某个元素的 variant 声明它属于 template 层，但渲染时落进了 content 层"
+        then: "不变量断言必须失败 —— 层归属由 variant 说了算，不由 ID 前缀说了算"
+      - when: "某组产物的卡片间距是 4px"
+        then: "必须判为碰撞（DEC-014：10px 是安全距，间距不足即碰撞）"
+      - when: "某组产物里有一段文字被截断成「…」"
+        then: "必须判为失败 —— 被丢弃的内容必须能被发现"
+      - when: "64 组里有一组因夹具缺数字而被降级成另一个版式"
+        then: "「每种版式渲染出来的就是它自己」这条不变量必须失败"
+    boundaries:
+      - "本条管**版式产物本身对不对**，不管内容好不好 —— 内容质量由 SPEC-QLT 系列管"
+      - "不变量在渲染产物上判定（SVG 的层分组与文本节点），不得在 IR 上自我复读"
+    acceptance:
+      - id: AC-GOV-003
+        criterion: "对 64 组产物断言五条不变量全部成立：① 每个元素所在的层与变体表声明一致 —— 既在 IR 上读一致，也在渲染产物的层分组里落对；② 标了 followsAccent 的元素在主题重映射后 accent 属性等于新主题的 accentColor，且换主题时该属性确实变了；③ 没有元素越出画布；④ 每个元素的每一段文字都完整出现在渲染产物的文本节点里；⑤ 卡片/层两两之间的 separation（= max(dx,dy)）不小于 10px；另断言每种版式渲染出来的 layout.type 就是它自己，且产出的槽位集合落在契约声明的范围内"
+        oracle:
+          tier: authoritative
+          source: "docs/architecture.md §12 ADR-018（层归属由 variant 决定）+ §12 ADR-017 / DEC-014（10px 是安全距）+ docs/quality-strategy.md §波 2"
+          confidence: high
+        verification:
+          kind: test
+          target: "packages/core/tests/layoutInvariants.test.ts::elements-belong-to-declared-layers"
+          command: "bun test ./packages/core/tests/layoutInvariants.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
+      - id: AC-GOV-004
+        criterion: "把 64 组当成一整份文稿交给质量引擎评估，断言零 issue 且总分 100 —— 跨页规则（如论点重复）也必须一并成立；另断言 8 种版式都有一条槽位契约、每条契约都消费 bullets"
+        oracle:
+          tier: authoritative
+          source: "docs/quality-strategy.md §波 2 —— 质量引擎是「事后扣分」，不变量是「产物本身就必须成立」；两者都成立才算这一版式是对的"
+          confidence: high
+        verification:
+          kind: test
+          target: "packages/core/tests/layoutInvariants.test.ts::no-quality-issue-in-any-combo"
+          command: "bun test ./packages/core/tests/layoutInvariants.test.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
 
 # ===========================================================================
 # 歧义与冲突登记
