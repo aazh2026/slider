@@ -1820,6 +1820,55 @@ export const MUTATIONS: Mutation[] = [
     testFile: 'e2e/navigation.e2e.ts',
     testName: 'AC-E2E-025 工作台第 2 页点放映 → 从第 2 页开始',
   },
+  // =======================================================================
+  // SPEC-GOV-005 领域层零依赖 —— 门禁自己抓不抓得住错
+  // =======================================================================
+  //
+  // 这几条注入的是**门禁本体**（scripts/check-domain-deps.ts）与**领域层源码**，
+  // 断言的是「门禁坏了的时候，判据必须红」——
+  // 一个从来不失败的验证器，通过得再漂亮也没有意义。
+  //
+  // 账本的三个方向各来一条：新增被放行 / 超额被放行 / 已还清还被留着。
+  // 只测一个方向的话，另外两个方向的洞会一直留着 ——
+  // 「账本可以随便写」和「账本是一张万能赦免状」是同一种失效。
+  {
+    criterion: 'AC-GOV-005',
+    description: '账本外的新违规被放行 —— 领域层新引一个 IO 库，门禁却不报',
+    file: 'scripts/check-domain-deps.ts',
+    find: '    if (!entry) {\n      added.push(violation);\n      continue;\n    }',
+    replace: '    if (!entry) {\n      continue;\n    }',
+    testFile: 'scripts/check-domain-deps.check.ts',
+    testName: 'domain-deps-ledger-ratchet-fails-in-both-directions',
+  },
+  {
+    criterion: 'AC-GOV-005',
+    description: '超过账本上限不算失败 —— 债在长大，门禁却不报',
+    file: 'scripts/check-domain-deps.ts',
+    find: '    if (violation.count > entry.maxCount) exceeded.push({ violation, maxCount: entry.maxCount });',
+    replace: '    if (violation.count > entry.maxCount) {\n      // 注入：上限被忽略\n    }',
+    testFile: 'scripts/check-domain-deps.check.ts',
+    testName: 'domain-deps-ledger-ratchet-fails-in-both-directions',
+  },
+  {
+    criterion: 'AC-GOV-005',
+    description: '已经还清的债不再报 —— 账本烂成万能赦免状，门禁却不报',
+    file: 'scripts/check-domain-deps.ts',
+    find: '    if (!foundByKey.has(key)) stale.push(entry);',
+    replace: '    if (!foundByKey.has(key)) {\n      // 注入：已还清的债不再报\n    }',
+    testFile: 'scripts/check-domain-deps.check.ts',
+    testName: 'domain-deps-ledger-ratchet-fails-in-both-directions',
+  },
+  {
+    criterion: 'AC-GOV-005',
+    description: '领域层偷偷引了 Node 的 fs —— 门禁必须抓到',
+    file: 'packages/core/src/engine/elementVariant.ts',
+    find:
+      "import type { ElementRole, ElementVariant, SlideElement, SlideIR } from '../types/slide';\n",
+    replace:
+      "import type { ElementRole, ElementVariant, SlideElement, SlideIR } from '../types/slide';\nimport fs from 'node:fs';\n",
+    testFile: 'scripts/check-domain-deps.check.ts',
+    testName: 'domain-layer-has-no-unregistered-host-dependency',
+  },
 ];
 
 interface RunResult {

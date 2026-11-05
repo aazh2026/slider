@@ -2595,6 +2595,45 @@ clauses:
           pass_when: "退出码 0，且该用例未被 skip"
         maturity: automated
 
+  # ---- SPEC-GOV-005 领域层零依赖 ----
+  - id: SPEC-GOV-005
+    title: 领域内核不得依赖宿主环境
+    type: governance
+    risk: high
+    status: active
+    maturity: automated
+    statement: "领域内核（packages/core/src）不得依赖宿主环境：不得 import 模型 SDK / 文件 IO 库 / 网络库 / DOM 模拟器 / Node 运行时，也不得自由使用 document / fetch / process 等主机全局；已存在的违规必须登记在欠账账本 spec/domain-deps-baseline.json 里，次数不得超过账本记的上限，账本里不得留着已经还清的条目"
+    source:
+      doc: "docs/testing-strategy.md"
+      section: "§3 分层详述 · L0 · 静态检查"
+      quote: '"领域层零依赖"是一条可执行的架构约束，必须由 CI 强制，否则架构会在无人察觉时腐化。'
+    derived_from: SPEC-GOV-001
+    inference: "覆盖率门槛管的是「测没测到」，管不了「能不能独立跑」—— 领域层一旦引了 IO 库或宿主全局，覆盖率再高也是一台绑在浏览器与文件系统上的机器"
+    behaviors:
+      - when: "有人在 packages/core/src 里 import 了 pptxgenjs 或 node:fs"
+        then: "门禁必须失败 —— 除非这一笔已经登记在欠账账本里，且次数没有超过账本记的上限"
+      - when: "有人在 packages/core/src 里写了 document.createElement（根本没有 import）"
+        then: "门禁必须失败 —— 浏览器依赖不会因为没有 import 就消失"
+      - when: "账本里记的那笔债已经还掉了（那处代码被删了）"
+        then: "门禁必须失败 —— 账本里要留下的是「现在还欠着的」，不是「曾经欠过的」"
+    boundaries:
+      - "本条只管**领域层**（packages/core/src）；apps/api 与前端不受它约束"
+      - "本条管「依赖了不该依赖的」，不管「有没有测到」—— 覆盖率是 SPEC-GOV-001 的事"
+      - "已有的 4 笔债（exportEngine.ts 引 pptxgenjs / jspdf，用 document / Image）登记在欠账账本里 —— 导出属于 IO，正确的位置是 adapters 层，而 adapters 层尚未建立"
+    acceptance:
+      - id: AC-GOV-005
+        criterion: "扫描 packages/core/src，断言：① 没有 import 模型 SDK / 文件 IO 库 / 网络库 / DOM 模拟器 / Node 运行时（node:path 等纯函数型内置模块除外）；② 没有自由使用 document / window / fetch / process 等主机全局（属性访问与同名局部绑定不算）；③ 已登记在 spec/domain-deps-baseline.json 里的违规，出现次数不得超过账本记的上限；④ 账本里没有已经还清的条目"
+        oracle:
+          tier: authoritative
+          source: "docs/testing-strategy.md §3 —— 「领域层零依赖」是一条可执行的架构约束，必须由 CI 强制"
+          confidence: high
+        verification:
+          kind: test
+          target: "scripts/check-domain-deps.check.ts::domain-layer-has-no-unregistered-host-dependency"
+          command: "bun test ./scripts/check-domain-deps.check.ts"
+          pass_when: "退出码 0，且该用例未被 skip"
+        maturity: automated
+
 # ===========================================================================
 # 歧义与冲突登记
 # ===========================================================================
